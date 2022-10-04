@@ -1,0 +1,52 @@
+appId: cn.bk.team.client
+productName: team-client
+directories:
+  buildResources: build
+files:
+  - '!**/.vscode/*'
+  - '!**/src/*'
+  - '!**/electron.vite.config.{js,ts,mjs,cjs}'
+  - '!**/{.eslintignore,.eslintrc.js,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
+  # - 'build/*.{png,ico,icns}'
+asarUnpack:
+  - '**/*.{node,dll}'
+afterSign: build/notarize.js
+win:
+  executableName: team-client
+nsis:
+  oneClick: false
+  perMachine: false
+  allowElevation: false
+  allowToChangeInstallationDirectory: true
+  installerIcon: build/icon.ico
+  uninstallerIcon: build/icon.ico
+  installerHeaderIcon: build/icon.ico
+  artifactName: 协作研发平台客户端-${version}-setup.${ext}
+  shortcutName: 协作研发平台客户端
+  uninstallDisplayName: 协作研发平台客户端
+  createDesktopShortcut: true
+
+mac:
+  icon: build.icon.icns
+  entitlementsInherit: build/entitlements.mac.plist
+  extendInfo:
+    - NSCameraUsageDescription: Application requests access to the device's camera.
+    - NSMicrophoneUsageDescription: Application requests access to the device's microphone.
+    - NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
+    - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
+dmg:
+  artifactName: ${name}-${version}.${ext}
+linux:
+  icon: build
+  target:
+    - AppImage
+    - snap
+    - deb
+  maintainer: electronjs.org
+  category: Utility
+appImage:
+  artifactName: ${name}-${version}.${ext}
+npmRebuild: false
+publish:
+  provider: generic
+  url: https://example.com/auto-updates

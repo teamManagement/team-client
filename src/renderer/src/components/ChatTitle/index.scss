@@ -1,0 +1,56 @@
+@use '../../styles/mixin';
+.chat-title {
+  height: 63px;
+  border-bottom: 1px solid #efece8;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+
+  > .avatar {
+    width: 68px;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  > .desc {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+    > div {
+      cursor: default;
+
+      &.name {
+        height: 23px;
+        line-height: 28px;
+        font-size: 16px;
+        font-weight: 500;
+
+        @include mixin.flex-text-overflow;
+      }
+
+      &.name-desc {
+        height: 23px;
+        line-height: 23px;
+        color: #999;
+        font-size: 12px;
+        @include mixin.flex-text-overflow;
+      }
+    }
+  }
+
+  > .operation-groups {
+    display: flex;
+    height: 100%;
+    overflow: hidden;
+    > .action {
+      padding: 12px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+  }
+}

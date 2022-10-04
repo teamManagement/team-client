@@ -1,0 +1,11 @@
+import { FC, HTMLAttributes } from 'react'
+import { ImgBase } from './_base'
+
+export const ImgUploadPicture: FC<HTMLAttributes<HTMLImageElement>> = (props) => {
+  return (
+    <ImgBase
+      {...props}
+      src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAAAXNSR0IArs4c6QAAArBJREFUOE+tlE1IVFEUx///+2ZMwcUELYQKXLQwEFoUlJAwQoGGHzOQpOk8FJTE1HkS0aaFgVCb6I2GBBXZjKLgYoYxSkhQKDCohVCLIoOwFi6EBCUpZ+6JNzU540eKdDeXe+49v/N9if+86PBqzOAlCjpIFu+FLyLvtPBWfMgeZo0ZvKDAUYi8FHJyL0CKnAJZrkXK6QtYr0lZiIZDVXuBpXX8pjUmgId+M7gKke5opO+ec+lvtBqg5LoIFrWgJT4U+rAbQ/5AVxuobtJvWiKC5ljEHvTVWYV0y1utdTMMdVwBvmg4dHQ3QF/AaiLxKAtYZQYrDeGVWMQu89a25+/Py1mOhu1U4TJXpdl90CXSC4oL1D2xx/2ftgSeq20v2Jfr/ihAD8kiQIqj4VBJJiwVRY7MpGSCBAhXUsOryJJNHjpvqhu7yg0yKMTiz9W1q0/HBhbSwJTBPPeUc/6xulbm7H/OHiQRgsHsHP4rVxkwT1KvlcaHBuac9448JzfnBYBCEq6sHKaBv3sTlgBzjpffgRVPrnuGxIHEWrJsfOTu+0zjVfUdRS63MQWwYBPQZ3YHCbFFMEmKMzlLTgsBLEomEqUbYX+daOxqUUrdz26bgHWHTHnWEwvbNzItJ7WuiA/1TWyXlqwqa61blVInRdAESFssEnqYVqwOdJwwYEwJ+Gbpy+zZ6enpxFbQLCAgCxDkQ6M+Ohx6slHBbwZPQ/AM5MS3+dn6raDrwEBwGcRKIqn948P9r7YLqaah8zyVMUJiMBq2WzcZDViXQfQ6n8MUiMTS/GzFduGsh99VZ1CNiMCORezutNzr9bo8h485VU6w5mLnGeUyngvwGYLpneaWlHKnPQA8EOArgUMi8JI44hQuNafOdCiqayQKdwJudZ/6maBvxyN9o5sGfy/ATJ1f6u5W43R7RagAAAAASUVORK5CYII="
+    />
+  )
+}

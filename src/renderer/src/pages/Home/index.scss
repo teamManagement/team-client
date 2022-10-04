@@ -1,0 +1,12 @@
+.home {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+
+  > .content {
+    flex: 1;
+    width: 100%;
+    display: flex;
+  }
+}

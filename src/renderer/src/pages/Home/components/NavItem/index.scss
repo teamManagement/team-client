@@ -1,0 +1,77 @@
+.nav-item {
+  width: 100%;
+  height: 58px;
+  padding: 6px 0;
+
+  &.active {
+    > a {
+      &::before,
+      &::after {
+        height: 100%;
+      }
+    }
+  }
+
+  & > a {
+    text-decoration: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    position: relative;
+    &::before,
+    &::after {
+      display: block;
+      content: '';
+      position: absolute;
+      height: 0;
+      left: 0;
+      transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      -webkit-transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      -moz-transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      -ms-transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      -o-transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    &::before {
+      width: 8px;
+      background: linear-gradient(180deg, rgba(142, 197, 242, 1) 0%, rgba(79, 157, 222, 1) 100%);
+    }
+
+    &::after {
+      width: 20px;
+      background: linear-gradient(270deg, rgba(41, 47, 76, 1) 0%, rgba(142, 197, 242, 1) 100%);
+      opacity: 0.6;
+    }
+
+    svg,
+    .t-icon {
+      font-size: 26px;
+      color: white;
+      transition: all 0.3s;
+      -webkit-transition: all 0.3s;
+      -moz-transition: all 0.3s;
+      -ms-transition: all 0.3s;
+      -o-transition: all 0.3s;
+    }
+
+    &:hover {
+      /* 指示条动画 */
+      &::before,
+      &::after {
+        height: 100%;
+      }
+
+      /* 图标动画 */
+      svg,
+      .t-icon {
+        transform: scale(1.2);
+        opacity: 1;
+        -webkit-transform: scale(1.2);
+        -moz-transform: scale(1.2);
+        -ms-transform: scale(1.2);
+        -o-transform: scale(1.2);
+      }
+    }
+  }
+}

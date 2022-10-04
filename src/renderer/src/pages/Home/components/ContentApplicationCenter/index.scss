@@ -1,0 +1,26 @@
+.application-center {
+  display: flex;
+  flex-direction: column;
+  padding: 18px;
+  padding-top: 0;
+
+  > .search {
+    width: 100%;
+    height: 58px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  > .application-container {
+    flex-grow: 1;
+    height: 0;
+    width: 100%;
+    overflow: hidden;
+    background-color: #fff;
+
+    // > .ant-tabs.ant-tabs-left {
+    //   height: 100%;
+    // }
+  }
+}

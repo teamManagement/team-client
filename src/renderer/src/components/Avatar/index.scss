@@ -1,0 +1,28 @@
+@use '../../styles/variables';
+.avatar {
+  .status {
+    > .t-badge--dot {
+      width: 8px !important;
+      height: 8px !important;
+    }
+
+    &.online {
+      > .t-badge--dot {
+        background-color: variables.$onlineColor !important;
+      }
+    }
+
+    &.offline {
+      > .t-badge--dot {
+        background-color: variables.$offlineColor !important;
+      }
+    }
+  }
+
+  .status-background > .t-badge--dot {
+    width: 16px !important;
+    height: 16px !important;
+    background-color: #fff !important;
+    //   background-color: green !important;
+  }
+}
