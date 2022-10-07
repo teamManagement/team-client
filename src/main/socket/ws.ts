@@ -70,7 +70,10 @@ export class WsHandler {
   private _connection(): void {
     try {
       this._ws = new WebSocket('wss://127.0.0.1:65528/ws', {
-        rejectUnauthorized: false
+        rejectUnauthorized: false,
+        headers: {
+          'User-Agent': 'teamManagerLocalView'
+        }
       })
       this._ws!.addListener('open', this._handshake)
       this._ws!.addListener('message', (message) => {
@@ -214,5 +217,11 @@ export class WsHandler {
         }
       }, 1000)
     })
+  }
+
+  public async loginOk(): Promise<boolean> {
+    const response = await this.sendDataAdnReceiveSync('checkIsLogin', '')
+    log.debug('检测登录状态, 返回数据: ', JSON.stringify(response))
+    return response.data
   }
 }

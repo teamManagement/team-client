@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain, IpcMainEvent } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, IpcMainEvent, net } from 'electron'
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import log from 'electron-log'
 import { DialogTopWin } from './windows/common'
@@ -8,6 +8,7 @@ import { SettingHomeWin } from './windows/home'
 import { getInitSplashscreen } from './windows/welcome'
 import { WsHandler } from './socket'
 import { SettingLoginWin } from './windows/login'
+import { initMainProcessEvents } from './events'
 
 app.commandLine.appendSwitch('--disable-http-cache')
 
@@ -34,10 +35,12 @@ async function createWindow(): Promise<void> {
   const wsHandler = WsHandler.instance
   const connResult = await wsHandler.waitConnection(2)
   if (connResult) {
-    SettingHomeWin(hideSplashscreen)
-  } else {
-    SettingLoginWin(hideSplashscreen)
+    if (await wsHandler.loginOk()) {
+      SettingHomeWin(hideSplashscreen)
+      return
+    }
   }
+  SettingLoginWin(hideSplashscreen)
 }
 
 app.on('certificate-error', (event, webContents, url, error, certifcate, callback) => {
@@ -54,6 +57,7 @@ app.on('second-instance', () => {
 })
 
 app.on('ready', () => {
+  initMainProcessEvents()
   ipcMain.addListener('appExit', (_event: IpcMainEvent, code?: number) => {
     app.exit(code || 0)
   })

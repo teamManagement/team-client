@@ -12,6 +12,7 @@ export interface AvatarProps {
   style?: React.CSSProperties
   status?: 'online' | 'offline'
   statusOffset?: [number, number]
+  disabledNameAutoLen?: boolean
 }
 
 export const Avatar: FC<AvatarProps> = ({
@@ -21,9 +22,13 @@ export const Avatar: FC<AvatarProps> = ({
   shape,
   size,
   statusOffset = [42, 8],
+  disabledNameAutoLen,
   ...otherProps
 }) => {
   const showName = useMemo<string | undefined>(() => {
+    if (disabledNameAutoLen) {
+      return name
+    }
     if (!name || name.length <= 2) {
       return name
     }

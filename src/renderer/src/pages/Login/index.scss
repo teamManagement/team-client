@@ -2,6 +2,10 @@
 $headerHeight: 68px;
 $headIconSize: 68px;
 
+.t-loading__parent {
+  height: 100%;
+}
+
 .login {
   background-repeat: no-repeat;
   background-size: 100% 100%;
@@ -35,6 +39,11 @@ $headIconSize: 68px;
       height: $headIconSize;
       overflow: hidden;
       border-radius: 50%;
+      -webkit-border-radius: 50%;
+      -moz-border-radius: 50%;
+      -ms-border-radius: 50%;
+      -o-border-radius: 50%;
+
       left: 50%;
       top: $headerHeight - math.div($headIconSize, 2);
       margin-left: calc($headIconSize / -2);
