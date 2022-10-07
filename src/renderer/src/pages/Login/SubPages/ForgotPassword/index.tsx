@@ -67,7 +67,7 @@ export const ForgotPassword: FC = () => {
   }, [])
 
   const validatorPasswordFormat = useCallback((val: string) => {
-    const reg = /^[a-zA-Z0-9_.]*$/
+    const reg = /^[a-zA-Z0-9_@.]*$/
     return reg.test(val)
   }, [])
 
@@ -81,7 +81,7 @@ export const ForgotPassword: FC = () => {
       verifyCode: [{ required: true, message: '验证码不能为空' }],
       password: [
         { required: true, message: '密码不能为空' },
-        { validator: validatorPasswordFormat, message: '密码只能由数字、字母、下划线或点组成' },
+        { validator: validatorPasswordFormat, message: '密码只能由数字、字母、下划线、点、@组成' },
         { min: 6, message: '密码长度不能小于6位' }
       ],
       confirmPassword: [

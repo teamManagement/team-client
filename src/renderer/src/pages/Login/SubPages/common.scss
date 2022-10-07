@@ -52,7 +52,12 @@
       padding: 10px 18px 8px 18px;
       width: 100%;
       flex-grow: 1;
-      overflow: auto;
+      overflow-y: auto;
+      overflow-x: hidden;
+
+      > .t-form {
+        width: 372px;
+      }
     }
   }
 }
