@@ -2,7 +2,9 @@ import { BrowserWindow } from 'electron'
 import { WinNameEnum } from '../../current'
 import { SettingWindow } from '../common'
 
-export async function SettingHomeWin(showOperation?: () => void): Promise<BrowserWindow> {
+export async function SettingHomeWin(
+  showOperation?: (win: BrowserWindow) => void
+): Promise<BrowserWindow> {
   return await SettingWindow(
     WinNameEnum.HOME,
     {
@@ -20,9 +22,10 @@ export async function SettingHomeWin(showOperation?: () => void): Promise<Browse
     true,
     {
       readyToShowFn: (win) => {
-        win.show()
         if (showOperation) {
-          showOperation()
+          showOperation(win)
+        } else {
+          win.show()
         }
       }
     }

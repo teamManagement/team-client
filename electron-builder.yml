@@ -7,7 +7,15 @@ files:
   - '!**/src/*'
   - '!**/electron.vite.config.{js,ts,mjs,cjs}'
   - '!**/{.eslintignore,.eslintrc.js,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
-  # - 'build/*.{png,ico,icns}'
+  - '!**/tsconfig.json'
+  - '!**/tsconfig.node.json'
+  - '!**/tsconfig.web.json'
+  - '!**/process/*'
+
+extraResources:
+  - from: 'process/${os}'
+    to: './'
+
 asarUnpack:
   - '**/*.{node,dll}'
 afterSign: build/notarize.js

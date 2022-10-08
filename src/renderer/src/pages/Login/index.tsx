@@ -8,9 +8,11 @@ import {
   Link,
   Loading,
   MessagePlugin,
-  SubmitContext
+  SubmitContext,
+  loading as loadingFn
 } from 'tdesign-react'
 import { UserIcon, LockOnIcon } from 'tdesign-icons-react'
+import { sha1 } from 'hash.js'
 import Avatar from '@renderer/components/Avatar'
 import CloseAppBtn from '@renderer/components/CloseAppBtn'
 import defaultHeadImg from '../../assets/imgs/default-header.png'
@@ -31,17 +33,25 @@ export const Login: FC = () => {
   }>({
     url: defaultHeadImg
   })
-  const [backgroundImg, setBackgroundImg] = useState<string>(defaultLoginBg)
+  const [backgroundImg] = useState<string>(defaultLoginBg)
   const [loading, setLoading] = useState<boolean>(false)
   const [form] = Form.useForm()
 
-  const loginSubmit = useCallback((context: SubmitContext) => {
+  const loginSubmit = useCallback(async (context: SubmitContext) => {
     if (context.validateResult !== true) {
       return
     }
 
-    console.log('username: ', form.getFieldValue!('username'))
-    console.log('password: ', form.getFieldValue!('password'))
+    const username = form.getFieldValue!('username')
+    const password = sha1().update(form.getFieldValue!('password')).digest('hex')
+    const loadingInstance = loadingFn(true)
+    try {
+      await window.api.login(username, password)
+    } catch (e) {
+      MessagePlugin.error((e as any).message || e)
+    } finally {
+      loadingInstance.hide()
+    }
   }, [])
 
   const usernameBlur = useCallback(async () => {

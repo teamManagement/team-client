@@ -9,8 +9,20 @@ import { getInitSplashscreen } from './windows/welcome'
 import { WsHandler } from './socket'
 import { SettingLoginWin } from './windows/login'
 import { initMainProcessEvents } from './events'
+import { installCaCert, verifyExternalProgramHash } from './process'
 
 app.commandLine.appendSwitch('--disable-http-cache')
+
+function alertPanic(message: string): void {
+  dialog.showMessageBoxSync(DialogTopWin(), {
+    type: 'error',
+    title: '致命错误',
+    message,
+    icon: AppIcon,
+    buttons: ['确定']
+  })
+  app.exit(1)
+}
 
 const instanceLock = app.requestSingleInstanceLock()
 if (!instanceLock) {
@@ -18,29 +30,52 @@ if (!instanceLock) {
 }
 
 process.on('uncaughtException', (error) => {
-  if (error) {
+  console.log(error)
+  alertPanic(error.message)
+})
+
+async function createWindow(): Promise<void> {
+  const hideSplashscreen = getInitSplashscreen()
+
+  log.debug('验证外部程序文件Hash...')
+  if (!(await verifyExternalProgramHash())) {
+    alertPanic('程序文件被篡改, 请尝试重新安装')
+    return
+  }
+
+  log.debug('外部程序文件Hash验证通过')
+
+  log.debug('安装团队协作平台CA根证书...')
+  if (!(await installCaCert())) {
+    alertPanic(
+      '安装团队协作平台根证书失败, 请尝试重新打开本应用, 如多次均提示本错误, 请联系管理员使用外部修复工具进行修复!!!'
+    )
+    return
+  }
+
+  try {
+    const wsHandler = WsHandler.instance
+    const connResult = await wsHandler.waitConnection(2)
+    if (connResult) {
+      if (await wsHandler.loginOk()) {
+        SettingHomeWin((win) => {
+          win.show()
+          hideSplashscreen()
+        })
+        return
+      }
+    }
+    SettingLoginWin(hideSplashscreen)
+  } catch (e) {
     dialog.showMessageBoxSync(DialogTopWin(), {
       type: 'error',
       title: '致命错误',
-      message: error.message,
+      message: '程序启动失败, 请尝试重启, 本次错误: ' + ((e as any).message || e),
       icon: AppIcon,
       buttons: ['确定']
     })
     app.exit(1)
   }
-})
-
-async function createWindow(): Promise<void> {
-  const hideSplashscreen = getInitSplashscreen()
-  const wsHandler = WsHandler.instance
-  const connResult = await wsHandler.waitConnection(2)
-  if (connResult) {
-    if (await wsHandler.loginOk()) {
-      SettingHomeWin(hideSplashscreen)
-      return
-    }
-  }
-  SettingLoginWin(hideSplashscreen)
 }
 
 app.on('certificate-error', (event, webContents, url, error, certifcate, callback) => {

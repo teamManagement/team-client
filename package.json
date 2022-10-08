@@ -3,6 +3,12 @@
   "version": "1.0.0",
   "description": "An Electron application with React and TypeScript",
   "main": "./out/main/index.js",
+  "signature": {
+    "mkcert": {
+      "linux": "5a049abaa15a4188050b451025e285945b5f5dde3c4d5f80784e35dadeeba68f6520d104fb2c18c3ed9d49cde047e435e401540491f59711973ccf4c0e0b6d3f",
+      "win32": "e7e17f3fd77daa704f88ff4dc6a22795ce0dc18b5db980bb2e5dbe823ca84f54ee8bd81e5e3d816668e4a841e53cb2bd487939e6ad805f5866926d6ddfdff086"
+    }
+  },
   "author": "example.com",
   "homepage": "https://www.electronjs.org",
   "scripts": {
@@ -23,8 +29,10 @@
     "@electron-toolkit/preload": "^1.0.2",
     "@electron-toolkit/utils": "^1.0.2",
     "@shen9401/react-im-input": "^1.0.10",
+    "@types/async-lock": "^1.3.0",
     "ahooks": "^3.7.1",
     "antd": "^4.23.4",
+    "async-lock": "^1.3.2",
     "classnames": "^2.3.1",
     "electron-log": "^4.4.8",
     "electron-splashscreen": "^1.0.0",

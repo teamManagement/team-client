@@ -3,7 +3,10 @@ import log from 'electron-log'
 import { WebSocket as WebSocketInterface } from 'ws'
 import { localMessageEncrypt } from '../security'
 import { randomBytes2HexStr, uniqueId } from '../security/random'
+import AsyncLock from 'async-lock'
 const WebSocket = require('ws')
+
+const lock = new AsyncLock()
 
 enum MessageType {
   PUSH,
@@ -17,7 +20,7 @@ interface MessageContent {
 }
 
 interface MessageCallbackMap {
-  [key: string]: (content: MessageContent) => void
+  [key: string]: (content: MessageContent, err?: Error) => void
 }
 
 export class WsHandler {
@@ -67,6 +70,20 @@ export class WsHandler {
     this._connectionOk = true
   }
 
+  private _clearResources(err?: Error): void {
+    lock.acquire('clear', (done) => {
+      try {
+        for (const key in this._messageCallbackMap) {
+          const cb = this._messageCallbackMap[key]
+          cb({} as any, err)
+          delete this._messageCallbackMap[key]
+        }
+      } finally {
+        done()
+      }
+    })
+  }
+
   private _connection(): void {
     try {
       this._ws = new WebSocket('wss://127.0.0.1:65528/ws', {
@@ -91,13 +108,15 @@ export class WsHandler {
       })
       this._ws!.addListener('error', (err) => {
         if (err.message.includes('connect ECONNREFUSED')) {
-          console.log('连接失败需要重启本地服务')
+          log.debug('连接失败需要重启本地服务')
         }
 
         log.warn('socket连接发生错误: ', JSON.stringify(err))
         this._connectionOk = false
+        this._clearResources(err)
       })
       this._ws!.addListener('close', () => {
+        this._clearResources()
         this._connectionOk = false
         log.warn('socket连接被断开')
         setTimeout(() => {
@@ -144,8 +163,12 @@ export class WsHandler {
   ): Promise<MessageContent> {
     return new Promise<MessageContent>((resolve, reject) => {
       const messageContent = this._generatorMessageContent(data, type)
-      this.registryCallback(messageContent.id, (data) => {
+      this.registryCallback(messageContent.id, (data, err) => {
         delete this._messageCallbackMap[messageContent.id]
+        if (err) {
+          reject(err)
+          return
+        }
         resolve(data)
       })
       messageContent.id = cmd + ':' + messageContent.id
@@ -161,8 +184,12 @@ export class WsHandler {
         type: MessageType.CALLBACK
       } as MessageContent
 
-      this.registryCallback(messageContent.id, (data) => {
+      this.registryCallback(messageContent.id, (data, err) => {
         delete this._messageCallbackMap[messageContent.id]
+        if (err) {
+          reject(err)
+          return
+        }
         resolve(data)
       })
 
@@ -189,7 +216,7 @@ export class WsHandler {
     return this._sendDataReceiveSync(cmd, data, type)
   }
 
-  public registryCallback(id: string, cb: (data: any) => void): void {
+  public registryCallback(id: string, cb: (data: any, err?: Error) => void): void {
     this._messageCallbackMap[id] = cb
   }
 
@@ -221,7 +248,17 @@ export class WsHandler {
 
   public async loginOk(): Promise<boolean> {
     const response = await this.sendDataAdnReceiveSync('checkIsLogin', '')
-    log.debug('检测登录状态, 返回数据: ', JSON.stringify(response))
     return response.data
+  }
+
+  public async login(username: string, password: string): Promise<void> {
+    const dataPack =
+      Buffer.from(username, 'utf-8').toString('base64') +
+      '.' +
+      Buffer.from(password, 'utf-8').toString('base64')
+    const response = await this.sendDataAdnReceiveSync('login', dataPack)
+    if (response.data.error) {
+      throw new Error(response.data.message)
+    }
   }
 }

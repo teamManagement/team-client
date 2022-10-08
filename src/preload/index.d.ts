@@ -42,7 +42,9 @@ declare global {
 
   interface Window {
     electron: ElectronAPI
-    api: unknown
+    api: {
+      login(username: string, password: string): Promise<void>
+    }
     httpApi: {
       webServerProxy<T>(
         url: string,

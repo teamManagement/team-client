@@ -101,10 +101,11 @@ export function sendHttpRequestToLocalWebServer<T>(
       res.on('end', () => {
         if (!buffer) {
           if (res.statusCode < 200 || res.statusCode > 299) {
+            const message = res.statusCode == 502 ? '网络异常' : '未知的异常'
             reject({
               error: true,
               httpCode: res.statusCode,
-              message: '未知的异常',
+              message,
               code: '-1'
             } as ResponseError)
             return

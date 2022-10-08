@@ -44,7 +44,16 @@ interface ResponseError {
 }
 
 // Custom APIs for renderer
-const api = {}
+const api = {
+  async login(username: string, password: string): Promise<void> {
+    const response = await ipcRenderer.invoke('ipc-login', username, password)
+    if (response.error) {
+      throw response
+    }
+
+    return response
+  }
+}
 
 const httpApi = {
   webServerProxy: async (url, options) => {
