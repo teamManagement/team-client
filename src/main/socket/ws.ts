@@ -4,6 +4,8 @@ import { WebSocket as WebSocketInterface } from 'ws'
 import { localMessageEncrypt } from '../security'
 import { randomBytes2HexStr, uniqueId } from '../security/random'
 import AsyncLock from 'async-lock'
+import { IpcMainInvokeEvent, ipcMain, WebContents } from 'electron'
+import { alertMsgAndRelaunch as alertMsgAndBreakToLogin } from '../windows/alerts'
 const WebSocket = require('ws')
 
 const lock = new AsyncLock()
@@ -23,12 +25,21 @@ interface MessageCallbackMap {
   [key: string]: (content: MessageContent, err?: Error) => void
 }
 
+interface TcpTransferInfo {
+  cmdCode: number
+  errMsg: string
+}
+
 export class WsHandler {
   private _retryNum = 0
   private _messageCallbackMap: MessageCallbackMap = {}
 
+  private _serverPushMsgTransferWebContentList: WebContents[] = []
+
   private _ws: WebSocketInterface | undefined = undefined
   private _connectionOk = false
+  private _loginOk = false
+
   public get connectionOk(): boolean {
     return this._connectionOk
   }
@@ -40,6 +51,25 @@ export class WsHandler {
       WsHandler._instance = new WsHandler()
     }
     return WsHandler._instance
+  }
+
+  public static initServerMsgTransferEvents(): void {
+    ipcMain.handle('ipc-serverMsgTransferEvent', (event: IpcMainInvokeEvent) => {
+      return lock.acquire('ipc-serverMsgTransferEvent', (done) => {
+        try {
+          const sender = event.sender
+          const list = WsHandler.instance._serverPushMsgTransferWebContentList
+          for (const w of list) {
+            if (w === sender) {
+              return
+            }
+          }
+          list.push(sender)
+        } finally {
+          done(undefined)
+        }
+      })
+    })
   }
 
   private constructor() {
@@ -65,9 +95,23 @@ export class WsHandler {
       return
     }
 
-    log.debug('本地消息隧道连接成功')
-    this._retryNum = 0
     this._connectionOk = true
+    log.debug('本地消息隧道连接成功')
+    if (this._loginOk) {
+      try {
+        log.debug('用户上次的状态为登录成功, 正在尝试恢复登录状态...')
+        await this.autoLogin()
+      } catch (e) {
+        log.error(
+          '用户上次的状态为登录成功, 在通道恢复时尝试自动登录失败, 将进行通道重连, 本次错误消息: ',
+          JSON.stringify(e)
+        )
+        this._ws?.close()
+        return
+      }
+      log.debug('用户状态回复成功')
+    }
+    this._retryNum = 0
   }
 
   private _clearResources(err?: Error): void {
@@ -104,6 +148,37 @@ export class WsHandler {
               return
             }
             break
+          case MessageType.PUSH:
+            lock.acquire('ipc-serverMsgTransferEvent', (done) => {
+              const buf = Buffer.from(msg.data, 'base64')
+              const serverData = buf.toString('utf8')
+              try {
+                const list = WsHandler.instance._serverPushMsgTransferWebContentList
+
+                const data = JSON.parse(serverData) as TcpTransferInfo
+                log.debug('接收到TCP Transfer数据: ', serverData)
+                if (data.cmdCode === 1) {
+                  this._loginOk = false
+                  alertMsgAndBreakToLogin(
+                    '服务器断开连接, 并无法自动恢复, 点击确认之后将跳转至登录, 请尝试再次手动登录'
+                  )
+                  return
+                }
+
+                for (const w of list) {
+                  w.send('ipc-serverMsgTransferEvent', serverData)
+                }
+              } catch (e) {
+                log.error(
+                  'TCP服务通道转发的数据内容失败, 内容: ',
+                  buf.toString('utf8'),
+                  ' , 错误信息: ',
+                  JSON.stringify(e)
+                )
+              } finally {
+                done()
+              }
+            })
         }
       })
       this._ws!.addListener('error', (err) => {
@@ -259,6 +334,29 @@ export class WsHandler {
     const response = await this.sendDataAdnReceiveSync('login', dataPack)
     if (response.data.error) {
       throw new Error(response.data.message)
+    }
+    this._loginOk = true
+  }
+
+  public async autoLogin(): Promise<boolean> {
+    log.debug('尝试进行自动登录')
+    const response = await this.sendDataAdnReceiveSync('autoLogin', undefined)
+    log.debug('自动登录结果: ', JSON.stringify(response))
+    if (response.data.error) {
+      throw new Error(response.data.message)
+    }
+    this._loginOk = true
+    return response.data
+  }
+
+  public clearWebContentResource(webContent: WebContents): void {
+    log.debug('开始清除WsHandler中的WebContent资源, 要被清除的WebContentId => ', webContent.id)
+    const webContentList = WsHandler.instance._serverPushMsgTransferWebContentList
+    for (let i = webContentList.length - 1; i >= 0; i--) {
+      if (webContentList[i] === webContent) {
+        log.debug('WebContentId => ', webContent.id, ', 从TCP Transfer通道中被移除')
+        webContentList.splice(i, 1)
+      }
     }
   }
 }

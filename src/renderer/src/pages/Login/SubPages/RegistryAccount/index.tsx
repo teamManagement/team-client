@@ -82,7 +82,7 @@ export const RegistryAccount: FC = () => {
     const loadingInstance = loading(true)
     setDisabledSendEmailBtn(true)
     try {
-      const emailAddress = await window.httpApi.webServerProxy<string>(
+      const emailAddress = await window.proxyApi.httpWebServerProxy<string>(
         'check/username/send/verify/' + username,
         {
           jsonData: {

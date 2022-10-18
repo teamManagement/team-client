@@ -1,6 +1,6 @@
 {
   "name": "team-client",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "An Electron application with React and TypeScript",
   "main": "./out/main/index.js",
   "signature": {
@@ -9,8 +9,8 @@
       "win32": "e7e17f3fd77daa704f88ff4dc6a22795ce0dc18b5db980bb2e5dbe823ca84f54ee8bd81e5e3d816668e4a841e53cb2bd487939e6ad805f5866926d6ddfdff086"
     }
   },
-  "author": "example.com",
-  "homepage": "https://www.electronjs.org",
+  "author": "苏林鑫",
+  "homepage": "https://apps.byzk.cn",
   "scripts": {
     "format": "prettier --write .",
     "lint": "eslint . --ext .js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix",

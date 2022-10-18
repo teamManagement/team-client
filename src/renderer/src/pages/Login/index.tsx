@@ -62,7 +62,9 @@ export const Login: FC = () => {
 
     setLoading(true)
     try {
-      const userIcon = await window.httpApi.webServerProxy<string>('check/username/' + username)
+      const userIcon = await window.proxyApi.httpWebServerProxy<string>(
+        'check/username/' + username
+      )
       const iconInfo = { url: '', name: '' }
       if (userIcon.startsWith('name:')) {
         iconInfo.name = userIcon.substring(5)
@@ -117,7 +119,7 @@ export const Login: FC = () => {
                 />
               </Form.FormItem>
               <Form.FormItem name="password">
-                <Input prefixIcon={<LockOnIcon />} placeholder="请输入用户密码" />
+                <Input prefixIcon={<LockOnIcon />} type="password" placeholder="请输入用户密码" />
               </Form.FormItem>
               <Form.FormItem>
                 <Button type="submit" block theme="success">

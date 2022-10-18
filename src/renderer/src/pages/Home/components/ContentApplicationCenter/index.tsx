@@ -1,10 +1,10 @@
 import { FC } from 'react'
 import { Button, Input } from 'tdesign-react'
 import { Tabs } from 'antd'
-import { AddIcon, SearchIcon } from 'tdesign-icons-react'
-// import 'antd/lib/tabs/style/index.css'
+import { AddIcon, SearchIcon, AppIcon, FormatHorizontalAlignCenterIcon } from 'tdesign-icons-react'
 import 'antd/dist/antd.css'
 import './index.scss'
+import { AppDesktop } from './appDesktop'
 
 export const ContentApplicationCenter: FC = () => {
   return (
@@ -18,7 +18,7 @@ export const ContentApplicationCenter: FC = () => {
       </div>
       <div className="application-container">
         <Tabs
-          style={{ height: '100%' }}
+          style={{ height: '100%', paddingTop: 8 }}
           tabPosition="left"
           tabBarExtraContent={{
             right: (
@@ -28,10 +28,26 @@ export const ContentApplicationCenter: FC = () => {
             )
           }}
           items={[
-            { label: '项目 1', key: 'item-1', children: '内容 1' }, // 务必填写 key
-            { label: '项目 1', key: 'item-2', children: '内容 1' }, // 务必填写 key
-            { label: '项目 1', key: 'item-3', children: '内容 1' }, // 务必填写 key
-            { label: '项目 2', key: 'item-40', children: '内容 2' }
+            {
+              label: (
+                <span className="app-item">
+                  <AppIcon />
+                  <span>全部</span>
+                </span>
+              ),
+              key: 'all',
+              children: <AppDesktop showContextMenu />
+            }, // 务必填写 key
+            {
+              label: (
+                <span className="app-item">
+                  <FormatHorizontalAlignCenterIcon />
+                  <span>正在使用</span>
+                </span>
+              ),
+              key: 'item-2',
+              children: '内容 1'
+            } // 务必填写 key
           ]}
         />
       </div>

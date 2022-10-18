@@ -46,21 +46,15 @@ export interface RequestOption {
   header?: { [key: string]: string }
 }
 
-export function sendHttpRequestToLocalWebServer<T>(
-  url: string,
-  options?: RequestOption
-): Promise<T> {
+function _sendHttpRequestBase<T>(url: string, options?: RequestOption): Promise<T> {
   return new Promise<T>((resolve, reject) => {
+    // try {
     options = options || {}
 
     options.method = options.method || 'POST'
 
-    if (!url.startsWith('/')) {
-      url = '/' + url
-    }
-
     const request = net.request({
-      path: '/p/web' + url,
+      path: url,
       hostname: '127.0.0.1',
       port: 65528,
       method: options.method,
@@ -85,6 +79,14 @@ export function sendHttpRequestToLocalWebServer<T>(
     if (options.dataWrite) {
       options.dataWrite(request)
     }
+
+    request.addListener('error', (e) => {
+      reject({
+        error: true,
+        message: e.message,
+        code: '-1'
+      } as ResponseError)
+    })
 
     request.on('response', (res) => {
       let buffer: Buffer | undefined = undefined
@@ -142,5 +144,20 @@ export function sendHttpRequestToLocalWebServer<T>(
     })
 
     request.end('')
+    // } catch (e) {}
   })
+}
+
+export function sendHttpRequestToLocalServer<T>(url: string, options?: RequestOption): Promise<T> {
+  return _sendHttpRequestBase(url, options)
+}
+
+export function sendHttpRequestToWebServer<T>(url: string, options?: RequestOption): Promise<T> {
+  if (!url.startsWith('/')) {
+    url = '/' + url
+  }
+
+  url = '/p/web' + url
+
+  return _sendHttpRequestBase(url, options)
 }

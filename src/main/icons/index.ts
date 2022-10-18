@@ -14,5 +14,6 @@ if (platform.isMacOS) {
 }
 
 export const AppIcon = path.join(__dirname, '..', '..', iconDirPath, iconFileName)
+console.log(AppIcon)
 
 export * from './logo'

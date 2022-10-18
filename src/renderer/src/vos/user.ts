@@ -26,4 +26,8 @@ export interface UserInfo {
    * 邮箱
    */
   email: string
+  /**
+   * 头像
+   */
+  icon: string
 }

@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain, IpcMainEvent, net } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, IpcMainEvent } from 'electron'
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import log from 'electron-log'
 import { DialogTopWin } from './windows/common'
@@ -10,19 +10,12 @@ import { WsHandler } from './socket'
 import { SettingLoginWin } from './windows/login'
 import { initMainProcessEvents } from './events'
 import { installCaCert, verifyExternalProgramHash } from './process'
+import { initApiProxy } from './apiProxy'
+import { alertPanic } from './windows/alerts'
 
 app.commandLine.appendSwitch('--disable-http-cache')
 
-function alertPanic(message: string): void {
-  dialog.showMessageBoxSync(DialogTopWin(), {
-    type: 'error',
-    title: '致命错误',
-    message,
-    icon: AppIcon,
-    buttons: ['确定']
-  })
-  app.exit(1)
-}
+log.debug('日志文件路径: ', log.transports.file.getFile().path)
 
 const instanceLock = app.requestSingleInstanceLock()
 if (!instanceLock) {
@@ -36,6 +29,9 @@ process.on('uncaughtException', (error) => {
 
 async function createWindow(): Promise<void> {
   const hideSplashscreen = getInitSplashscreen()
+
+  log.debug('初始化electron api代理...')
+  initApiProxy()
 
   log.debug('验证外部程序文件Hash...')
   if (!(await verifyExternalProgramHash())) {
@@ -56,8 +52,12 @@ async function createWindow(): Promise<void> {
   try {
     const wsHandler = WsHandler.instance
     const connResult = await wsHandler.waitConnection(2)
+    log.debug('注册socket消息转发事件...')
+    WsHandler.initServerMsgTransferEvents()
+    log.debug('注册socket消息转发事件完毕!')
+
     if (connResult) {
-      if (await wsHandler.loginOk()) {
+      if ((await wsHandler.loginOk()) || (await wsHandler.autoLogin())) {
         SettingHomeWin((win) => {
           win.show()
           hideSplashscreen()
@@ -67,6 +67,7 @@ async function createWindow(): Promise<void> {
     }
     SettingLoginWin(hideSplashscreen)
   } catch (e) {
+    console.log(e)
     dialog.showMessageBoxSync(DialogTopWin(), {
       type: 'error',
       title: '致命错误',

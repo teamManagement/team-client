@@ -1,12 +1,13 @@
 import { ipcMain, IpcMainInvokeEvent } from 'electron'
 import { CurrentInfo, WinNameEnum } from '../current'
 import { WsHandler } from '../socket'
-import { ResponseError, sendHttpRequestToLocalWebServer } from '../tools'
+import { ResponseError, sendHttpRequestToLocalServer, sendHttpRequestToWebServer } from '../tools'
 import { promiseErrWrapper } from '../tools/wrapper'
 import { SettingHomeWin } from '../windows/home'
 
 export function initMainProcessEvents(): void {
   ipcMain.handle('ipc-proxy-web-server', proxyWebServer)
+  ipcMain.handle('ipc-proxy-local-server', proxyLocalWebServer)
   ipcMain.handle('ipc-login', login)
 }
 
@@ -29,7 +30,16 @@ async function proxyWebServer(
   options?: string
 ): Promise<any> {
   options = options || '{}'
+  return promiseErrWrapper<any, ResponseError>(sendHttpRequestToWebServer(url, JSON.parse(options)))
+}
+
+async function proxyLocalWebServer(
+  _event: IpcMainInvokeEvent,
+  url: string,
+  options?: string
+): Promise<any> {
+  options = options || '{}'
   return promiseErrWrapper<any, ResponseError>(
-    sendHttpRequestToLocalWebServer(url, JSON.parse(options))
+    sendHttpRequestToLocalServer(url, JSON.parse(options))
   )
 }

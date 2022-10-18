@@ -3,6 +3,7 @@ import { BrowserWindow, BrowserWindowConstructorOptions, app, dialog, shell } fr
 import { is } from '@electron-toolkit/utils'
 import { CurrentInfo, winWebContentsIdMap, WinNameEnum } from '../current'
 import { AppIcon } from '../icons'
+import { WsHandler } from '../socket'
 
 export async function SettingWindow(
   winNameEnum: WinNameEnum,
@@ -35,9 +36,11 @@ export async function SettingWindow(
   if (callBackOptions && callBackOptions.afterSettingOptions) {
     callBackOptions.afterSettingOptions(win)
   }
-  const webContentsId = win.webContents.id
+  const webContents = win.webContents
+  const webContentsId = webContents.id
   win.on('closed', () => {
     try {
+      WsHandler.instance.clearWebContentResource(webContents)
       if (callBackOptions && callBackOptions.closeFn) {
         callBackOptions.closeFn(win)
       }
