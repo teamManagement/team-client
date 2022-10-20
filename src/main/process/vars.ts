@@ -14,6 +14,7 @@ programDirPath = path.join(__dirname, programDirPath)
 logs.debug('外部程序文件存储目录: ', programDirPath)
 
 export const mkcertFilePath = path.join(programDirPath, 'mkcert' + programSuffix)
+export const localServerFilePath = path.join(programDirPath, 'teamClientServer' + programSuffix)
 
 logs.debug('mkcert可执行文件存储目录: ', mkcertFilePath)
 

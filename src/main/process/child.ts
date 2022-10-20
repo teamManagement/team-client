@@ -3,8 +3,9 @@ import logs from 'electron-log'
 import os from 'os'
 import process from 'process'
 import { spawn, SpawnOptionsWithoutStdio } from 'child_process'
-import { mkcertFilePath } from './vars'
+import { localServerFilePath, mkcertFilePath } from './vars'
 import path from 'path'
+import { is } from '@electron-toolkit/utils'
 
 const caCrt = `-----BEGIN CERTIFICATE-----
 MIIGFjCCA/6gAwIBAgIIRPu6j0zgbLgwDQYJKoZIhvcNAQELBQAwgZAxCzAJBgNV
@@ -95,7 +96,12 @@ ssgXdBqFb1usKk334Hd7lWpf9u6ZLYpBwduch1wx4Bmh0aIoWE3vYjedJPAudQt8
 a77dR/qpLAvtxWgPURANHO6hcMAPfsc=
 -----END PRIVATE KEY-----`
 
-export function spawnProcess(cmd: string, options?: SpawnOptionsWithoutStdio): Promise<number> {
+export function spawnProcess(
+  cmd: string,
+  options?: SpawnOptionsWithoutStdio & {
+    withAdmin?: boolean
+  }
+): Promise<number> {
   return new Promise<number>((resolve) => {
     const cmdSplit = cmd.split(' ')
     try {
@@ -123,6 +129,24 @@ export function spawnProcess(cmd: string, options?: SpawnOptionsWithoutStdio): P
       resolve(code || 0)
     })
   })
+}
+
+export async function installLocalServer(): Promise<boolean> {
+  if (is.dev) {
+    logs.debug('检测到是开发环境, 取消本地服务的启动')
+    return true
+  }
+  await spawnProcess(`${localServerFilePath} -cmd=stop`)
+  await spawnProcess(`${localServerFilePath} -cmd=uninstall`)
+  if ((await spawnProcess(`${localServerFilePath} -cmd=install`)) !== 0) {
+    logs.error('本地服务安装失败')
+    return false
+  }
+  if ((await spawnProcess(`${localServerFilePath} -cmd=start`)) !== 0) {
+    logs.error('启动本地服务失败')
+    return false
+  }
+  return true
 }
 
 export async function installCaCert(): Promise<boolean> {

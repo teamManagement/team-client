@@ -9,7 +9,7 @@ import { getInitSplashscreen } from './windows/welcome'
 import { WsHandler } from './socket'
 import { SettingLoginWin } from './windows/login'
 import { initMainProcessEvents } from './events'
-import { installCaCert, verifyExternalProgramHash } from './process'
+import { installCaCert, installLocalServer, verifyExternalProgramHash } from './process'
 import { initApiProxy } from './apiProxy'
 import { alertPanic } from './windows/alerts'
 import { initApplicationViewManager } from './applications/manager'
@@ -46,6 +46,14 @@ async function createWindow(): Promise<void> {
   if (!(await installCaCert())) {
     alertPanic(
       '安装团队协作平台根证书失败, 请尝试重新打开本应用, 如多次均提示本错误, 请联系管理员使用外部修复工具进行修复!!!'
+    )
+    return
+  }
+
+  log.debug('启动本地服务...')
+  if (!(await installLocalServer())) {
+    alertPanic(
+      '启动团队协作平台本地组件失败, 请尝试重新打开本应用, 如多次均提示本错误, 请联系管理员使用外部修复工具进行修复!!!'
     )
     return
   }

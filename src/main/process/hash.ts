@@ -2,7 +2,7 @@ import process from 'process'
 import fs from 'fs'
 import { createHash } from 'crypto'
 import logs from 'electron-log'
-import { mkcertFilePath, packageInfo } from './vars'
+import { localServerFilePath, mkcertFilePath, packageInfo } from './vars'
 
 function fileToSha512(filePath: string): Promise<string> {
   return new Promise<string>((resolve, reject) => {
@@ -28,15 +28,25 @@ function fileToSha512(filePath: string): Promise<string> {
 export async function verifyExternalProgramHash(): Promise<boolean> {
   try {
     if ((await fileToSha512(mkcertFilePath)) !== packageInfo.signature.mkcert[process.platform]) {
-      logs.error('mkcert程序Hash验证失败')
+      logs.error('mkcert程序HASH验证失败')
       return false
     }
 
-    logs.debug('mkcert程序Hash验证成功')
+    logs.debug('mkcert程序HASH验证成功!')
+
+    if (
+      (await fileToSha512(localServerFilePath)) !==
+      packageInfo.signature.localServer[process.platform]
+    ) {
+      logs.error('本地服务文件HASH验证失败')
+      return false
+    }
+
+    logs.debug('本地服务文件HASH验证成功!')
 
     return true
   } catch (e) {
-    logs.error('外部程序文件Hash验证失败, 错误信息: ', JSON.stringify(e))
+    logs.error('外部程序文件HASH验证失败, 错误信息: ', JSON.stringify(e))
     return false
   }
 }
