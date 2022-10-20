@@ -1,13 +1,32 @@
 import { FC, useCallback, useMemo, useState, MouseEvent, useEffect } from 'react'
 import AppItem from '@renderer/components/AppItem'
-import { loading, MessagePlugin } from 'tdesign-react'
+import { MessagePlugin } from 'tdesign-react'
+import Loading from '@renderer/components/Loading'
 
-const appDesktopContextMenu = window.electron.ContextMenu.getById('appDesktopContextMenu')
+// 用?解决appErr路由引发的对象不存在的bug
+const appDesktopContextMenu = window.electron?.ContextMenu.getById('appDesktopContextMenu')
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 ;(async () => {
+  if (!appDesktopContextMenu) {
+    return
+  }
   await appDesktopContextMenu.clearItems()
   await appDesktopContextMenu.appendMenuItem({ id: 'refresh', label: '刷新' })
 })()
+
+const appStoreInfo: AppInfo = {
+  id: '1',
+  name: '应用商店',
+  inside: true,
+  type: (window as any).AppType?.REMOTE_WEB,
+  remoteSiteUrl: 'https://baidu.com',
+  url: 'https://www.baidusdf.com',
+  icon: 'https://127.0.0.1:65528/icons/appstore.png',
+  iconType: (window as any).IconType?.URL,
+  desc: '应用商店',
+  shortDesc: '应用商店',
+  version: '0.0.1'
+}
 
 export interface AppDesktopContextMenuEvent {
   refresh: () => Promise<void>
@@ -16,30 +35,45 @@ export interface AppDesktopContextMenuEvent {
 
 export interface AppDesktop {
   showContextMenu?: boolean
+  onlyShowOpened?: boolean
+  openedAppIdList: string[]
+  onOpen: (app: AppInfo) => void
 }
 
-export const AppDesktop: FC<AppDesktop> = ({ showContextMenu }) => {
+export const AppDesktop: FC<AppDesktop> = ({
+  showContextMenu,
+  onlyShowOpened,
+  openedAppIdList,
+  onOpen
+}) => {
   const [appList, setAppList] = useState<AppInfo[]>([])
+  const [loadingDesc, setLoadingDesc] = useState<string>('')
 
   const forceRefreshAppList = useCallback(async () => {
-    const loadInstance = loading(true)
+    setLoadingDesc('正在刷新应用列表...')
     try {
-      setAppList((await window.proxyApi.httpLocalServerProxy('/app/force/refresh')) || [])
+      const appList: AppInfo[] =
+        (await window.proxyApi.httpLocalServerProxy('/app/force/refresh')) || []
+      appList.push(appStoreInfo)
+      setAppList(appList)
     } catch (e) {
       MessagePlugin.error('刷新应用列表失败: ' + (e as any).message)
     } finally {
-      loadInstance.hide()
+      setLoadingDesc('')
     }
   }, [])
 
   const queryAppList = useCallback(async () => {
-    const loadInstance = loading(true)
+    setLoadingDesc('正在加载应用列表...')
     try {
-      setAppList((await window.proxyApi.httpLocalServerProxy('/app/info/desktop/list')) || [])
+      const appList: AppInfo[] =
+        (await window.proxyApi.httpLocalServerProxy('/app/info/desktop/list')) || []
+      appList.push(appStoreInfo)
+      setAppList(appList)
     } catch (e) {
       MessagePlugin.error('获取应用列表失败: ' + (e as any).message)
     } finally {
-      loadInstance.hide()
+      setLoadingDesc('')
     }
   }, [])
 
@@ -52,14 +86,22 @@ export const AppDesktop: FC<AppDesktop> = ({ showContextMenu }) => {
   }, [queryAppList])
 
   const appElementList = useMemo(() => {
-    return appList.map((app) => {
+    let convertAppList = appList
+    if (onlyShowOpened) {
+      convertAppList = convertAppList.filter((val) => openedAppIdList.includes(val.id))
+    }
+    return convertAppList.map((app) => {
+      // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+      const appClick = () => {
+        onOpen(app)
+      }
       return (
         <div className="item" key={app.id}>
-          <AppItem info={app} />
+          <AppItem onClick={appClick} isOpened={openedAppIdList.includes(app.id)} info={app} />
         </div>
       )
     })
-  }, [appList])
+  }, [appList, openedAppIdList, onlyShowOpened])
 
   const onContextMenuWrapper = useCallback(() => {
     if (!showContextMenu) {
@@ -71,6 +113,7 @@ export const AppDesktop: FC<AppDesktop> = ({ showContextMenu }) => {
   return (
     <div className="app-desktop" onContextMenu={onContextMenuWrapper}>
       {appElementList}
+      {loadingDesc && <Loading desc={loadingDesc} />}
     </div>
   )
 }

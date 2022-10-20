@@ -29,7 +29,8 @@ export async function SettingWindow(
     ...windowOptions,
     hasShadow: true,
     webPreferences: {
-      preload: path.join(__dirname, '..', 'preload', 'index.js')
+      preload: path.join(__dirname, '..', 'preload', 'index.js'),
+      sandbox: false
     }
   }
   const win = new BrowserWindow(winOption)

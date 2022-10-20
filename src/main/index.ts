@@ -12,6 +12,7 @@ import { initMainProcessEvents } from './events'
 import { installCaCert, verifyExternalProgramHash } from './process'
 import { initApiProxy } from './apiProxy'
 import { alertPanic } from './windows/alerts'
+import { initApplicationViewManager } from './applications/manager'
 
 app.commandLine.appendSwitch('--disable-http-cache')
 
@@ -55,6 +56,10 @@ async function createWindow(): Promise<void> {
     log.debug('注册socket消息转发事件...')
     WsHandler.initServerMsgTransferEvents()
     log.debug('注册socket消息转发事件完毕!')
+
+    log.debug('注册应用视图事件...')
+    initApplicationViewManager()
+    log.debug('注册应用试图相关事件完毕!')
 
     if (connResult) {
       if ((await wsHandler.loginOk()) || (await wsHandler.autoLogin())) {

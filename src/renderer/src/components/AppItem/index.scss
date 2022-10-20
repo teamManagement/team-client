@@ -1,7 +1,29 @@
 $size: 75px;
+$openedSize: 16px;
+$openedOffset: -6px;
 .application-item {
+  position: relative;
   cursor: pointer;
   width: $size;
+
+  &.opened {
+    &::before {
+      content: '';
+      display: block;
+      width: $openedSize;
+      height: $openedSize;
+      border-radius: $openedSize;
+      -webkit-border-radius: $openedSize;
+      -moz-border-radius: $openedSize;
+      -ms-border-radius: $openedSize;
+      -o-border-radius: $openedSize;
+      background-color: orange;
+      position: absolute;
+      right: $openedOffset;
+      top: $openedOffset;
+      z-index: 999;
+    }
+  }
 
   &:hover {
     > .icon {

@@ -18,6 +18,7 @@ declare global {
     inside: boolean
     type: AppType
     remoteSiteUrl: string
+    url: string
     icon: string
     iconType: IconType
     desc: string
@@ -138,6 +139,24 @@ declare global {
 
   //#endregion
 
+  //#region 应用视图相关
+  class ApplicationView {
+    public constructor(id: string, url: string)
+    public init(): Promise<void>
+    public destroy(): Promise<void>
+    public hide(): Promise<void>
+    public load(): Promise<void>
+    public show(data?: {
+      x: number
+      y: number
+      width?: number
+      widthOffset: number
+      height?: number
+      heightOffset: number
+    }): Promise<void>
+  }
+  //#endregion
+
   interface Window {
     electron: ElectronAPI & {
       ContextMenu: {
@@ -149,5 +168,38 @@ declare global {
       login(username: string, password: string): Promise<void>
     }
     proxyApi: ProxyApi
+    app: {
+      getOpenedIdList(): string[]
+      getApplicationViewById(id: string): ApplicationView | undefined
+      openApp(id: string, url: string): Promise<ApplicationView>
+      closeApp(id: string): Promise<void>
+      listenOpenStatusNotice(fn: (id: string, status: 'open' | 'close') => void): void
+      removeListenOpenStatusNotice(fn: (id: string, status: 'open' | 'close') => void): void
+      show(
+        id: string,
+        bounds?: {
+          x?: number
+          y?: number
+          width?: number
+          widthOffset?: number
+          height?: number
+          heightOffset?: number
+        }
+      ): Promise<boolean>
+      showOrLoad(
+        id: string,
+        url: string,
+        bounds?: {
+          x?: number
+          y?: number
+          width?: number
+          widthOffset?: number
+          height?: number
+          heightOffset?: number
+        }
+      ): Promise<boolean>
+      hangUp(): Promise<void>
+      restore(): Promise<void>
+    }
   }
 }

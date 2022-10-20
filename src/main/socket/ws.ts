@@ -6,6 +6,7 @@ import { randomBytes2HexStr, uniqueId } from '../security/random'
 import AsyncLock from 'async-lock'
 import { IpcMainInvokeEvent, ipcMain, WebContents } from 'electron'
 import { alertMsgAndRelaunch as alertMsgAndBreakToLogin } from '../windows/alerts'
+import { clearAllApplicationViews } from '../applications/manager'
 const WebSocket = require('ws')
 
 const lock = new AsyncLock()
@@ -358,5 +359,7 @@ export class WsHandler {
         webContentList.splice(i, 1)
       }
     }
+
+    clearAllApplicationViews()
   }
 }

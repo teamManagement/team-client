@@ -1,5 +1,6 @@
 import { FC } from 'react'
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
+import AppError from './pages/AppError'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import ForgotPassword from './pages/Login/SubPages/ForgotPassword'
@@ -13,6 +14,7 @@ const App: FC = () => {
         <Route path="/login/forgotPassword" element={<ForgotPassword />} />
         <Route path="/login/registryAccount" element={<RegistryAccount />} />
         <Route path="/home/*" element={<Home />} />
+        <Route path="/app/error" element={<AppError />} />
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
     </HashRouter>

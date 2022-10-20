@@ -2,6 +2,7 @@ import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 import { proxyApi, TcpTransferCmdCode } from './proxy'
 import { ContextMenu } from './electronProxy'
+import { ApplicationView } from './appViews'
 
 // Custom APIs for renderer
 const api = {
@@ -37,7 +38,22 @@ const apiMap: { [key: string]: any } = {
   AppType: AppType,
   IconType: IconType,
   proxyApi: proxyApi,
-  TcpTransferCmdCode: TcpTransferCmdCode
+  TcpTransferCmdCode,
+  ApplicationView: function (id: string, url: string) {
+    return new ApplicationView(id, url)
+  },
+  app: {
+    getOpenedIdList: ApplicationView.getOpenedIdList,
+    getApplicationViewById: ApplicationView.getApplicationViewById,
+    openApp: ApplicationView.openApp,
+    closeApp: ApplicationView.closeApp,
+    listenOpenStatusNotice: ApplicationView.listenOpenStatusNotice,
+    removeListenOpenStatusNotice: ApplicationView.removeListenOpenStatusNotice,
+    show: ApplicationView.show,
+    showOrLoad: ApplicationView.showOrLoad,
+    hangUp: ApplicationView.hangUp,
+    restore: ApplicationView.restore
+  }
 }
 
 for (const k in apiMap) {
