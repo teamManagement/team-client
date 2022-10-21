@@ -65,13 +65,18 @@ export const ContentApplicationCenter: FC = () => {
     setLoadingDesc('正在打开应用...')
     const wrapperEle = applicationCenterEle.current!
     try {
-      await window.app.openApp(app.id, app.url, {
-        x: wrapperEle.offsetLeft + 7,
-        y: wrapperEle.offsetTop + 6 + 40,
-        width: wrapperEle.clientWidth,
-        height: wrapperEle.clientHeight - 40,
-        widthOffset: -1
-      })
+      await window.app.openApp(
+        app.id,
+        app.url,
+        {
+          x: wrapperEle.offsetLeft + 7,
+          y: wrapperEle.offsetTop + 6 + 40,
+          width: wrapperEle.clientWidth,
+          height: wrapperEle.clientHeight - 40,
+          widthOffset: -1
+        },
+        app.inside
+      )
       setNowOpenApp(app)
     } catch (e) {
       MessagePlugin.error('应用加载失败')

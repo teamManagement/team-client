@@ -181,7 +181,8 @@ declare global {
           widthOffset?: number
           height?: number
           heightOffset?: number
-        }
+        },
+        loadInsidePreload?: boolean
       ): Promise<ApplicationView>
       closeApp(id: string): Promise<void>
       listenOpenStatusNotice(
@@ -200,18 +201,6 @@ declare global {
           heightOffset?: number
         }
       ): Promise<boolean>
-      // showOrLoad(
-      //   id: string,
-      //   url: string,
-      //   bounds?: {
-      //     x?: number
-      //     y?: number
-      //     width?: number
-      //     widthOffset?: number
-      //     height?: number
-      //     heightOffset?: number
-      //   }
-      // ): Promise<boolean>
       hangUp(): Promise<void>
       restore(): Promise<void>
     }

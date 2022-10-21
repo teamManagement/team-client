@@ -69,29 +69,17 @@ export class ApplicationView {
       widthOffset: number
       height?: number
       heightOffset: number
-    }
+    },
+    loadInsidePreload?: boolean
   ): Promise<boolean> {
     if (await ApplicationView.show(id)) {
       return true
     }
 
-    const view = new ApplicationView(id, url)
+    const view = new ApplicationView(id, url, loadInsidePreload)
     await view.init()
     await view.show(bounds)
     return true
-
-    // return await ApplicationView.show(id, bounds)
-
-    // let view = ApplicationView._openedMap[id]
-    // if (view) {
-    //   return view
-    // }
-
-    // view = new ApplicationView(id, url)
-    // await view.init()
-    // await view.load()
-
-    // return view
   }
 
   public static getApplicationViewById(id: string): ApplicationView | undefined {
@@ -153,7 +141,11 @@ export class ApplicationView {
     }
   }
 
-  public constructor(private _id: string, private _url: string) {
+  public constructor(
+    private _id: string,
+    private _url: string,
+    private _loadInsidePreload?: boolean
+  ) {
     this._ipcInvoke = this._ipcInvoke.bind(this)
     this.init = this.init.bind(this)
     this.destroy = this.destroy.bind(this)
@@ -181,7 +173,7 @@ export class ApplicationView {
       return
     }
 
-    await this._ipcInvoke(ApplicationViewEventNames.CREATE_VIEW)
+    await this._ipcInvoke(ApplicationViewEventNames.CREATE_VIEW, this._loadInsidePreload)
     ApplicationView._openedIdList.push(this._id)
     ApplicationView._openedMap[this._id] = this
     this._noticeStatus('open')
@@ -201,10 +193,6 @@ export class ApplicationView {
     await this._ipcInvoke(ApplicationViewEventNames.HIDE_VIEW)
   }
 
-  //   public async load(): Promise<void> {
-  //     await this._ipcInvoke(ApplicationViewEventNames.LOAD_VIEW, this._url)
-  //   }
-
   public async show(data?: {
     x: number
     y: number
@@ -213,7 +201,6 @@ export class ApplicationView {
     height?: number
     heightOffset: number
   }): Promise<void> {
-    console.log('进入...')
     ApplicationView._endOpenId = this._id
     await this._ipcInvoke(ApplicationViewEventNames.SHOW_VIEW, this._url, data)
   }

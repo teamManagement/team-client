@@ -1,4 +1,4 @@
-import { is } from '@electron-toolkit/utils'
+import { is, optimizer } from '@electron-toolkit/utils'
 import path from 'path'
 import { BrowserView, BrowserWindow, ipcMain, IpcMainInvokeEvent, Rectangle } from 'electron'
 
@@ -210,7 +210,11 @@ async function destroyView(_event: IpcMainInvokeEvent, id: string): Promise<void
   }
 }
 
-async function createView(_event: IpcMainInvokeEvent, id: string): Promise<void> {
+async function createView(
+  _event: IpcMainInvokeEvent,
+  id: string,
+  loadInsidePreload?: boolean
+): Promise<void> {
   if (!id) {
     throw new Error('缺失应用ID')
   }
@@ -219,7 +223,22 @@ async function createView(_event: IpcMainInvokeEvent, id: string): Promise<void>
     return
   }
 
-  _viewMap[id] = new BrowserView()
+  let preload: string | undefined = undefined
+  if (loadInsidePreload) {
+    preload = path.join(__dirname, '..', 'preload', 'index.js')
+  }
+
+  const bv = new BrowserView({
+    webPreferences: {
+      preload: preload,
+      sandbox: false
+    }
+  })
+  _viewMap[id] = bv
+
+  if (is.dev) {
+    optimizer.watchWindowShortcuts(bv as any)
+  }
 }
 
 function eventPromiseWrapper(
