@@ -2,7 +2,7 @@ import path from 'path'
 import { is } from '@electron-toolkit/utils'
 import logs from 'electron-log'
 
-const sysName = process.platform === 'win32' ? 'windows' : 'linux'
+const sysName = process.platform === 'win32' ? 'win' : 'linux'
 const programSuffix = process.platform === 'win32' ? '.exe' : ''
 
 let programDirPath = path.join('..', '..', '..')

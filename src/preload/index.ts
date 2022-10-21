@@ -50,7 +50,7 @@ const apiMap: { [key: string]: any } = {
     listenOpenStatusNotice: ApplicationView.listenOpenStatusNotice,
     removeListenOpenStatusNotice: ApplicationView.removeListenOpenStatusNotice,
     show: ApplicationView.show,
-    showOrLoad: ApplicationView.showOrLoad,
+    // showOrLoad: ApplicationView.showOrLoad,
     hangUp: ApplicationView.hangUp,
     restore: ApplicationView.restore
   }

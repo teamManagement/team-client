@@ -92,7 +92,8 @@ async function createWindow(): Promise<void> {
   }
 }
 
-app.on('certificate-error', (event, webContents, url, error, certifcate, callback) => {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+app.on('certificate-error', (_event, _webContents, url, _error, _certifcate, _callback) => {
   console.log('+++++++++++++++++++++++++++++++++++++++++++++++')
   log.info('cert error, url: ', url)
 })

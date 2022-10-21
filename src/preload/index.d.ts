@@ -171,10 +171,24 @@ declare global {
     app: {
       getOpenedIdList(): string[]
       getApplicationViewById(id: string): ApplicationView | undefined
-      openApp(id: string, url: string): Promise<ApplicationView>
+      openApp(
+        id: string,
+        url: string,
+        bounds?: {
+          x?: number
+          y?: number
+          width?: number
+          widthOffset?: number
+          height?: number
+          heightOffset?: number
+        }
+      ): Promise<ApplicationView>
       closeApp(id: string): Promise<void>
-      listenOpenStatusNotice(fn: (id: string, status: 'open' | 'close') => void): void
-      removeListenOpenStatusNotice(fn: (id: string, status: 'open' | 'close') => void): void
+      listenOpenStatusNotice(
+        listenId: string,
+        fn: (id: string, status: 'open' | 'close') => void
+      ): void
+      removeListenOpenStatusNotice(listenId: string): void
       show(
         id: string,
         bounds?: {
@@ -186,18 +200,18 @@ declare global {
           heightOffset?: number
         }
       ): Promise<boolean>
-      showOrLoad(
-        id: string,
-        url: string,
-        bounds?: {
-          x?: number
-          y?: number
-          width?: number
-          widthOffset?: number
-          height?: number
-          heightOffset?: number
-        }
-      ): Promise<boolean>
+      // showOrLoad(
+      //   id: string,
+      //   url: string,
+      //   bounds?: {
+      //     x?: number
+      //     y?: number
+      //     width?: number
+      //     widthOffset?: number
+      //     height?: number
+      //     heightOffset?: number
+      //   }
+      // ): Promise<boolean>
       hangUp(): Promise<void>
       restore(): Promise<void>
     }

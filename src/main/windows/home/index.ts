@@ -1,6 +1,9 @@
-import { BrowserWindow } from 'electron'
-import { WinNameEnum } from '../../current'
+import { app, BrowserWindow, Menu, Tray } from 'electron'
+import { CurrentInfo, WinNameEnum } from '../../current'
+import { AppIcon } from '../../icons'
 import { SettingWindow } from '../common'
+
+let platformTray: Tray | undefined = undefined
 
 export async function SettingHomeWin(
   showOperation?: (win: BrowserWindow) => void
@@ -21,13 +24,52 @@ export async function SettingHomeWin(
     '/home',
     true,
     {
-      readyToShowFn: (win) => {
+      readyToShowFn(win) {
+        initTray()
         if (showOperation) {
           showOperation(win)
         } else {
           win.show()
         }
+      },
+      closeFn() {
+        if (!platformTray) {
+          return
+        }
+        platformTray.destroy()
+        platformTray = undefined
       }
     }
   )
+}
+
+function initTray(): void {
+  if (platformTray) {
+    return
+  }
+  const menu = Menu.buildFromTemplate([
+    {
+      label: '打开',
+      // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+      click() {
+        CurrentInfo.CurrentWindow?.show()
+        CurrentInfo.CurrentWindow?.focus()
+      }
+    },
+    { type: 'separator' },
+    {
+      label: '退出程序',
+      // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+      click() {
+        app.exit(0)
+      }
+    }
+  ])
+  platformTray = new Tray(AppIcon)
+  platformTray.setToolTip('团队协作平台')
+  platformTray.setContextMenu(menu)
+  platformTray.addListener('double-click', () => {
+    CurrentInfo.CurrentWindow?.show()
+    CurrentInfo.CurrentWindow?.focus()
+  })
 }

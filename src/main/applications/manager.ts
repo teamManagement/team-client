@@ -72,22 +72,38 @@ async function loadView(_event: IpcMainInvokeEvent, id: string, url: string): Pr
 async function showView(
   event: IpcMainInvokeEvent,
   id: string,
+  url?: string,
   boundsOptions?: Rectangle & { widthOffset?: number; heightOffset?: number }
 ): Promise<void> {
+  if (!url) {
+    throw new Error('缺失应用路径')
+  }
+
   const view = checkViewById(id)
+
   const bw = BrowserWindow.fromWebContents(event.sender)
   if (!bw) {
     throw new Error('应用窗体不存在')
   }
 
-  const views = bw.getBrowserViews()
-  if (!views.includes(view)) {
+  if (bw.getBrowserView() !== view) {
     bw.setBrowserView(view)
   }
-  if (boundsOptions) {
-    const bwBounds = bw.getBounds()
 
-    const bounds = view.getBounds()
+  const _view = view as any
+  if (_view.originBounds) {
+    view.setBounds(_view.originBounds)
+    delete _view['originBounds']
+    return
+  }
+
+  if (_view.loadOK) {
+    return
+  }
+
+  const bwBounds = bw.getBounds()
+  const bounds = view.getBounds()
+  if (boundsOptions) {
     if (typeof boundsOptions?.x !== 'undefined') {
       bounds.x = parseInt(boundsOptions.x + '')
     }
@@ -115,14 +131,47 @@ async function showView(
     if (typeof boundsOptions?.heightOffset !== 'undefined') {
       bounds.height += parseInt(boundsOptions.heightOffset + '')
     }
-
-    view.setBounds(bounds)
-    view.setAutoResize({
-      width: true,
-      height: true
-    })
-    view.webContents.openDevTools()
   }
+
+  try {
+    await view.webContents.loadURL(url)
+  } catch (e) {
+    const errJsonStr = JSON.stringify(e)
+    const errInfo = Buffer.from(errJsonStr, 'utf8').toString('base64url')
+    if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+      await view.webContents.loadURL(`${appErrorPageUrl}?errInfo=${errInfo}`)
+    } else {
+      await view.webContents.loadFile(appErrorPageUrl, {
+        hash: appErrorPageHashName,
+        query: {
+          errInfo
+        }
+      })
+    }
+  }
+
+  view.setBounds(bounds)
+  view.setAutoResize({
+    width: true,
+    height: true
+  })
+  // 修复请求跨域问题
+  view.webContents.session.webRequest.onBeforeSendHeaders((details, callback) => {
+    callback({
+      requestHeaders: { referer: '*', ...details.requestHeaders }
+    })
+  })
+
+  view.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        'Access-Control-Allow-Origin': ['*'],
+        ...details.responseHeaders
+      }
+    })
+  })
+
+  _view.ok = true
 }
 
 async function hideView(_event: IpcMainInvokeEvent, id: string): Promise<void> {
@@ -133,7 +182,15 @@ async function hideView(_event: IpcMainInvokeEvent, id: string): Promise<void> {
       return
     }
 
-    bw.removeBrowserView(view)
+    const bv = bw.getBrowserView()
+    if (!bv) {
+      return
+    }
+
+    const bounds = bv.getBounds()
+    ;(bv as any).originBounds = bounds
+
+    bv.setBounds({ ...bounds, width: 0, height: 0 })
   } catch (e) {
     //nothing
   }

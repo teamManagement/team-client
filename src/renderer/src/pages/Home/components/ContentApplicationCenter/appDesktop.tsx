@@ -20,7 +20,7 @@ const appStoreInfo: AppInfo = {
   inside: true,
   type: (window as any).AppType?.REMOTE_WEB,
   remoteSiteUrl: 'https://baidu.com',
-  url: 'https://www.baidusdf.com',
+  url: 'https://www.baidu.com/',
   icon: 'https://127.0.0.1:65528/icons/appstore.png',
   iconType: (window as any).IconType?.URL,
   desc: '应用商店',
@@ -36,6 +36,7 @@ export interface AppDesktopContextMenuEvent {
 export interface AppDesktop {
   showContextMenu?: boolean
   onlyShowOpened?: boolean
+  keyword?: string
   openedAppIdList: string[]
   onOpen: (app: AppInfo) => void
 }
@@ -44,6 +45,7 @@ export const AppDesktop: FC<AppDesktop> = ({
   showContextMenu,
   onlyShowOpened,
   openedAppIdList,
+  keyword,
   onOpen
 }) => {
   const [appList, setAppList] = useState<AppInfo[]>([])
@@ -86,10 +88,18 @@ export const AppDesktop: FC<AppDesktop> = ({
   }, [queryAppList])
 
   const appElementList = useMemo(() => {
-    let convertAppList = appList
-    if (onlyShowOpened) {
-      convertAppList = convertAppList.filter((val) => openedAppIdList.includes(val.id))
-    }
+    const convertAppList = appList.filter((val) => {
+      if (onlyShowOpened && !openedAppIdList.includes(val.id)) {
+        return false
+      }
+
+      if (keyword && !val.name.includes(keyword)) {
+        return false
+      }
+
+      return true
+    })
+
     return convertAppList.map((app) => {
       // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
       const appClick = () => {
@@ -101,7 +111,7 @@ export const AppDesktop: FC<AppDesktop> = ({
         </div>
       )
     })
-  }, [appList, openedAppIdList, onlyShowOpened])
+  }, [appList, openedAppIdList, onlyShowOpened, keyword])
 
   const onContextMenuWrapper = useCallback(() => {
     if (!showContextMenu) {

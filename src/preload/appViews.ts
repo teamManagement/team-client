@@ -30,8 +30,6 @@ export class ApplicationView {
   private static _endOpenId: string | undefined = undefined
 
   public static async hangUp(): Promise<void> {
-    // eslint-disable-next-line no-debugger
-    debugger
     if (!ApplicationView._endOpenId) {
       return
     }
@@ -58,22 +56,42 @@ export class ApplicationView {
   }
 
   public static getOpenedIdList(): string[] {
-    // eslint-disable-next-line no-debugger
-    debugger
     return ApplicationView._openedIdList
   }
 
-  public static async openApp(id: string, url: string): Promise<ApplicationView> {
-    let view = ApplicationView._openedMap[id]
-    if (view) {
-      return view
+  public static async openApp(
+    id: string,
+    url: string,
+    bounds?: {
+      x: number
+      y: number
+      width?: number
+      widthOffset: number
+      height?: number
+      heightOffset: number
+    }
+  ): Promise<boolean> {
+    if (await ApplicationView.show(id)) {
+      return true
     }
 
-    view = new ApplicationView(id, url)
+    const view = new ApplicationView(id, url)
     await view.init()
-    await view.load()
+    await view.show(bounds)
+    return true
 
-    return view
+    // return await ApplicationView.show(id, bounds)
+
+    // let view = ApplicationView._openedMap[id]
+    // if (view) {
+    //   return view
+    // }
+
+    // view = new ApplicationView(id, url)
+    // await view.init()
+    // await view.load()
+
+    // return view
   }
 
   public static getApplicationViewById(id: string): ApplicationView | undefined {
@@ -81,28 +99,30 @@ export class ApplicationView {
   }
 
   public static async closeApp(id: string): Promise<void> {
-    const view = this._openedMap[id]
+    const view = ApplicationView._openedMap[id]
     if (!view) {
       return
     }
-    view.destroy()
+    await view.destroy()
   }
 
-  public static listenOpenStatusNotice(fn: (id: string, status: 'open' | 'close') => void): void {
+  public static listenOpenStatusNotice(
+    id: string,
+    fn: (id: string, status: 'open' | 'close') => void
+  ): void {
     for (const _fn of ApplicationView._appOpenStatusNoticeFn) {
-      if (_fn === fn) {
+      if ((_fn as any)._id === (fn as any)._id) {
         return
       }
     }
 
+    ;(fn as any)._id = id
     ApplicationView._appOpenStatusNoticeFn.push(fn)
   }
 
-  public static removeListenOpenStatusNotice(
-    fn: (id: string, status: 'open' | 'close') => void
-  ): void {
+  public static removeListenOpenStatusNotice(id: string): void {
     for (let i = 0; i < ApplicationView._appOpenStatusNoticeFn.length; i++) {
-      if (ApplicationView._appOpenStatusNoticeFn[i] === fn) {
+      if ((ApplicationView._appOpenStatusNoticeFn[i] as any)._id === id) {
         ApplicationView._appOpenStatusNoticeFn.splice(i, 1)
         return
       }
@@ -133,37 +153,12 @@ export class ApplicationView {
     }
   }
 
-  public static async showOrLoad(
-    id: string,
-    url: string,
-    bounds?: {
-      x: number
-      y: number
-      width?: number
-      widthOffset: number
-      height?: number
-      heightOffset: number
-    }
-  ): Promise<boolean> {
-    try {
-      if (await ApplicationView.show(id)) {
-        return true
-      }
-
-      await ApplicationView.openApp(id, url)
-
-      return await ApplicationView.show(id, bounds)
-    } catch (e) {
-      return false
-    }
-  }
-
   public constructor(private _id: string, private _url: string) {
     this._ipcInvoke = this._ipcInvoke.bind(this)
     this.init = this.init.bind(this)
     this.destroy = this.destroy.bind(this)
     this.hide = this.hide.bind(this)
-    this.load = this.load.bind(this)
+    // this.load = this.load.bind(this)
     this.show = this.show.bind(this)
   }
 
@@ -206,9 +201,9 @@ export class ApplicationView {
     await this._ipcInvoke(ApplicationViewEventNames.HIDE_VIEW)
   }
 
-  public async load(): Promise<void> {
-    await this._ipcInvoke(ApplicationViewEventNames.LOAD_VIEW, this._url)
-  }
+  //   public async load(): Promise<void> {
+  //     await this._ipcInvoke(ApplicationViewEventNames.LOAD_VIEW, this._url)
+  //   }
 
   public async show(data?: {
     x: number
@@ -220,6 +215,6 @@ export class ApplicationView {
   }): Promise<void> {
     console.log('进入...')
     ApplicationView._endOpenId = this._id
-    await this._ipcInvoke(ApplicationViewEventNames.SHOW_VIEW, data)
+    await this._ipcInvoke(ApplicationViewEventNames.SHOW_VIEW, this._url, data)
   }
 }
