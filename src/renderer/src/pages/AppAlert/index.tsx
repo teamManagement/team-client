@@ -1,5 +1,4 @@
 import AppOpenTitle from '@renderer/components/AppOpenTitle'
-import { title } from 'process'
 import { FC, useCallback, useEffect, useState } from 'react'
 import { FullscreenIcon, JumpIcon, PinIcon, PoweroffIcon, RemoveIcon } from 'tdesign-icons-react'
 import { Button } from 'tdesign-react'
