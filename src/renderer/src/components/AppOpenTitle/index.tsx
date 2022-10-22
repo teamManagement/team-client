@@ -1,3 +1,4 @@
+import classNames from 'classnames'
 import { Children, FC, ReactNode, useCallback } from 'react'
 import './index.scss'
 
@@ -5,16 +6,29 @@ export interface AppOpenTitleProps {
   startEle?: ReactNode | ReactNode[] | string
   endEle?: ReactNode | ReactNode[] | string
   title?: string
+  drag?: boolean
+  iconUrl?: string
+  disabled?: boolean
 }
 
-export const AppOpenTitle: FC<AppOpenTitleProps> = ({ startEle, endEle, title }) => {
+export const AppOpenTitle: FC<AppOpenTitleProps> = ({
+  startEle,
+  endEle,
+  title,
+  drag,
+  iconUrl,
+  disabled
+}) => {
   const convertEle = useCallback((eleList: any) => {
     return Children.map(eleList, (el) => {
-      return <div className="operation-icon">{el}</div>
+      return <div className="operation-icon electron-no-drag">{el}</div>
     })
   }, [])
   return (
-    <div className="app-open-title">
+    <div
+      title={title}
+      className={classNames('app-open-title', { 'electron-drag': drag, disabled })}
+    >
       <div className="operation-start">
         {convertEle(startEle)}
         {/* <div title="返回列表" className="operation-icon">
@@ -22,7 +36,14 @@ export const AppOpenTitle: FC<AppOpenTitleProps> = ({ startEle, endEle, title })
         </div> */}
       </div>
       <div className="operation-title">
-        <span>{title}</span>
+        {iconUrl && (
+          <div className="icon">
+            <img src={iconUrl} />
+          </div>
+        )}
+        <div className="desc">
+          <span>{title}</span>
+        </div>
       </div>
       <div className="operation-end">
         {convertEle(endEle)}

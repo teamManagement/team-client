@@ -1,6 +1,43 @@
 import { is, optimizer } from '@electron-toolkit/utils'
 import path from 'path'
-import { BrowserView, BrowserWindow, ipcMain, IpcMainInvokeEvent, Rectangle } from 'electron'
+import {
+  BrowserView,
+  BrowserWindow,
+  ipcMain,
+  IpcMainInvokeEvent,
+  Rectangle,
+  session
+} from 'electron'
+import { PRELOAD_JS_INSIDE, PRELOAD_JS_NEW_WINDOW_OPEN } from '../consts'
+import { SettingWindow } from '../windows/common'
+import { WinNameEnum } from '../current'
+import { uniqueId } from '../security/random'
+
+//#region APP相关接口
+enum AppType {
+  REMOTE_WEB,
+  LOCAL_WEB
+}
+
+enum IconType {
+  URL,
+  ICON_FONT
+}
+
+interface AppInfo {
+  id: string
+  name: string
+  inside: boolean
+  type: AppType
+  remoteSiteUrl: string
+  url: string
+  icon: string
+  iconType: IconType
+  desc: string
+  shortDesc: string
+  version: string
+}
+//#endregion
 
 const appErrorPageHashName = '/app/error'
 let appErrorPageUrl = path.join(__dirname, '../renderer/index.html')
@@ -28,7 +65,11 @@ enum ApplicationViewEventNames {
   /**
    * 隐藏视图
    */
-  HIDE_VIEW = 'ipc-HIDE_VIEW'
+  HIDE_VIEW = 'ipc-HIDE_VIEW',
+  /**
+   * 在alert中显示
+   */
+  SHOW_IN_ALERT = 'ipc-SHOW_ALERT_VIEW'
 }
 
 let _viewMap: { [key: string]: BrowserView } = {}
@@ -69,6 +110,42 @@ async function loadView(_event: IpcMainInvokeEvent, id: string, url: string): Pr
   }
 }
 
+function handlerBounds(
+  bounds: Rectangle,
+  defaultBounds: Rectangle,
+  boundsOptions?: Rectangle & { widthOffset?: number; heightOffset?: number }
+): void {
+  if (boundsOptions) {
+    if (typeof boundsOptions?.x !== 'undefined') {
+      bounds.x = parseInt(boundsOptions.x + '')
+    }
+
+    if (typeof boundsOptions?.y !== 'undefined') {
+      bounds.y = parseInt(boundsOptions.y + '')
+    }
+
+    if (typeof boundsOptions?.width !== 'undefined') {
+      bounds.width = parseInt(boundsOptions.width + '')
+    } else {
+      bounds.width = parseInt(defaultBounds.width + '')
+    }
+
+    if (typeof boundsOptions?.height !== 'undefined') {
+      bounds.height = parseInt(boundsOptions.height + '')
+    } else {
+      bounds.height = parseInt(defaultBounds.height + '')
+    }
+
+    if (typeof boundsOptions?.widthOffset !== 'undefined') {
+      bounds.width += parseInt(boundsOptions.widthOffset + '')
+    }
+
+    if (typeof boundsOptions?.heightOffset !== 'undefined') {
+      bounds.height += parseInt(boundsOptions.heightOffset + '')
+    }
+  }
+}
+
 async function showView(
   event: IpcMainInvokeEvent,
   id: string,
@@ -103,36 +180,19 @@ async function showView(
 
   const bwBounds = bw.getBounds()
   const bounds = view.getBounds()
-  if (boundsOptions) {
-    if (typeof boundsOptions?.x !== 'undefined') {
-      bounds.x = parseInt(boundsOptions.x + '')
-    }
 
-    if (typeof boundsOptions?.y !== 'undefined') {
-      bounds.y = parseInt(boundsOptions.y + '')
-    }
+  handlerBounds(bounds, bwBounds, boundsOptions)
 
-    if (typeof boundsOptions?.width !== 'undefined') {
-      bounds.width = parseInt(boundsOptions.width + '')
-    } else {
-      bounds.width = parseInt(bwBounds.width + '')
-    }
+  view.setBounds(bounds)
+  view.setAutoResize({
+    width: true,
+    height: true
+  })
 
-    if (typeof boundsOptions?.height !== 'undefined') {
-      bounds.height = parseInt(boundsOptions.height + '')
-    } else {
-      bounds.height = parseInt(bwBounds.height + '')
-    }
-
-    if (typeof boundsOptions?.widthOffset !== 'undefined') {
-      bounds.width += parseInt(boundsOptions.widthOffset + '')
-    }
-
-    if (typeof boundsOptions?.heightOffset !== 'undefined') {
-      bounds.height += parseInt(boundsOptions.heightOffset + '')
-    }
-  }
-
+  view.webContents.setWindowOpenHandler((details) => {
+    view.webContents.send('ipc-url-new-window-handler', details.url)
+    return { action: 'deny' }
+  })
   try {
     await view.webContents.loadURL(url)
   } catch (e) {
@@ -150,11 +210,6 @@ async function showView(
     }
   }
 
-  view.setBounds(bounds)
-  view.setAutoResize({
-    width: true,
-    height: true
-  })
   // 修复请求跨域问题
   view.webContents.session.webRequest.onBeforeSendHeaders((details, callback) => {
     callback({
@@ -172,6 +227,77 @@ async function showView(
   })
 
   _view.ok = true
+}
+
+async function showViewInAlert(_event: IpcMainInvokeEvent, id: string): Promise<void> {
+  const view = checkViewById(id)
+  const _view = view as any
+
+  if (_view._win) {
+    const win: BrowserWindow = _view._win
+    win.show()
+    win.focus()
+    return
+  }
+
+  const appInfo: AppInfo = _view._appInfo
+  if (!appInfo) {
+    throw new Error('缺失应用信息')
+  }
+
+  await new Promise<void>((resolve, reject) => {
+    SettingWindow(
+      WinNameEnum.NONE,
+      {
+        minWidth: 800,
+        minHeight: 550,
+        width: 800,
+        height: 550,
+        frame: false,
+        resizable: true,
+        transparent: true,
+        maximizable: false,
+        minimizable: false
+      },
+      '/app/alert',
+      false,
+      {
+        async readyToShowFn(win) {
+          try {
+            win.webContents.openDevTools()
+            await new Promise<void>((resolve, reject) => {
+              const timeoutId = setTimeout(() => {
+                reject('应用打开超时')
+              }, 5000)
+              const callbackId = 'ipc-appInfo-receive-' + uniqueId()
+              ipcMain.once(callbackId, () => {
+                clearTimeout(timeoutId)
+                resolve()
+              })
+              win.webContents.send('ipc-appInfo-receive', callbackId, JSON.stringify(appInfo))
+            })
+            _view._win = win
+            _view.noAlertBounds = view.getBounds()
+          } catch (e) {
+            win.destroy()
+            reject(e as any)
+            return
+          }
+          view.setBounds({ x: 6, y: 46, width: 788, height: 498 })
+          view.setAutoResize({
+            width: true,
+            height: true
+          })
+          win.setBrowserView(view)
+          win.show()
+          resolve()
+        }
+      },
+      true
+    ).catch((e) => {
+      reject(e)
+    })
+  })
 }
 
 async function hideView(_event: IpcMainInvokeEvent, id: string): Promise<void> {
@@ -212,29 +338,34 @@ async function destroyView(_event: IpcMainInvokeEvent, id: string): Promise<void
 
 async function createView(
   _event: IpcMainInvokeEvent,
-  id: string,
+  appInfo: AppInfo,
   loadInsidePreload?: boolean
 ): Promise<void> {
-  if (!id) {
-    throw new Error('缺失应用ID')
+  if (!appInfo || !appInfo.id) {
+    throw new Error('缺失应用信息')
   }
 
-  if (_viewMap[id]) {
+  if (_viewMap[appInfo.id]) {
     return
   }
 
   let preload: string | undefined = undefined
   if (loadInsidePreload) {
-    preload = path.join(__dirname, '..', 'preload', 'index.js')
+    preload = PRELOAD_JS_INSIDE
   }
+
+  const appSession = session.fromPartition(appInfo.id)
+  appSession.setPreloads([PRELOAD_JS_NEW_WINDOW_OPEN])
 
   const bv = new BrowserView({
     webPreferences: {
       preload: preload,
-      sandbox: false
+      sandbox: false,
+      session: appSession
     }
   })
-  _viewMap[id] = bv
+  ;(bv as any)._appInfo = appInfo
+  _viewMap[appInfo.id] = bv
 
   if (is.dev) {
     optimizer.watchWindowShortcuts(bv as any)
@@ -265,6 +396,7 @@ export function initApplicationViewManager(): void {
   ipcMain.handle(ApplicationViewEventNames.LOAD_VIEW, eventPromiseWrapper(loadView))
   ipcMain.handle(ApplicationViewEventNames.SHOW_VIEW, eventPromiseWrapper(showView))
   ipcMain.handle(ApplicationViewEventNames.HIDE_VIEW, eventPromiseWrapper(hideView))
+  ipcMain.handle(ApplicationViewEventNames.SHOW_IN_ALERT, eventPromiseWrapper(showViewInAlert))
 }
 
 export function clearAllApplicationViews(): void {

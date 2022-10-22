@@ -4,6 +4,7 @@ import { is } from '@electron-toolkit/utils'
 import { CurrentInfo, winWebContentsIdMap, WinNameEnum } from '../current'
 import { AppIcon } from '../icons'
 import { WsHandler } from '../socket'
+import { PRELOAD_JS_INSIDE } from '../consts'
 
 export async function SettingWindow(
   winNameEnum: WinNameEnum,
@@ -14,7 +15,8 @@ export async function SettingWindow(
     afterSettingOptions?: (win: BrowserWindow) => void
     readyToShowFn?: (win: BrowserWindow) => void
     closeFn?: (win: BrowserWindow) => void
-  }
+  },
+  closeNoClearResources?: boolean
 ): Promise<BrowserWindow> {
   const nowWin = CurrentInfo.getWin(winNameEnum)
   if (nowWin) {
@@ -27,9 +29,8 @@ export async function SettingWindow(
     icon: AppIcon,
     show: false,
     ...windowOptions,
-    hasShadow: true,
     webPreferences: {
-      preload: path.join(__dirname, '..', 'preload', 'index.js'),
+      preload: PRELOAD_JS_INSIDE,
       sandbox: false
     }
   }
@@ -41,7 +42,9 @@ export async function SettingWindow(
   const webContentsId = webContents.id
   win.on('closed', () => {
     try {
-      WsHandler.instance.clearWebContentResource(webContents)
+      if (!closeNoClearResources) {
+        WsHandler.instance.clearWebContentResource(webContents)
+      }
       if (callBackOptions && callBackOptions.closeFn) {
         callBackOptions.closeFn(win)
       }

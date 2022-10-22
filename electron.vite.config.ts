@@ -13,6 +13,10 @@ export default defineConfig({
   preload: {
     build: {
       rollupOptions: {
+        input: {
+          inside: resolve(__dirname, 'src/preload/inside/index.ts'),
+          newWindowOpen: resolve(__dirname, 'src/preload/newWindowOpen/index.ts')
+        },
         external: ['@electron-toolkit/preload']
       }
     }

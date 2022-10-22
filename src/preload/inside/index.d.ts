@@ -141,7 +141,7 @@ declare global {
 
   //#region 应用视图相关
   class ApplicationView {
-    public constructor(id: string, url: string)
+    public constructor(appInfo: AppInfo)
     public init(): Promise<void>
     public destroy(): Promise<void>
     public hide(): Promise<void>
@@ -172,8 +172,7 @@ declare global {
       getOpenedIdList(): string[]
       getApplicationViewById(id: string): ApplicationView | undefined
       openApp(
-        id: string,
-        url: string,
+        appInfo: AppInfo,
         bounds?: {
           x?: number
           y?: number
@@ -201,8 +200,20 @@ declare global {
           heightOffset?: number
         }
       ): Promise<boolean>
+      showInAlert(
+        id: string,
+        bounds?: {
+          x?: number
+          y?: number
+          width?: number
+          widthOffset?: number
+          height?: number
+          heightOffset?: number
+        }
+      ): Promise<void>
       hangUp(): Promise<void>
-      restore(): Promise<void>
+      restore(): Promise<AppInfo>
+      getCurrentAppInfo(): Promise<AppInfo>
     }
   }
 }

@@ -6,11 +6,18 @@ $appOpenTitleIconSize: 38px;
   right: 0;
   height: $appOpenTitleIconSize;
   background-color: #fff;
-  z-index: 999;
+  z-index: 99999;
   display: flex;
   padding: 0 22px;
 
   box-shadow: 0 0 8px #888;
+
+  &.disabled {
+    .operation-icon {
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+  }
 
   // .operation-start {
   // }
@@ -27,9 +34,32 @@ $appOpenTitleIconSize: 38px;
     align-items: center;
     justify-content: center;
 
-    > span {
-      font-size: 18px;
-      font-weight: bold;
+    > .icon {
+      width: $appOpenTitleIconSize;
+      height: $appOpenTitleIconSize;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      > img {
+        max-width: 23px;
+        max-height: 23px;
+        vertical-align: middle;
+        user-select: none;
+      }
+    }
+
+    > .desc {
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      > span {
+        font-size: 18px;
+        font-weight: bold;
+        user-select: none;
+      }
     }
   }
 

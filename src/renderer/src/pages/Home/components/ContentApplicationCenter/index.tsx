@@ -23,9 +23,10 @@ export const ContentApplicationCenter: FC = () => {
   const [openedAppIdList, setOpenedAppIdList] = useState<string[]>(window.app.getOpenedIdList())
   const [nowOpenApp, setNowOpenApp] = useState<AppInfo | undefined>(undefined)
   const [keyword, setKeyword] = useState<string | undefined>(undefined)
-
+  const [openTitleDisabled, setOpenTitleDisabled] = useState<boolean>(false)
+  console.log(nowOpenApp)
   useEffect(() => {
-    window.app.restore()
+    window.app.restore().then(setNowOpenApp)
     return () => {
       window.app.hangUp()
     }
@@ -65,9 +66,9 @@ export const ContentApplicationCenter: FC = () => {
     setLoadingDesc('正在打开应用...')
     const wrapperEle = applicationCenterEle.current!
     try {
+      setNowOpenApp(app)
       await window.app.openApp(
-        app.id,
-        app.url,
+        app,
         {
           x: wrapperEle.offsetLeft + 7,
           y: wrapperEle.offsetTop + 6 + 40,
@@ -77,10 +78,11 @@ export const ContentApplicationCenter: FC = () => {
         },
         app.inside
       )
-      setNowOpenApp(app)
     } catch (e) {
-      MessagePlugin.error('应用加载失败')
+      setNowOpenApp(undefined)
+      MessagePlugin.error(e as string)
     } finally {
+      console.log('关闭loading...')
       setLoadingDesc('')
     }
   }, [])
@@ -93,42 +95,25 @@ export const ContentApplicationCenter: FC = () => {
     setNowOpenApp(undefined)
   }, [nowOpenApp])
 
-  const appOpenTitleStarBtns = useMemo(() => {
-    return (
-      <Button
-        // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-        onClick={async () => {
-          window.app.hangUp()
-          setNowOpenApp(undefined)
-        }}
-        title="返回桌面"
-        shape="square"
-        variant="text"
-        icon={<RollbackIcon size="22px" />}
-      />
-    )
-  }, [])
+  const onAppAlert = useCallback(async () => {
+    try {
+      setOpenTitleDisabled(true)
+      if (!nowOpenApp) {
+        return
+      }
+      await window.app.showInAlert(nowOpenApp.id)
+      setNowOpenApp(undefined)
+    } catch (e) {
+      MessagePlugin.error((e as any).message || e)
+    } finally {
+      setOpenTitleDisabled(false)
+    }
+  }, [nowOpenApp])
 
-  const appOpenTitleEndBtns = useMemo(() => {
-    return [
-      <Button
-        title="弹出"
-        key="jump"
-        shape="square"
-        variant="text"
-        icon={<JumpIcon size="22px" />}
-      />,
-      <Button
-        onClick={onAppClose}
-        title="关闭"
-        key="close"
-        shape="square"
-        variant="text"
-        theme="danger"
-        icon={<PoweroffIcon size="22px" />}
-      />
-    ]
-  }, [onAppClose])
+  const onCallbackToDesktop = useCallback(() => {
+    window.app.hangUp()
+    setNowOpenApp(undefined)
+  }, [])
 
   const appDesktopTabs = useMemo(() => {
     const result = [
@@ -182,9 +167,39 @@ export const ContentApplicationCenter: FC = () => {
     <div className="application-center match-parent" ref={applicationCenterEle}>
       {nowOpenApp && (
         <AppOpenTitle
+          iconUrl={nowOpenApp.icon}
           title={nowOpenApp.name}
-          endEle={appOpenTitleEndBtns}
-          startEle={appOpenTitleStarBtns}
+          endEle={[
+            <Button
+              disabled={openTitleDisabled}
+              onClick={onAppAlert}
+              title="弹出"
+              key="jump"
+              shape="square"
+              variant="text"
+              icon={<JumpIcon size="22px" />}
+            />,
+            <Button
+              disabled={openTitleDisabled}
+              onClick={onAppClose}
+              title="关闭"
+              key="close"
+              shape="square"
+              variant="text"
+              theme="danger"
+              icon={<PoweroffIcon size="22px" />}
+            />
+          ]}
+          startEle={
+            <Button
+              disabled={openTitleDisabled}
+              onClick={onCallbackToDesktop}
+              title="返回桌面"
+              shape="square"
+              variant="text"
+              icon={<RollbackIcon size="22px" />}
+            />
+          }
         />
       )}
       <div className="search">
