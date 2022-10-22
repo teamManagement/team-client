@@ -158,6 +158,16 @@ declare global {
   //#endregion
 
   interface Window {
+    currentWindow: {
+      fullScreen(): Promise<void>
+      unFullscreen(): Promise<void>
+      maximize(): Promise<void>
+      unMaximize(): Promise<void>
+      minimize(): Promise<void>
+      unMinimize(): Promise<void>
+      alwaysOnTop(): Promise<void>
+      unAlwaysOnTop(): Promise<void>
+    }
     electron: ElectronAPI & {
       ContextMenu: {
         get(): ContextMenu
@@ -170,6 +180,7 @@ declare global {
     proxyApi: ProxyApi
     app: {
       getOpenedIdList(): string[]
+      getAlertIdList(): string[]
       getApplicationViewById(id: string): ApplicationView | undefined
       openApp(
         appInfo: AppInfo,
@@ -211,6 +222,7 @@ declare global {
           heightOffset?: number
         }
       ): Promise<void>
+      destroyInAlert(id: string): Promise<void>
       hangUp(): Promise<void>
       restore(): Promise<AppInfo>
       getCurrentAppInfo(): Promise<AppInfo>

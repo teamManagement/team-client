@@ -1,5 +1,12 @@
 import { ipcRenderer } from 'electron'
 
+ipcRenderer.addListener(
+  'ipc-app-open-status-notice',
+  (_event, appInfo: AppInfo, status: 'open' | 'close') => {
+    ApplicationView.noticeStatus(appInfo, status)
+  }
+)
+
 //#region APP相关接口
 enum AppType {
   REMOTE_WEB,
@@ -28,12 +35,8 @@ interface AppInfo {
 
 let _currentAppInfo: any = undefined
 
-console.log('监听。。。')
 const eventAppInfoReceive = 'ipc-appInfo-receive'
 ipcRenderer.once(eventAppInfoReceive, (_event, callbackId: string, appInfo: string) => {
-  console.log('监听进入...')
-  // eslint-disable-next-line no-debugger
-  debugger
   _currentAppInfo = JSON.parse(appInfo)
   ipcRenderer.send(callbackId)
 })
@@ -83,12 +86,17 @@ enum ApplicationViewEventNames {
   /**
    * 在alert中显示
    */
-  SHOW_IN_ALERT = 'ipc-SHOW_ALERT_VIEW'
+  SHOW_IN_ALERT = 'ipc-SHOW_ALERT_VIEW',
+  /**
+   * 销毁alert中的视图
+   */
+  DESTROY_ALERT = 'ipc-DESTROY_ALERT_VIEW'
 }
 
 export class ApplicationView {
   private static _openedMap: { [key: string]: ApplicationView } = {}
   private static _openedIdList: string[] = []
+  private static _alertIdList: string[] = []
   private static _appOpenStatusNoticeFn: ((appId: string, status: 'open' | 'close') => void)[] = []
   private static _endOpenAppInfo: AppInfo | undefined = undefined
 
@@ -121,6 +129,10 @@ export class ApplicationView {
 
   public static getOpenedIdList(): string[] {
     return ApplicationView._openedIdList
+  }
+
+  public static getAlertIdList(): string[] {
+    return ApplicationView._alertIdList
   }
 
   public static async openApp(
@@ -222,6 +234,13 @@ export class ApplicationView {
     }
 
     await view.showInAlert(data)
+    if (!ApplicationView._alertIdList.includes(id)) {
+      ApplicationView._alertIdList.push(id)
+    }
+  }
+
+  public static async destroyInAlert(id: string): Promise<void> {
+    await ipcRenderer.invoke(ApplicationViewEventNames.DESTROY_ALERT, id)
   }
 
   private _url: string
@@ -237,9 +256,25 @@ export class ApplicationView {
     this._url = this._appInfo.url
   }
 
-  private _noticeStatus(status: 'open' | 'close'): void {
+  public static noticeStatus(appInfo: AppInfo, status: 'open' | 'close'): void {
+    if (status === 'open') {
+      if (!ApplicationView._openedIdList.includes(appInfo.id)) {
+        ApplicationView._openedIdList.push(appInfo.id)
+      }
+    } else if (status === 'close') {
+      delete ApplicationView._openedMap[appInfo.id]
+      let index = ApplicationView._openedIdList.indexOf(appInfo.id)
+      if (index !== -1) {
+        ApplicationView._openedIdList.splice(index, 1)
+      }
+
+      index = ApplicationView._alertIdList.indexOf(appInfo.id)
+      if (index !== -1) {
+        ApplicationView._alertIdList.splice(index, 1)
+      }
+    }
     for (const fn of ApplicationView._appOpenStatusNoticeFn) {
-      fn(this._appInfo.id, status)
+      fn(appInfo.id, status)
     }
   }
 
@@ -267,11 +302,12 @@ export class ApplicationView {
     if (index !== -1) {
       ApplicationView._openedIdList.splice(index, 1)
     }
-    this._noticeStatus('close')
+    // this._noticeStatus('close')
   }
 
   public async hide(): Promise<void> {
     await this._ipcInvoke(ApplicationViewEventNames.HIDE_VIEW, false)
+    ApplicationView._endOpenAppInfo = undefined
   }
 
   public async show(data?: {
@@ -284,12 +320,8 @@ export class ApplicationView {
   }): Promise<void> {
     ApplicationView._endOpenAppInfo = this._appInfo
     await this._ipcInvoke(ApplicationViewEventNames.SHOW_VIEW, false, this._url, data)
-    if (ApplicationView._openedIdList.includes(this._appInfo.id)) {
-      return
-    }
-    ApplicationView._openedIdList.push(this._appInfo.id)
     ApplicationView._openedMap[this._appInfo.id] = this
-    this._noticeStatus('open')
+    // this._noticeStatus('open')
   }
 
   public async showInAlert(data?: {

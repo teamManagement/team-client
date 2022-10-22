@@ -64,3 +64,8 @@ body {
   align-items: center;
   justify-content: center;
 }
+
+.t-message {
+  position: relative;
+  z-index: 999999 !important;
+}

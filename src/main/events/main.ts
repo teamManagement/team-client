@@ -5,7 +5,7 @@ import { ResponseError, sendHttpRequestToLocalServer, sendHttpRequestToWebServer
 import { promiseErrWrapper } from '../tools/wrapper'
 import { SettingHomeWin } from '../windows/home'
 
-export function initMainProcessEvents(): void {
+export function _initMainProcessEvents(): void {
   ipcMain.handle('ipc-proxy-web-server', proxyWebServer)
   ipcMain.handle('ipc-proxy-local-server', proxyLocalWebServer)
   ipcMain.handle('ipc-login', login)

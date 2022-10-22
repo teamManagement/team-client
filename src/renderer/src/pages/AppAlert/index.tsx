@@ -1,10 +1,19 @@
 import AppOpenTitle from '@renderer/components/AppOpenTitle'
-import { FC, useCallback, useEffect, useState } from 'react'
-import { FullscreenIcon, JumpIcon, PinIcon, PoweroffIcon, RemoveIcon } from 'tdesign-icons-react'
+import { CSSProperties, FC, useCallback, useEffect, useMemo, useState } from 'react'
+import {
+  FullscreenExitIcon,
+  FullscreenIcon,
+  PinFilledIcon,
+  PinIcon,
+  PoweroffIcon,
+  RemoveIcon
+} from 'tdesign-icons-react'
 import { Button } from 'tdesign-react'
 import './index.scss'
 
 export const AppAlert: FC = () => {
+  const [isFull, setIsFull] = useState<boolean>(false)
+  const [isOnTop, setIsOnTop] = useState<boolean>(false)
   const [appInfo, setAppInfo] = useState<AppInfo | undefined>(undefined)
   const queryAppInfo = useCallback(async () => {
     setAppInfo(await window.app.getCurrentAppInfo())
@@ -14,6 +23,54 @@ export const AppAlert: FC = () => {
     queryAppInfo()
   }, [])
 
+  const onFullscreen = useCallback(() => {
+    setIsFull((full) => {
+      if (full) {
+        window.currentWindow.unMaximize()
+      } else {
+        window.currentWindow.maximize()
+      }
+      return !full
+    })
+  }, [])
+
+  const onHide = useCallback(() => {
+    window.currentWindow.minimize()
+  }, [])
+
+  const onClose = useCallback(() => {
+    if (!appInfo) {
+      return
+    }
+    window.app.destroyInAlert(appInfo.id)
+  }, [appInfo])
+
+  const onAlwaysTop = useCallback(() => {
+    setIsOnTop((top) => {
+      if (top) {
+        window.currentWindow.unAlwaysOnTop()
+      } else {
+        window.currentWindow.alwaysOnTop()
+      }
+      return !top
+    })
+  }, [])
+
+  const fullIcon = useMemo(() => {
+    const style = { transform: 'rotate(90deg)' } as CSSProperties
+    const size = '22px'
+    return !isFull ? (
+      <FullscreenIcon style={style} size={size} />
+    ) : (
+      <FullscreenExitIcon style={style} size={size} />
+    )
+  }, [isFull])
+
+  const onTopIcon = useMemo(() => {
+    const size = '22px'
+    return isOnTop ? <PinFilledIcon size={size} /> : <PinIcon size={size} />
+  }, [isOnTop])
+
   return (
     <div className="app-alert">
       {appInfo && (
@@ -22,24 +79,35 @@ export const AppAlert: FC = () => {
           title={appInfo.name}
           iconUrl={appInfo.icon}
           startEle={
-            <Button key="pin" title="置顶" shape="square" variant="text" icon={<PinIcon />} />
-          }
-          endEle={[
             <Button
-              key="restore"
-              title="还原"
+              onClick={onAlwaysTop}
+              key="pin"
+              title="置顶"
               shape="square"
               variant="text"
-              icon={
-                <JumpIcon
-                  style={{
-                    transform: 'rotate(180deg)'
-                  }}
-                  size="22px"
-                />
-              }
-            />,
+              icon={onTopIcon}
+            />
+          }
+          endEle={[
+            // TODO 事件实现逻辑有点复杂
+            // TODO 需要将应用桌面的nowApp信息变化监听从render中移动到preload并由主进程进行触发
+            // TODO 这一版赶时间, 下一版再说~~~
+            // <Button
+            //   key="restore"
+            //   title="还原"
+            //   shape="square"
+            //   variant="text"
+            //   icon={
+            //     <JumpIcon
+            //       style={{
+            //         transform: 'rotate(180deg)'
+            //       }}
+            //       size="22px"
+            //     />
+            //   }
+            // />,
             <Button
+              onClick={onHide}
               key="hide"
               title="缩小到任务栏"
               shape="square"
@@ -47,14 +115,15 @@ export const AppAlert: FC = () => {
               icon={<RemoveIcon size="22px" />}
             />,
             <Button
+              onClick={onFullscreen}
               key="fullscreen"
-              title="全屏"
+              title="放大"
               shape="square"
               variant="text"
-              icon={<FullscreenIcon size="22px" />}
+              icon={fullIcon}
             />,
             <Button
-              // onClick={onAppClose}
+              onClick={onClose}
               title="关闭"
               key="close"
               shape="square"

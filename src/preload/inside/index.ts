@@ -3,6 +3,7 @@ import { electronAPI } from '@electron-toolkit/preload'
 import { proxyApi, TcpTransferCmdCode } from './proxy'
 import { ContextMenu } from './electronProxy'
 import { ApplicationView, getCurrentAppInfo } from './appViews'
+import { currentWindow } from './windows'
 
 // Custom APIs for renderer
 const api = {
@@ -44,6 +45,7 @@ const apiMap: { [key: string]: any } = {
   },
   app: {
     getOpenedIdList: ApplicationView.getOpenedIdList,
+    getAlertIdList: ApplicationView.getAlertIdList,
     getApplicationViewById: ApplicationView.getApplicationViewById,
     openApp: ApplicationView.openApp,
     closeApp: ApplicationView.closeApp,
@@ -54,8 +56,10 @@ const apiMap: { [key: string]: any } = {
     hangUp: ApplicationView.hangUp,
     restore: ApplicationView.restore,
     showInAlert: ApplicationView.showInAlert,
+    destroyInAlert: ApplicationView.destroyInAlert,
     getCurrentAppInfo
-  }
+  },
+  currentWindow
 }
 
 for (const k in apiMap) {

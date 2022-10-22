@@ -24,13 +24,15 @@ export const ContentApplicationCenter: FC = () => {
   const [nowOpenApp, setNowOpenApp] = useState<AppInfo | undefined>(undefined)
   const [keyword, setKeyword] = useState<string | undefined>(undefined)
   const [openTitleDisabled, setOpenTitleDisabled] = useState<boolean>(false)
-  console.log(nowOpenApp)
+  const [alertAppIdList, setAlertAppIdList] = useState<string[]>(window.app.getAlertIdList())
   useEffect(() => {
     window.app.restore().then(setNowOpenApp)
     return () => {
       window.app.hangUp()
     }
   }, [])
+
+  console.log('nowAppInfo: ', nowOpenApp, ', alertList: ', alertAppIdList)
 
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -53,6 +55,23 @@ export const ContentApplicationCenter: FC = () => {
         }
         return targetIdList
       })
+      if (status === 'close') {
+        setNowOpenApp((app) => {
+          if (app?.id === id) {
+            return undefined
+          }
+          return app
+        })
+
+        setAlertAppIdList((l) => {
+          const index = l.indexOf(id)
+          if (index === -1) {
+            return l
+          }
+
+          return [...l.splice(index, 1)]
+        })
+      }
     }
 
     const listenId = 'appStatusListener'
@@ -62,30 +81,32 @@ export const ContentApplicationCenter: FC = () => {
     }
   }, [])
 
-  const appOpen = useCallback(async (app: AppInfo) => {
-    setLoadingDesc('正在打开应用...')
-    const wrapperEle = applicationCenterEle.current!
-    try {
-      setNowOpenApp(app)
-      await window.app.openApp(
-        app,
-        {
-          x: wrapperEle.offsetLeft + 7,
-          y: wrapperEle.offsetTop + 6 + 40,
-          width: wrapperEle.clientWidth,
-          height: wrapperEle.clientHeight - 40,
-          widthOffset: -1
-        },
-        app.inside
-      )
-    } catch (e) {
-      setNowOpenApp(undefined)
-      MessagePlugin.error(e as string)
-    } finally {
-      console.log('关闭loading...')
-      setLoadingDesc('')
-    }
-  }, [])
+  const appOpen = useCallback(
+    async (app: AppInfo) => {
+      setLoadingDesc('正在打开应用...')
+      const wrapperEle = applicationCenterEle.current!
+      try {
+        setNowOpenApp(app)
+        await window.app.openApp(
+          app,
+          {
+            x: wrapperEle.offsetLeft + 7,
+            y: wrapperEle.offsetTop + 6 + 40,
+            width: wrapperEle.clientWidth,
+            height: wrapperEle.clientHeight - 40,
+            widthOffset: -1
+          },
+          app.inside
+        )
+      } catch (e) {
+        setNowOpenApp(undefined)
+        MessagePlugin.error(e as string)
+      } finally {
+        setLoadingDesc('')
+      }
+    },
+    [alertAppIdList]
+  )
 
   const onAppClose = useCallback(async () => {
     if (!nowOpenApp) {
@@ -103,6 +124,13 @@ export const ContentApplicationCenter: FC = () => {
       }
       await window.app.showInAlert(nowOpenApp.id)
       setNowOpenApp(undefined)
+      setAlertAppIdList((list) => {
+        if (list.includes(nowOpenApp.id)) {
+          return list
+        }
+
+        return [...list, nowOpenApp.id]
+      })
     } catch (e) {
       MessagePlugin.error((e as any).message || e)
     } finally {
@@ -165,7 +193,7 @@ export const ContentApplicationCenter: FC = () => {
 
   return (
     <div className="application-center match-parent" ref={applicationCenterEle}>
-      {nowOpenApp && (
+      {nowOpenApp && !alertAppIdList.includes(nowOpenApp.id) && (
         <AppOpenTitle
           iconUrl={nowOpenApp.icon}
           title={nowOpenApp.name}

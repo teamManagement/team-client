@@ -10,7 +10,7 @@ import {
 } from 'electron'
 import { PRELOAD_JS_INSIDE, PRELOAD_JS_NEW_WINDOW_OPEN } from '../consts'
 import { SettingWindow } from '../windows/common'
-import { WinNameEnum } from '../current'
+import { CurrentInfo, WinNameEnum } from '../current'
 import { uniqueId } from '../security/random'
 
 //#region APP相关接口
@@ -69,7 +69,11 @@ enum ApplicationViewEventNames {
   /**
    * 在alert中显示
    */
-  SHOW_IN_ALERT = 'ipc-SHOW_ALERT_VIEW'
+  SHOW_IN_ALERT = 'ipc-SHOW_ALERT_VIEW',
+  /**
+   * 销毁alert中的视图
+   */
+  DESTROY_ALERT = 'ipc-DESTROY_ALERT_VIEW'
 }
 
 let _viewMap: { [key: string]: BrowserView } = {}
@@ -157,6 +161,16 @@ async function showView(
   }
 
   const view = checkViewById(id)
+  const _view = view as any
+  if (_view._win) {
+    const win: BrowserWindow = _view._win
+    if (win.isMinimized()) {
+      win.restore()
+    }
+    win.show()
+    win.focus()
+    return
+  }
 
   const bw = BrowserWindow.fromWebContents(event.sender)
   if (!bw) {
@@ -167,7 +181,7 @@ async function showView(
     bw.setBrowserView(view)
   }
 
-  const _view = view as any
+  // const _view = view as any
   if (_view.originBounds) {
     view.setBounds(_view.originBounds)
     delete _view['originBounds']
@@ -227,6 +241,11 @@ async function showView(
   })
 
   _view.ok = true
+  CurrentInfo.getWin(WinNameEnum.HOME)?.webContents.send(
+    'ipc-app-open-status-notice',
+    _view._appInfo,
+    'open'
+  )
 }
 
 async function showViewInAlert(_event: IpcMainInvokeEvent, id: string): Promise<void> {
@@ -235,6 +254,9 @@ async function showViewInAlert(_event: IpcMainInvokeEvent, id: string): Promise<
 
   if (_view._win) {
     const win: BrowserWindow = _view._win
+    if (win.isMinimized()) {
+      win.restore()
+    }
     win.show()
     win.focus()
     return
@@ -264,7 +286,6 @@ async function showViewInAlert(_event: IpcMainInvokeEvent, id: string): Promise<
       {
         async readyToShowFn(win) {
           try {
-            win.webContents.openDevTools()
             await new Promise<void>((resolve, reject) => {
               const timeoutId = setTimeout(() => {
                 reject('应用打开超时')
@@ -303,6 +324,10 @@ async function showViewInAlert(_event: IpcMainInvokeEvent, id: string): Promise<
 async function hideView(_event: IpcMainInvokeEvent, id: string): Promise<void> {
   try {
     const view = checkViewById(id)
+    const _view = view as any
+    if (_view._win) {
+      return
+    }
     const bw = BrowserWindow.fromBrowserView(view)
     if (!bw) {
       return
@@ -314,7 +339,9 @@ async function hideView(_event: IpcMainInvokeEvent, id: string): Promise<void> {
     }
 
     const bounds = bv.getBounds()
-    ;(bv as any).originBounds = bounds
+    if (!(bv as any).originBounds) {
+      ;(bv as any).originBounds = bounds
+    }
 
     bv.setBounds({ ...bounds, width: 0, height: 0 })
   } catch (e) {
@@ -329,6 +356,32 @@ async function destroyView(_event: IpcMainInvokeEvent, id: string): Promise<void
     if (win) {
       win.removeBrowserView(view)
     }
+    CurrentInfo.getWin(WinNameEnum.HOME)?.webContents.send(
+      'ipc-app-open-status-notice',
+      (view as any)._appInfo,
+      'close'
+    )
+    ;(view.webContents as any).destroy()
+    delete _viewMap[id]
+  } catch (e) {
+    //nothing
+  }
+}
+
+async function destroyAlertView(_event: IpcMainInvokeEvent, id: string): Promise<void> {
+  try {
+    const view = checkViewById(id)
+    const _view = view as any
+    const win = _view._win as BrowserWindow
+    if (win) {
+      win.hide()
+      win.destroy()
+    }
+    CurrentInfo.getWin(WinNameEnum.HOME)?.webContents.send(
+      'ipc-app-open-status-notice',
+      (view as any)._appInfo,
+      'close'
+    )
     ;(view.webContents as any).destroy()
     delete _viewMap[id]
   } catch (e) {
@@ -397,6 +450,7 @@ export function initApplicationViewManager(): void {
   ipcMain.handle(ApplicationViewEventNames.SHOW_VIEW, eventPromiseWrapper(showView))
   ipcMain.handle(ApplicationViewEventNames.HIDE_VIEW, eventPromiseWrapper(hideView))
   ipcMain.handle(ApplicationViewEventNames.SHOW_IN_ALERT, eventPromiseWrapper(showViewInAlert))
+  ipcMain.handle(ApplicationViewEventNames.DESTROY_ALERT, eventPromiseWrapper(destroyAlertView))
 }
 
 export function clearAllApplicationViews(): void {
