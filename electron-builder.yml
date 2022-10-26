@@ -1,5 +1,5 @@
 appId: cn.bk.team.client
-productName: team-client
+productName: Teamwork
 directories:
   buildResources: build
 files:
@@ -29,9 +29,9 @@ nsis:
   installerIcon: build/icon.ico
   uninstallerIcon: build/icon.ico
   installerHeaderIcon: build/icon.ico
-  artifactName: 协作研发平台客户端-${version}-setup.${ext}
-  shortcutName: 协作研发平台客户端
-  uninstallDisplayName: 协作研发平台客户端
+  artifactName: Teamwork-${version}-setup.${ext}
+  shortcutName: Teamwork
+  uninstallDisplayName: Teamwork
   createDesktopShortcut: true
 
 mac:
@@ -55,6 +55,6 @@ linux:
 appImage:
   artifactName: ${name}-${version}.${ext}
 npmRebuild: false
-publish:
-  provider: generic
-  url: https://example.com/auto-updates
+# publish:
+#   provider: generic
+#   url: https://example.com/auto-updates

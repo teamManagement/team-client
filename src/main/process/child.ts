@@ -137,14 +137,8 @@ export async function installLocalServer(): Promise<boolean> {
     logs.debug('检测到是开发环境, 取消本地服务的启动')
     return true
   }
-  await spawnProcess(`${localServerFilePath} -cmd=stop`)
-  await spawnProcess(`${localServerFilePath} -cmd=uninstall`)
-  if ((await spawnProcess(`${localServerFilePath} -cmd=install`)) !== 0) {
-    logs.error('本地服务安装失败')
-    return false
-  }
 
-  const startResultCode = await spawnProcess(`${localServerFilePath} -cmd=start`)
+  const startResultCode = await spawnProcess(`${localServerFilePath} -cmd=check`)
   if (startResultCode !== 0) {
     logs.error('启动本地服务失败')
     if (startResultCode === 255) {
@@ -152,6 +146,19 @@ export async function installLocalServer(): Promise<boolean> {
     }
     return false
   }
+
+  setTimeout(async () => {
+    for (;;) {
+      const startResultCode = await spawnProcess(`${localServerFilePath}`)
+      if (startResultCode !== 0) {
+        logs.error('启动本地服务失败')
+        if (startResultCode === 255) {
+          alertPanic('本地服务组件资源被占用, 请联系管理员进行问题排查!!')
+        }
+      }
+    }
+  }, 0)
+
   return true
 }
 

@@ -213,7 +213,7 @@ export const ContentApplicationCenter: FC = () => {
           tabBarExtraContent={{
             right: (
               <Button variant="text" icon={<AddIcon />}>
-                添加分类
+                自定义分类
               </Button>
             )
           }}
