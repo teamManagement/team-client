@@ -319,6 +319,12 @@ async function showView(event: IpcMainInvokeEvent, id: string): Promise<void> {
 
   const view = viewInfo.view
 
+  CurrentInfo.getWin(WinNameEnum.HOME)?.webContents.send(
+    'ipc-app-open-status-notice',
+    viewInfo.appInfo,
+    'showTitle'
+  )
+
   bw.setBrowserView(view)
 
   view.setBounds(_calcViewBounds(bw))
