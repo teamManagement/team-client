@@ -139,24 +139,6 @@ declare global {
 
   //#endregion
 
-  //#region 应用视图相关
-  class ApplicationView {
-    public constructor(appInfo: AppInfo)
-    public init(): Promise<void>
-    public destroy(): Promise<void>
-    public hide(): Promise<void>
-    public load(): Promise<void>
-    public show(data?: {
-      x: number
-      y: number
-      width?: number
-      widthOffset: number
-      height?: number
-      heightOffset: number
-    }): Promise<void>
-  }
-  //#endregion
-
   interface Window {
     currentWindow: {
       fullScreen(): Promise<void>
@@ -180,52 +162,61 @@ declare global {
     proxyApi: ProxyApi
     app: {
       getOpenedIdList(): string[]
-      getAlertIdList(): string[]
-      getApplicationViewById(id: string): ApplicationView | undefined
-      openApp(
-        appInfo: AppInfo,
-        bounds?: {
-          x?: number
-          y?: number
-          width?: number
-          widthOffset?: number
-          height?: number
-          heightOffset?: number
-        },
-        loadInsidePreload?: boolean
-      ): Promise<ApplicationView>
-      closeApp(id: string): Promise<void>
-      listenOpenStatusNotice(
-        listenId: string,
-        fn: (id: string, status: 'open' | 'close') => void
-      ): void
-      removeListenOpenStatusNotice(listenId: string): void
-      show(
-        id: string,
-        bounds?: {
-          x?: number
-          y?: number
-          width?: number
-          widthOffset?: number
-          height?: number
-          heightOffset?: number
-        }
-      ): Promise<boolean>
-      showInAlert(
-        id: string,
-        bounds?: {
-          x?: number
-          y?: number
-          width?: number
-          widthOffset?: number
-          height?: number
-          heightOffset?: number
-        }
-      ): Promise<void>
-      destroyInAlert(id: string): Promise<void>
+      listenStatusNotice(id: string, fn: (appInfo: AppInfo, status: 'open' | 'close') => void): void
+      removeStatusNotice(id: string): void
+      openApp(appInfo: AppInfo): Promise<void>
+      showById(id: string): Promise<void>
+      showInAlertById(id: string): Promise<void>
+      currentShowInAlert(): Promise<void>
+      hideById(id: string): Promise<void>
       hangUp(): Promise<void>
       restore(): Promise<AppInfo>
-      getCurrentAppInfo(): Promise<AppInfo>
+      hideEndOpenedApp(): Promise<void>
+      destroyById(id: string): Promise<void>
+      destroyAlertById(id: string): Promise<void>
+      getCurrentAppInfo(): AppInfo | undefined
+      // getOpenedIdList(): string[]
+      // getAlertIdList(): string[]
+      // getApplicationViewById(id: string): ApplicationView | undefined
+      // openApp(
+      //   appInfo: AppInfo,
+      //   bounds?: {
+      //     x?: number
+      //     y?: number
+      //     width?: number
+      //     widthOffset?: number
+      //     height?: number
+      //     heightOffset?: number
+      //   },
+      //   loadInsidePreload?: boolean
+      // ): Promise<ApplicationView>
+      // closeApp(id: string): Promise<void>
+      // show(
+      //   id: string,
+      //   bounds?: {
+      //     x?: number
+      //     y?: number
+      //     width?: number
+      //     widthOffset?: number
+      //     height?: number
+      //     heightOffset?: number
+      //   }
+      // ): Promise<boolean>
+      // showInAlert(
+      //   id: string,
+      //   bounds?: {
+      //     x?: number
+      //     y?: number
+      //     width?: number
+      //     widthOffset?: number
+      //     height?: number
+      //     heightOffset?: number
+      //   }
+      // ): Promise<void>
+      // destroyInAlert(id: string): Promise<void>
+      // hangUp(): Promise<void>
+      // restore(): Promise<AppInfo>
+      // getCurrentAppInfo(): Promise<AppInfo>
     }
   }
 }

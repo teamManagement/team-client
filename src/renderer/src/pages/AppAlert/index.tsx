@@ -14,14 +14,7 @@ import './index.scss'
 export const AppAlert: FC = () => {
   const [isFull, setIsFull] = useState<boolean>(false)
   const [isOnTop, setIsOnTop] = useState<boolean>(false)
-  const [appInfo, setAppInfo] = useState<AppInfo | undefined>(undefined)
-  const queryAppInfo = useCallback(async () => {
-    setAppInfo(await window.app.getCurrentAppInfo())
-  }, [])
-
-  useEffect(() => {
-    queryAppInfo()
-  }, [])
+  const [appInfo] = useState<AppInfo | undefined>(window.app.getCurrentAppInfo())
 
   const onFullscreen = useCallback(() => {
     setIsFull((full) => {
@@ -42,7 +35,7 @@ export const AppAlert: FC = () => {
     if (!appInfo) {
       return
     }
-    window.app.destroyInAlert(appInfo.id)
+    window.app.destroyAlertById(appInfo.id)
   }, [appInfo])
 
   const onAlwaysTop = useCallback(() => {
@@ -109,7 +102,7 @@ export const AppAlert: FC = () => {
             <Button
               onClick={onHide}
               key="hide"
-              title="缩小到任务栏"
+              title="最小化"
               shape="square"
               variant="text"
               icon={<RemoveIcon size="22px" />}
@@ -117,7 +110,7 @@ export const AppAlert: FC = () => {
             <Button
               onClick={onFullscreen}
               key="fullscreen"
-              title="放大"
+              title="最大化"
               shape="square"
               variant="text"
               icon={fullIcon}

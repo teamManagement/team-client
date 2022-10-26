@@ -2,7 +2,22 @@ import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 import { proxyApi, TcpTransferCmdCode } from './proxy'
 import { ContextMenu } from './electronProxy'
-import { ApplicationView, getCurrentAppInfo } from './appViews'
+import {
+  currentShowInAlert,
+  destroyAlertById,
+  destroyById,
+  getCurrentAppInfo,
+  getOpenedIdList,
+  hangUp,
+  hideById,
+  hideEndOpenedApp,
+  listenStatusNotice,
+  openApp,
+  removeStatusNotice,
+  restore,
+  showById,
+  showInAlertById
+} from './appViews'
 import { currentWindow } from './windows'
 
 // Custom APIs for renderer
@@ -40,23 +55,20 @@ const apiMap: { [key: string]: any } = {
   IconType: IconType,
   proxyApi: proxyApi,
   TcpTransferCmdCode,
-  ApplicationView: function (appInfo: any) {
-    return new ApplicationView(appInfo)
-  },
   app: {
-    getOpenedIdList: ApplicationView.getOpenedIdList,
-    getAlertIdList: ApplicationView.getAlertIdList,
-    getApplicationViewById: ApplicationView.getApplicationViewById,
-    openApp: ApplicationView.openApp,
-    closeApp: ApplicationView.closeApp,
-    listenOpenStatusNotice: ApplicationView.listenOpenStatusNotice,
-    removeListenOpenStatusNotice: ApplicationView.removeListenOpenStatusNotice,
-    show: ApplicationView.show,
-    // showOrLoad: ApplicationView.showOrLoad,
-    hangUp: ApplicationView.hangUp,
-    restore: ApplicationView.restore,
-    showInAlert: ApplicationView.showInAlert,
-    destroyInAlert: ApplicationView.destroyInAlert,
+    getOpenedIdList,
+    listenStatusNotice,
+    removeStatusNotice,
+    openApp,
+    showById,
+    showInAlertById,
+    currentShowInAlert,
+    hideById,
+    hangUp,
+    restore,
+    hideEndOpenedApp,
+    destroyById,
+    destroyAlertById,
     getCurrentAppInfo
   },
   currentWindow

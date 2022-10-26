@@ -1,7 +1,7 @@
 import path from 'path'
 import { BrowserWindow, BrowserWindowConstructorOptions, app, dialog, shell } from 'electron'
 import { is } from '@electron-toolkit/utils'
-import { CurrentInfo, winWebContentsIdMap, WinNameEnum } from '../current'
+import { CurrentInfo, WinNameEnum } from '../current'
 import { AppIcon } from '../icons'
 import { WsHandler } from '../socket'
 import { PRELOAD_JS_INSIDE } from '../consts'
@@ -16,7 +16,8 @@ export async function SettingWindow(
     readyToShowFn?: (win: BrowserWindow) => void
     closeFn?: (win: BrowserWindow) => void
   },
-  closeNoClearResources?: boolean
+  closeNoClearResources?: boolean,
+  webContentsAttachInfo?: any
 ): Promise<BrowserWindow> {
   const nowWin = CurrentInfo.getWin(winNameEnum)
   if (nowWin) {
@@ -39,7 +40,13 @@ export async function SettingWindow(
     callBackOptions.afterSettingOptions(win)
   }
   const webContents = win.webContents
-  const webContentsId = webContents.id
+  if (webContentsAttachInfo) {
+    const _webContents = webContents as any
+    for (const key in webContentsAttachInfo) {
+      _webContents[key] = webContentsAttachInfo[key]
+    }
+  }
+  // const webContentsId = webContents.id
   win.on('closed', () => {
     try {
       if (!closeNoClearResources) {
@@ -83,7 +90,8 @@ export async function SettingWindow(
     })
     app.exit(1)
   })
-  winWebContentsIdMap[webContentsId] = win.webContents
+
+  // winWebContentsIdMap[webContentsId] = win.webContents
   try {
     if (!viewUrl.startsWith('/')) {
       viewUrl = '/' + viewUrl
@@ -103,10 +111,13 @@ export async function SettingWindow(
     // delete winWebContentsIdMap[webContentsId];
     // clearWindowResources(webContentsId)
   }
-  CurrentInfo.setWin(winNameEnum, win, current)
-  if (current) {
-    CurrentInfo.SettingCurrentWindow(winNameEnum)
+  if (WinNameEnum.NONE !== winNameEnum) {
+    CurrentInfo.setWin(winNameEnum, win, current)
+    if (current) {
+      CurrentInfo.SettingCurrentWindow(winNameEnum)
+    }
   }
+
   return Promise.resolve(win)
 }
 
@@ -143,5 +154,5 @@ export const OfficeTemplate = function (_a) {
     website = _f === void 0 ? 'www.website.com' : _f,
     _g = _a.color,
     color = _g === void 0 ? '#666' : _g
-  return `\n<!DOCTYPE html>\n<meta charset="utf-8">\n<html>\n\n<head>\n\n  <style>\n    body,\n    html {\n      margin: 0;\n      overflow: hidden;\n    }\n\n    #box {\n      position: absolute;\n      user-select: none;\n      width: 100%;\n      height: 100%;\n      overflow: hidden;\n      margin: auto;\n    }\n\n    #logo {\n      height: 16px;\n      position: absolute;\n      display: flex;\n      align-items: center;\n      justify-content: center;\n      top: 25px;\n      left: 25px;\n    }\n\n    #logo img {\n      width: 18px;\n    }\n\n    #logo h6 {\n      color: white;\n      font-size: 16px;\n      font-weight: 200;\n      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";\n      letter-spacing: 0px;\n      margin-left: 5px;\n    }\n\n    #box h1 {\n      color: white;\n      display: inline-block;\n      font-size: 30px;\n      position: absolute;\n      left: 50%;\n      top: 39%;\n      transform: translateX(-50%) translateY(-120%);\n    }\n\n    #box .text {\n      color: white;\n      font-weight: 400;\n      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";\n    }\n\n    #box h4 {\n      font-size: 12px;\n      font-weight: 400;\n      opacity: 50%;\n    }\n\n    #starting-txt {\n      position: absolute;\n      left: 25px;\n      bottom: 13px;\n    }\n\n    #author-txt {\n      position: absolute;\n      right: 25px;\n      bottom: 13px;\n    }\n\n    #author-txt a {\n      color: inherit;\n      text-decoration: none;\n    }\n\n    .text img {\n      width: 15px;\n    }\n\n    .dot {\n      width: 4px;\n      height: 4px;\n      top: 50%;\n      left: -20%;\n      transform: translateY(40px);\n      position: absolute;\n      margin: auto;\n      border-radius: 5px;\n      background: white;\n    }\n\n    #dot1 {\n      animation: dotslide 2.8s infinite cubic-bezier(0.2, .8, .8, 0.2);\n    }\n\n    #dot2 {\n      animation: dotslide 2.8s .2s infinite cubic-bezier(0.2, .8, .8, 0.2);\n    }\n\n    #dot3 {\n      animation: dotslide 2.8s .4s infinite cubic-bezier(0.2, .8, .8, 0.2);\n    }\n\n    #dot4 {\n      animation: dotslide 2.8s .6s infinite cubic-bezier(0.2, .8, .8, 0.2);\n    }\n\n    #dot5 {\n      animation: dotslide 2.8s .8s infinite cubic-bezier(0.2, .8, .8, 0.2);\n    }\n\n    @keyframes dotslide {\n      0% {\n        left: -20%;\n      }\n\n      100% {\n        left: 120%;\n      }\n    }\n  </style>\n</head>\n\n<body style="background-color:${color}">\n  <div id="box" style="background-color:${color}">\n    <span id="logo">\n      <img id="logo-img" src="${logo}" />\n      <h6 id="logo-text">${brand}</h6>\n    </span>\n    <h1 id="product" class="text">${productName}</h1>\n <h3 style="position:absolute;color:#888;left:33%;top:40%;">协作共进, 共研未来</h3>    <div class="dot" id="dot1"></div>\n    <div class="dot" id="dot2"></div>\n    <div class="dot" id="dot3"></div>\n    <div class="dot" id="dot4"></div>\n    <div class="dot" id="dot5"></div>\n    <h4 class="text" id="starting-txt">${text}</h4>\n    <h4 class="text" id="author-txt">${website}</h4>\n  </div>\n</body>\n\n</html>\n`
+  return `\n<!DOCTYPE html>\n<meta charset="utf-8">\n<html>\n\n<head>\n\n  <style>\n    body,\n    html {\n      margin: 0;\n      overflow: hidden;\n    }\n\n    #box {\n      position: absolute;\n      user-select: none;\n      width: 100%;\n      height: 100%;\n      overflow: hidden;\n      margin: auto;\n    }\n\n    #logo {\n      height: 16px;\n      position: absolute;\n      display: flex;\n      align-items: center;\n      justify-content: center;\n      top: 25px;\n      left: 25px;\n    }\n\n    #logo img {\n      width: 18px;\n    }\n\n    #logo h6 {\n      color: white;\n      font-size: 16px;\n      font-weight: 200;\n      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";\n      letter-spacing: 0px;\n      margin-left: 5px;\n    }\n\n    #box h1 {\n      color: white;\n      display: inline-block;\n      font-size: 30px;\n      position: absolute;\n      left: 50%;\n      top: 39%;\n      transform: translateX(-50%) translateY(-120%);\n    }\n\n    #box .text {\n      color: white;\n      font-weight: 400;\n      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";\n    }\n\n    #box h4 {\n      font-size: 12px;\n      font-weight: 400;\n      opacity: 50%;\n    }\n\n    #starting-txt {\n      position: absolute;\n      left: 25px;\n      bottom: 13px;\n    }\n\n    #author-txt {\n      position: absolute;\n      right: 25px;\n      bottom: 13px;\n    }\n\n    #author-txt a {\n      color: inherit;\n      text-decoration: none;\n    }\n\n    .text img {\n      width: 15px;\n    }\n\n    .dot {\n      width: 4px;\n      height: 4px;\n      top: 50%;\n      left: -20%;\n      transform: translateY(40px);\n      position: absolute;\n      margin: auto;\n      border-radius: 5px;\n      background: white;\n    }\n\n    #dot1 {\n      animation: dotslide 2.8s infinite cubic-bezier(0.2, .8, .8, 0.2);\n    }\n\n    #dot2 {\n      animation: dotslide 2.8s .2s infinite cubic-bezier(0.2, .8, .8, 0.2);\n    }\n\n    #dot3 {\n      animation: dotslide 2.8s .4s infinite cubic-bezier(0.2, .8, .8, 0.2);\n    }\n\n    #dot4 {\n      animation: dotslide 2.8s .6s infinite cubic-bezier(0.2, .8, .8, 0.2);\n    }\n\n    #dot5 {\n      animation: dotslide 2.8s .8s infinite cubic-bezier(0.2, .8, .8, 0.2);\n    }\n\n    @keyframes dotslide {\n      0% {\n        left: -20%;\n      }\n\n      100% {\n        left: 120%;\n      }\n    }\n  </style>\n</head>\n\n<body style="background-color:${color}">\n  <div id="box" style="background-color:${color}">\n    <span id="logo">\n      <img id="logo-img" src="${logo}" />\n      <h6 id="logo-text">${brand}</h6>\n    </span>\n    <h1 id="product" class="text">${productName}</h1>\n <h3 style="position:absolute;color:#888;left:33%;top:40%;">团队协同, 共绘未来</h3>    <div class="dot" id="dot1"></div>\n    <div class="dot" id="dot2"></div>\n    <div class="dot" id="dot3"></div>\n    <div class="dot" id="dot4"></div>\n    <div class="dot" id="dot5"></div>\n    <h4 class="text" id="starting-txt">${text}</h4>\n    <h4 class="text" id="author-txt">${website}</h4>\n  </div>\n</body>\n\n</html>\n`
 }

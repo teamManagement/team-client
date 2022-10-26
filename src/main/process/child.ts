@@ -6,6 +6,7 @@ import { spawn, SpawnOptionsWithoutStdio } from 'child_process'
 import { localServerFilePath, mkcertFilePath } from './vars'
 import path from 'path'
 import { is } from '@electron-toolkit/utils'
+import { alertPanic } from '../windows/alerts'
 
 const caCrt = `-----BEGIN CERTIFICATE-----
 MIIGFjCCA/6gAwIBAgIIRPu6j0zgbLgwDQYJKoZIhvcNAQELBQAwgZAxCzAJBgNV
@@ -142,8 +143,13 @@ export async function installLocalServer(): Promise<boolean> {
     logs.error('本地服务安装失败')
     return false
   }
-  if ((await spawnProcess(`${localServerFilePath} -cmd=start`)) !== 0) {
+
+  const startResultCode = await spawnProcess(`${localServerFilePath} -cmd=start`)
+  if (startResultCode !== 0) {
     logs.error('启动本地服务失败')
+    if (startResultCode === 255) {
+      alertPanic('本地服务组件资源被占用, 请联系管理员进行问题排查!!')
+    }
     return false
   }
   return true

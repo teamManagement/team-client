@@ -8,16 +8,47 @@ enum WindowsEventName {
   MINIMIZE = 'WIN-MINIMIZE',
   UNMINIMIZE = 'WIN-UN-MINIMIZE',
   ALWAYS_TOP = 'WIN-ALWAYS-TOP',
-  UN_ALWAYS_TOP = 'WIN-UN-ALWAYS-TOP'
+  UN_ALWAYS_TOP = 'WIN-UN-ALWAYS-TOP',
+  EVENT_REGISTER = 'WIN-EVENT-REGISTER'
 }
 
-async function _winOperation(event: IpcMainInvokeEvent, name: WindowsEventName): Promise<void> {
+const renderEventMap: { [key: string]: () => void } = {}
+
+async function _winOperation(
+  event: IpcMainInvokeEvent,
+  name: WindowsEventName,
+  eventName: string,
+  eventId: string
+): Promise<void> {
   const win = BrowserWindow.fromWebContents(event.sender)
   if (!win) {
     return
   }
 
-  switch (name) {
+  if (name === WindowsEventName.EVENT_REGISTER) {
+    if (!eventId) {
+      throw new Error('缺失')
+    }
+    const callback: () => void = () => {
+      event.sender.send(eventName)
+    }
+    renderEventMap[eventId] = callback
+    winEventRegister(win, eventName, callback)
+    return
+  }
+  winOperation(win, name)
+}
+
+export function winEventRegister(win: BrowserWindow, eventName: string, fn: any): void {
+  win.addListener(eventName as any, fn)
+}
+
+export function winEventRemove(win: BrowserWindow, eventName: string, fn: any): void {
+  win.removeListener(eventName as any, fn)
+}
+
+export function winOperation(win: BrowserWindow, operationName: WindowsEventName): void {
+  switch (operationName) {
     case WindowsEventName.FULLSCREEN:
       win.setFullScreen(true)
       return
@@ -25,10 +56,24 @@ async function _winOperation(event: IpcMainInvokeEvent, name: WindowsEventName):
       win.setFullScreen(false)
       return
     case WindowsEventName.MAXIMIZE:
+      if (process.platform === 'win32') {
+        if ((win as any)._unmaximizeBounds) {
+          return
+        }
+        ;(win as any)._unmaximizeBounds = win.getBounds()
+      }
       win.maximize()
       return
     case WindowsEventName.UNMAXIMIZE:
-      win.unmaximize()
+      if (process.platform === 'win32') {
+        if (!(win as any)._unmaximizeBounds) {
+          return
+        }
+        win.setBounds((win as any)._unmaximizeBounds)
+        delete (win as any)._unmaximizeBounds
+      } else {
+        win.unmaximize()
+      }
       return
     case WindowsEventName.MINIMIZE:
       win.minimize()

@@ -111,6 +111,12 @@ export class WsHandler {
         return
       }
       log.debug('用户状态回复成功')
+      const mockData = JSON.stringify({ cmdCode: 2, dataType: 0 })
+      const list = WsHandler.instance._serverPushMsgTransferWebContentList
+      for (const w of list) {
+        w.send('ipc-serverMsgTransferEvent', mockData)
+      }
+      log.debug('用户回复之后的状态已向渲染进程进行推送')
     }
     this._retryNum = 0
   }
@@ -195,6 +201,12 @@ export class WsHandler {
         this._clearResources()
         this._connectionOk = false
         log.warn('socket连接被断开')
+        const mockData = JSON.stringify({ cmdCode: 0, dataType: 0 })
+        const list = WsHandler.instance._serverPushMsgTransferWebContentList
+        for (const w of list) {
+          w.send('ipc-serverMsgTransferEvent', mockData)
+        }
+        log.debug('连接断开消息已推送至渲染进程中')
         setTimeout(() => {
           this._retryNum += 1
           log.info('正在尝试重连socket连接')
@@ -252,7 +264,7 @@ export class WsHandler {
     })
   }
 
-  public _callbackDataAndReceiveSyn<T>(id: string, data: any): Promise<MessageContent> {
+  public _callbackDataAndReceiveSyn(id: string, data: any): Promise<MessageContent> {
     return new Promise<MessageContent>((resolve, reject) => {
       const messageContent = {
         id,

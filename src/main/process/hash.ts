@@ -3,6 +3,7 @@ import fs from 'fs'
 import { createHash } from 'crypto'
 import logs from 'electron-log'
 import { localServerFilePath, mkcertFilePath, packageInfo } from './vars'
+import { is } from '@electron-toolkit/utils'
 
 function fileToSha512(filePath: string): Promise<string> {
   return new Promise<string>((resolve, reject) => {
@@ -33,6 +34,11 @@ export async function verifyExternalProgramHash(): Promise<boolean> {
     }
 
     logs.debug('mkcert程序HASH验证成功!')
+
+    if (is.dev) {
+      logs.debug('当前环境为开发环境, 跳过本地服务文件的HASH验证')
+      return true
+    }
 
     if (
       (await fileToSha512(localServerFilePath)) !==

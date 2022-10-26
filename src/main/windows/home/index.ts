@@ -1,4 +1,5 @@
 import { app, BrowserWindow, Menu, Tray } from 'electron'
+import { browserWindowListenViewResize } from '../../applications/manager'
 import { CurrentInfo, WinNameEnum } from '../../current'
 import { AppIcon } from '../../icons'
 import { SettingWindow } from '../common'
@@ -8,7 +9,7 @@ let platformTray: Tray | undefined = undefined
 export async function SettingHomeWin(
   showOperation?: (win: BrowserWindow) => void
 ): Promise<BrowserWindow> {
-  return await SettingWindow(
+  const bw = await SettingWindow(
     WinNameEnum.HOME,
     {
       width: 1000,
@@ -41,6 +42,10 @@ export async function SettingHomeWin(
       }
     }
   )
+
+  browserWindowListenViewResize(bw)
+
+  return bw
 }
 
 function initTray(): void {
@@ -66,7 +71,7 @@ function initTray(): void {
     }
   ])
   platformTray = new Tray(AppIcon)
-  platformTray.setToolTip('团队协作平台')
+  platformTray.setToolTip('Team Managed')
   platformTray.setContextMenu(menu)
   platformTray.addListener('double-click', () => {
     CurrentInfo.CurrentWindow?.show()
