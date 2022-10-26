@@ -1,5 +1,5 @@
 import AppOpenTitle from '@renderer/components/AppOpenTitle'
-import { CSSProperties, FC, useCallback, useEffect, useMemo, useState } from 'react'
+import { CSSProperties, FC, useCallback, useMemo, useState } from 'react'
 import {
   FullscreenExitIcon,
   FullscreenIcon,

@@ -43,6 +43,11 @@ export async function SettingHomeWin(
     }
   )
 
+  bw.addListener('close', (event) => {
+    event.preventDefault()
+    bw.hide()
+  })
+
   browserWindowListenViewResize(bw)
 
   return bw

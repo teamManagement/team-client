@@ -176,47 +176,46 @@ function _calcViewBounds(bw: BrowserWindow, inAlert?: boolean): Rectangle {
  * @param url 视图页面加载路径
  */
 async function loadView(bw: BrowserWindow, bv: BrowserView, url: string): Promise<void> {
-  if (!url) {
-    throw new Error('缺失应用路径')
-  }
+  bv.webContents.addListener('dom-ready', () => {
+    const _view = bv as any
+    const _originBounds = _view._originBounds
+    delete _view._originBounds
+    if (_originBounds) {
+      bv.setBounds(_originBounds)
+    }
+  })
 
-  try {
-    bv.webContents.addListener('dom-ready', () => {
-      const _view = bv as any
-      const _originBounds = _view._originBounds
-      delete _view._originBounds
-      if (_originBounds) {
-        bv.setBounds(_originBounds)
+  bv.webContents.setWindowOpenHandler((details) => {
+    bv.webContents.send('ipc-url-new-window-handler', details.url)
+    return { action: 'deny' }
+  })
+
+  // 修复请求跨域问题
+  bv.webContents.session.webRequest.onBeforeSendHeaders((details, callback) => {
+    callback({
+      requestHeaders: { referer: '*', ...details.requestHeaders }
+    })
+  })
+
+  bv.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        'Access-Control-Allow-Origin': ['*'],
+        ...details.responseHeaders
       }
     })
+  })
 
-    bv.webContents.setWindowOpenHandler((details) => {
-      bv.webContents.send('ipc-url-new-window-handler', details.url)
-      return { action: 'deny' }
-    })
-
-    // 修复请求跨域问题
-    bv.webContents.session.webRequest.onBeforeSendHeaders((details, callback) => {
-      callback({
-        requestHeaders: { referer: '*', ...details.requestHeaders }
-      })
-    })
-
-    bv.webContents.session.webRequest.onHeadersReceived((details, callback) => {
-      callback({
-        responseHeaders: {
-          'Access-Control-Allow-Origin': ['*'],
-          ...details.responseHeaders
-        }
-      })
-    })
-
-    bw.setBrowserView(bv)
-    bv.setAutoResize({
-      width: true,
-      height: true
-    })
-    bv.setBounds(_calcViewBounds(bw))
+  bw.setBrowserView(bv)
+  bv.setAutoResize({
+    width: true,
+    height: true
+  })
+  bv.setBounds(_calcViewBounds(bw))
+  try {
+    if (!url) {
+      throw { message: 'not found application view url' }
+    }
 
     await bv.webContents.loadURL(url)
   } catch (e) {
@@ -282,6 +281,11 @@ async function openAppView(event: IpcMainInvokeEvent, appInfo: AppInfo): Promise
   }
   _viewMap[appInfo.id] = viewInfo
 
+  CurrentInfo.getWin(WinNameEnum.HOME)?.webContents.send(
+    'ipc-app-open-status-notice',
+    viewInfo.appInfo,
+    'showTitle'
+  )
   await loadView(bw, bv, appInfo.url)
   ;(bv.webContents as any)._appInfo = appInfo
   _wrapperEndOpenInfo = viewInfo
@@ -377,6 +381,9 @@ async function showViewInAlert(_event: IpcMainInvokeEvent, id: string): Promise<
       {
         async readyToShowFn(win) {
           win.show()
+        },
+        closeFn() {
+          destroyAlertView(null as any, viewInfo.appInfo.id)
         }
       },
       true,
@@ -463,8 +470,10 @@ async function destroyAlertView(_event: IpcMainInvokeEvent, id: string): Promise
     const viewInfo = checkViewById(id)
     const win = viewInfo.win
     if (win) {
-      win.hide()
-      win.destroy()
+      if (!win.isDestroyed()) {
+        win.hide()
+        win.destroy()
+      }
     }
     CurrentInfo.getWin(WinNameEnum.HOME)?.webContents.send(
       'ipc-app-open-status-notice',

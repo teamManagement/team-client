@@ -33,12 +33,15 @@ export const ContentApplicationCenter: FC = () => {
 
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-    const appOpenedNoticeEvent = (appInfo: AppInfo, status: 'open' | 'close') => {
+    const appOpenedNoticeEvent = (appInfo: AppInfo, status: 'open' | 'close' | 'showTitle') => {
       const id = appInfo.id
       setOpenedAppIdList((idList) => {
         const targetIdList = [...idList]
         const index = idList.indexOf(id)
-        if (status === 'open') {
+        if (status === 'showTitle') {
+          setNowOpenApp(appInfo)
+          return idList
+        } else if (status === 'open') {
           if (index === -1) {
             targetIdList.push(id)
           } else {
@@ -73,10 +76,8 @@ export const ContentApplicationCenter: FC = () => {
   const appOpen = useCallback(async (app: AppInfo) => {
     setLoadingDesc('正在打开应用...')
     try {
-      setNowOpenApp(app)
       await window.app.openApp(app)
     } catch (e) {
-      setNowOpenApp(undefined)
       MessagePlugin.error(e as string)
     } finally {
       setLoadingDesc('')
@@ -88,7 +89,6 @@ export const ContentApplicationCenter: FC = () => {
       return
     }
     await window.app.destroyById(nowOpenApp.id)
-    setNowOpenApp(undefined)
   }, [nowOpenApp])
 
   const onAppAlert = useCallback(async () => {

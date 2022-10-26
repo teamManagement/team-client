@@ -15,7 +15,7 @@ const appDesktopContextMenu = window.electron?.ContextMenu.getById('appDesktopCo
 })()
 
 const appStoreInfo: AppInfo = {
-  id: '1',
+  id: '0',
   name: '应用商店',
   inside: true,
   type: (window as any).AppType?.REMOTE_WEB,
