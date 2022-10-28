@@ -7,6 +7,8 @@ import AsyncLock from 'async-lock'
 import { IpcMainInvokeEvent, ipcMain, WebContents } from 'electron'
 import { alertMsgAndRelaunch as alertMsgAndBreakToLogin } from '../windows/alerts'
 import { clearAllApplicationViews } from '../applications/manager'
+import { CurrentInfo, WinNameEnum } from '../current'
+import { SettingLoginWin } from '../windows/login'
 const WebSocket = require('ws')
 
 const lock = new AsyncLock()
@@ -360,6 +362,18 @@ export class WsHandler {
     }
     this._loginOk = true
     return response.data
+  }
+
+  public async logout(): Promise<void> {
+    log.debug('帐号登出...')
+    await this.sendDataAdnReceiveSync('logout', undefined)
+    this._loginOk = false
+
+    log.debug('重置窗体到登录界面')
+    CurrentInfo.getWin(WinNameEnum.HOME)?.hide()
+    SettingLoginWin()
+    CurrentInfo.getWin(WinNameEnum.HOME)?.destroy()
+    CurrentInfo.setWin(WinNameEnum.HOME, undefined)
   }
 
   public clearWebContentResource(webContent: WebContents): void {

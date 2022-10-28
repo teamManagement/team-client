@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain, IpcMainEvent } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, IpcMainEvent, screen } from 'electron'
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import log from 'electron-log'
 import { DialogTopWin } from './windows/common'
@@ -13,6 +13,7 @@ import { installCaCert, installLocalServer, verifyExternalProgramHash } from './
 import { initApiProxy } from './apiProxy'
 import { alertPanic } from './windows/alerts'
 import { initApplicationViewManager } from './applications/manager'
+import { initNotificationEvent } from './notification'
 
 app.commandLine.appendSwitch('--disable-http-cache')
 
@@ -29,6 +30,8 @@ process.on('uncaughtException', (error) => {
 })
 
 async function createWindow(): Promise<void> {
+  const allDisplay = screen.getAllDisplays()
+  console.log(allDisplay)
   const hideSplashscreen = getInitSplashscreen()
 
   log.debug('初始化electron api代理...')
@@ -68,6 +71,10 @@ async function createWindow(): Promise<void> {
     log.debug('注册应用视图事件...')
     initApplicationViewManager()
     log.debug('注册应用试图相关事件完毕!')
+
+    log.debug('注册消息通知事件...')
+    initNotificationEvent()
+    log.debug('注册消息通知事件完毕！！！')
 
     if (connResult) {
       if ((await wsHandler.loginOk()) || (await wsHandler.autoLogin())) {

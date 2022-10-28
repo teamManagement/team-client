@@ -24,6 +24,8 @@ export function alertMsgAndRelaunch(message: string): void {
     buttons: ['确定']
   })
 
-  CurrentInfo.getWin(WinNameEnum.HOME)?.close()
+  CurrentInfo.getWin(WinNameEnum.HOME)?.hide()
   SettingLoginWin()
+  CurrentInfo.getWin(WinNameEnum.HOME)?.destroy()
+  CurrentInfo.setWin(WinNameEnum.HOME, undefined)
 }

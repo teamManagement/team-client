@@ -12,6 +12,7 @@ import {
 import { PRELOAD_JS_INSIDE, PRELOAD_JS_NEW_WINDOW_OPEN } from '../consts'
 import { SettingWindow } from '../windows/common'
 import { CurrentInfo, WinNameEnum } from '../current'
+import { ipcEventPromiseWrapper } from '../tools/ipc'
 
 //#region APP相关接口
 enum AppType {
@@ -493,24 +494,6 @@ async function destroyAlertView(_event: IpcMainInvokeEvent, id: string): Promise
   }
 }
 
-function eventPromiseWrapper(
-  res: (event: IpcMainInvokeEvent, ...data: any) => Promise<any>
-): (event: IpcMainInvokeEvent, ...data: any) => Promise<any> {
-  return async (event, ...reqData: any) => {
-    try {
-      let data = await res(event, ...reqData)
-      if (data) {
-        data = JSON.stringify(data)
-      }
-
-      return { error: false, data }
-    } catch (e: any) {
-      const err = e as Error
-      return { error: true, msg: err.message }
-    }
-  }
-}
-
 function appOpenedIdListGet(event: IpcMainEvent): void {
   event.returnValue = Object.keys(_viewMap)
 }
@@ -543,19 +526,19 @@ async function hideEndOpenedApp(event: IpcMainInvokeEvent): Promise<void> {
 }
 
 export function initApplicationViewManager(): void {
-  ipcMain.handle(ApplicationViewEventNames.OPEN_APP_VIEW, eventPromiseWrapper(openAppView))
-  ipcMain.handle(ApplicationViewEventNames.SHOW_VIEW, eventPromiseWrapper(showView))
-  ipcMain.handle(ApplicationViewEventNames.SHOW_IN_ALERT, eventPromiseWrapper(showViewInAlert))
+  ipcMain.handle(ApplicationViewEventNames.OPEN_APP_VIEW, ipcEventPromiseWrapper(openAppView))
+  ipcMain.handle(ApplicationViewEventNames.SHOW_VIEW, ipcEventPromiseWrapper(showView))
+  ipcMain.handle(ApplicationViewEventNames.SHOW_IN_ALERT, ipcEventPromiseWrapper(showViewInAlert))
   ipcMain.handle(
     ApplicationViewEventNames.SHOW_IN_ALERT_NOW_BY_OPENED,
-    eventPromiseWrapper(currentAppShowInAlert)
+    ipcEventPromiseWrapper(currentAppShowInAlert)
   )
-  ipcMain.handle(ApplicationViewEventNames.HIDE_VIEW, eventPromiseWrapper(hideView))
-  ipcMain.handle(ApplicationViewEventNames.HIDE_END_VIEW, eventPromiseWrapper(hideEndOpenedApp))
-  ipcMain.handle(ApplicationViewEventNames.DESTROY_VIEW, eventPromiseWrapper(destroyView))
-  ipcMain.handle(ApplicationViewEventNames.DESTROY_ALERT, eventPromiseWrapper(destroyAlertView))
-  ipcMain.handle(ApplicationViewEventNames.HANG_UP, eventPromiseWrapper(hangUp))
-  ipcMain.handle(ApplicationViewEventNames.RESTORE, eventPromiseWrapper(restore))
+  ipcMain.handle(ApplicationViewEventNames.HIDE_VIEW, ipcEventPromiseWrapper(hideView))
+  ipcMain.handle(ApplicationViewEventNames.HIDE_END_VIEW, ipcEventPromiseWrapper(hideEndOpenedApp))
+  ipcMain.handle(ApplicationViewEventNames.DESTROY_VIEW, ipcEventPromiseWrapper(destroyView))
+  ipcMain.handle(ApplicationViewEventNames.DESTROY_ALERT, ipcEventPromiseWrapper(destroyAlertView))
+  ipcMain.handle(ApplicationViewEventNames.HANG_UP, ipcEventPromiseWrapper(hangUp))
+  ipcMain.handle(ApplicationViewEventNames.RESTORE, ipcEventPromiseWrapper(restore))
   ipcMain.addListener(ApplicationViewEventNames.OPENED_APP_ID_LIST, appOpenedIdListGet)
 }
 

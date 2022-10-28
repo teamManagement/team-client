@@ -1,4 +1,4 @@
-import { FC, useCallback, useState } from 'react'
+import { FC, useCallback, useState, KeyboardEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Button,
@@ -9,7 +9,8 @@ import {
   Loading,
   MessagePlugin,
   SubmitContext,
-  loading as loadingFn
+  loading as loadingFn,
+  InputValue
 } from 'tdesign-react'
 import { UserIcon, LockOnIcon } from 'tdesign-icons-react'
 import { sha1 } from 'hash.js'
@@ -89,6 +90,15 @@ export const Login: FC = () => {
     navigate('/login/registryAccount', { replace: true })
   }, [])
 
+  const keyUpSubmitForm = useCallback(
+    (_val: InputValue, ctx: { e: KeyboardEvent<HTMLInputElement> }) => {
+      if (ctx.e.key.toLocaleLowerCase() === 'enter') {
+        form.submit!()
+      }
+    },
+    []
+  )
+
   return (
     <Loading showOverlay loading={loading} text="正在登录...">
       <div className="login match-parent" style={{ backgroundImage: `url(${backgroundImg})` }}>
@@ -113,13 +123,19 @@ export const Login: FC = () => {
             >
               <Form.FormItem name="username">
                 <Input
+                  onKeyup={keyUpSubmitForm}
                   onBlur={usernameBlur}
                   prefixIcon={<UserIcon />}
                   placeholder="请输入用户名/身份识别号/邮箱"
                 />
               </Form.FormItem>
               <Form.FormItem name="password">
-                <Input prefixIcon={<LockOnIcon />} type="password" placeholder="请输入用户密码" />
+                <Input
+                  onKeyup={keyUpSubmitForm}
+                  prefixIcon={<LockOnIcon />}
+                  type="password"
+                  placeholder="请输入用户密码"
+                />
               </Form.FormItem>
               <Form.FormItem>
                 <Button type="submit" block theme="success">

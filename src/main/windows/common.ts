@@ -17,7 +17,8 @@ export async function SettingWindow(
     closeFn?: (win: BrowserWindow) => void
   },
   closeNoClearResources?: boolean,
-  webContentsAttachInfo?: any
+  webContentsAttachInfo?: any,
+  preloadJsPath?: string
 ): Promise<BrowserWindow> {
   const nowWin = CurrentInfo.getWin(winNameEnum)
   if (nowWin) {
@@ -31,7 +32,7 @@ export async function SettingWindow(
     show: false,
     ...windowOptions,
     webPreferences: {
-      preload: PRELOAD_JS_INSIDE,
+      preload: preloadJsPath || PRELOAD_JS_INSIDE,
       sandbox: false
     }
   }

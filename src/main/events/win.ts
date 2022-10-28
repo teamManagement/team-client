@@ -9,7 +9,10 @@ enum WindowsEventName {
   UNMINIMIZE = 'WIN-UN-MINIMIZE',
   ALWAYS_TOP = 'WIN-ALWAYS-TOP',
   UN_ALWAYS_TOP = 'WIN-UN-ALWAYS-TOP',
-  EVENT_REGISTER = 'WIN-EVENT-REGISTER'
+  EVENT_REGISTER = 'WIN-EVENT-REGISTER',
+  SHOW = 'WIN-SHOW',
+  HIDE = 'WIN-HIDE',
+  CLOSE = 'WIN-CLOSE'
 }
 
 const renderEventMap: { [key: string]: () => void } = {}
@@ -88,6 +91,15 @@ export function winOperation(win: BrowserWindow, operationName: WindowsEventName
     case WindowsEventName.UN_ALWAYS_TOP:
       win.setAlwaysOnTop(false)
       win.setVisibleOnAllWorkspaces(false)
+      return
+    case WindowsEventName.SHOW:
+      win.show()
+      return
+    case WindowsEventName.HIDE:
+      win.hide()
+      return
+    case WindowsEventName.CLOSE:
+      win.close()
       return
   }
 }

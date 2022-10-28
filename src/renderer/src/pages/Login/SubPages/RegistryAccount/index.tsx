@@ -1,11 +1,25 @@
 import { FC, useCallback, useMemo, useState } from 'react'
-import { Button, Form, Input, FormRule, MessagePlugin, loading } from 'tdesign-react'
+import {
+  Button,
+  Form,
+  Input,
+  FormRule,
+  MessagePlugin,
+  loading,
+  SubmitContext,
+  message,
+  DialogPlugin
+} from 'tdesign-react'
 import { LinkIcon, LocationIcon, LockOnIcon, SecuredIcon, UserIcon } from 'tdesign-icons-react'
 import { useCountDown } from 'ahooks'
+import { useNavigate } from 'react-router-dom'
 import Title from '../Title'
 import './index.scss'
+import { sha1 } from 'hash.js'
 
 export const RegistryAccount: FC = () => {
+  const navigate = useNavigate()
+
   const [form] = Form.useForm()
   const [disabledUsername, setDisabledUsername] = useState<boolean>(true)
   const [disabledEmail, setDisabledEmail] = useState<boolean>(true)
@@ -26,6 +40,15 @@ export const RegistryAccount: FC = () => {
     return reg.test(val)
   }, [])
 
+  const validatorPasswordFormat = useCallback((val: string) => {
+    const reg = /^[a-zA-Z0-9_@.]*$/
+    return reg.test(val)
+  }, [])
+
+  const validatorPasswordConfirm = useCallback((val: string) => {
+    return form.getFieldValue!('password') === val
+  }, [])
+
   const formRules = useMemo(() => {
     return {
       idCode: [{ required: true, message: '身份识别号不能为空' }],
@@ -36,6 +59,15 @@ export const RegistryAccount: FC = () => {
       email: [
         { required: true, message: '邮箱地址不能为空' },
         { email: true, message: '不符合邮箱地址规则' }
+      ],
+      password: [
+        { required: true, message: '密码不能为空' },
+        { validator: validatorPasswordFormat, message: '密码只能由数字、字母、下划线、点、@组成' },
+        { min: 6, message: '密码长度不能小于6位' }
+      ],
+      confirmPassword: [
+        { required: true, message: '确认密码不能为空' },
+        { validator: validatorPasswordConfirm, message: '两次密码输入不一致' }
       ]
     } as { [key: string]: FormRule[] }
   }, [])
@@ -77,7 +109,7 @@ export const RegistryAccount: FC = () => {
     }
     const username = form.getFieldValue!('username')
     const idCode = form.getFieldValue!('idCode')
-    const email = form.getFieldValue!('idCode')
+    const email = form.getFieldValue!('email')
 
     const loadingInstance = loading(true)
     setDisabledSendEmailBtn(true)
@@ -104,12 +136,56 @@ export const RegistryAccount: FC = () => {
     }
   }, [])
 
+  const registrySubmit = useCallback(async (ctx: SubmitContext) => {
+    if (ctx.validateResult !== true) {
+      return
+    }
+
+    const loadingInstance = loading(true)
+    try {
+      const username = form.getFieldValue!('username')
+      const email = form.getFieldValue!('email')
+      const idCode = form.getFieldValue!('idCode')
+      const verifyCode = form.getFieldValue!('verifyCode')
+      const password = sha1().update(form.getFieldValue!('password')).digest('hex')
+      await window.proxyApi.httpWebServerProxy('/user/register', {
+        jsonData: {
+          username,
+          email,
+          idCode,
+          verifyCode,
+          password
+        }
+      })
+      const dialog = DialogPlugin.alert({
+        body: '用户注册成功',
+        confirmBtn: {
+          content: '返回登录',
+          variant: 'base',
+          theme: 'success',
+          onClick: () => {
+            navigate('/login', { replace: true })
+            dialog.hide()
+          }
+        },
+        closeOnOverlayClick: false,
+        closeBtn: false
+      })
+    } catch (e) {
+      const resErr = e as ResponseError
+      message.error(resErr.message)
+    } finally {
+      loadingInstance.hide()
+    }
+  }, [])
+
   return (
     <div className="login-full-bg match-parent">
       <div className="content-wrapper">
         <Title desc="帐号注册" />
         <div className="form-content">
           <Form
+            onSubmit={registrySubmit}
             form={form}
             rules={formRules}
             statusIcon={false}

@@ -15,7 +15,8 @@ export default defineConfig({
       rollupOptions: {
         input: {
           inside: resolve(__dirname, 'src/preload/inside/index.ts'),
-          newWindowOpen: resolve(__dirname, 'src/preload/newWindowOpen/index.ts')
+          newWindowOpen: resolve(__dirname, 'src/preload/newWindowOpen/index.ts'),
+          notification: resolve(__dirname, 'src/preload/notification/index.ts')
         },
         external: ['@electron-toolkit/preload']
       }

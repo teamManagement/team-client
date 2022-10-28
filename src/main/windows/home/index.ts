@@ -2,6 +2,8 @@ import { app, BrowserWindow, Menu, Tray } from 'electron'
 import { browserWindowListenViewResize } from '../../applications/manager'
 import { CurrentInfo, WinNameEnum } from '../../current'
 import { AppIcon } from '../../icons'
+import { showNotification } from '../../notification'
+import { WsHandler } from '../../socket'
 import { SettingWindow } from '../common'
 
 let platformTray: Tray | undefined = undefined
@@ -60,18 +62,34 @@ function initTray(): void {
   const menu = Menu.buildFromTemplate([
     {
       label: '打开',
-      // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-      click() {
+      click(): void {
         CurrentInfo.CurrentWindow?.show()
         CurrentInfo.CurrentWindow?.focus()
       }
     },
     { type: 'separator' },
     {
+      label: '退出登录',
+      click(): void {
+        WsHandler.instance.logout()
+      }
+    },
+    {
       label: '退出程序',
-      // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-      click() {
+      click(): void {
         app.exit(0)
+      }
+    },
+    { type: 'separator' },
+    {
+      label: '消息通知测试',
+      click(): void {
+        showNotification('template', {
+          title: '测试',
+          body: '测试内容',
+          duration: 0,
+          closable: true
+        })
       }
     }
   ])

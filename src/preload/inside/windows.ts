@@ -8,7 +8,10 @@ enum WindowsEventName {
   MINIMIZE = 'WIN-MINIMIZE',
   UNMINIMIZE = 'WIN-UN-MINIMIZE',
   ALWAYS_TOP = 'WIN-ALWAYS-TOP',
-  UN_ALWAYS_TOP = 'WIN-UN-ALWAYS-TOP'
+  UN_ALWAYS_TOP = 'WIN-UN-ALWAYS-TOP',
+  SHOW = 'WIN-SHOW',
+  HIDE = 'WIN-HIDE',
+  CLOSE = 'WIN-CLOSE'
 }
 
 function _ipcCurrentWindowInvoke(name: WindowsEventName): Promise<any> {
@@ -39,5 +42,14 @@ export const currentWindow = {
   },
   unAlwaysOnTop(): Promise<void> {
     return _ipcCurrentWindowInvoke(WindowsEventName.UN_ALWAYS_TOP)
+  },
+  show(): Promise<void> {
+    return _ipcCurrentWindowInvoke(WindowsEventName.SHOW)
+  },
+  hide(): Promise<void> {
+    return _ipcCurrentWindowInvoke(WindowsEventName.HIDE)
+  },
+  close(): Promise<void> {
+    return _ipcCurrentWindowInvoke(WindowsEventName.CLOSE)
   }
 }
