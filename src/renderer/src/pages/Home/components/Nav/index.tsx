@@ -1,31 +1,83 @@
 import Avatar from '@renderer/components/Avatar'
-import { FC, useEffect, useState } from 'react'
-import { MessagePlugin } from 'tdesign-react'
+import { FC, useEffect, useState, MouseEvent } from 'react'
 import './index.scss'
 import NavItem from '../NavItem'
 import IconFont from '@renderer/components/IconFont'
-import { UserInfo } from '@renderer/vos/user'
-import { useUserStatus } from '@renderer/hooks'
+import { useUserinfo, useUserStatus } from '@renderer/hooks'
+import { useCallback } from 'react'
 
 export const Nav: FC = () => {
-  const [userInfo, setUserInfo] = useState<UserInfo | undefined>(undefined)
+  const userInfo = useUserinfo()
   const userStatus = useUserStatus()
-  useEffect(() => {
-    window.proxyApi
-      .httpLocalServerProxy<UserInfo>('/user/now')
-      .then((user) => {
-        console.log('获取到的用户信息: ', user)
-        setUserInfo(user)
-      })
-      .catch((e) => {
-        MessagePlugin.error('获取用户信息失败: ' + ((e as any).message || e))
-      })
+  const [showAvatarOperation, setAvatarOperation] = useState<boolean>(false)
+
+  const avatarClick = useCallback((event: MouseEvent<HTMLDivElement>) => {
+    event.preventDefault()
+    event.stopPropagation()
+    setAvatarOperation((show) => !show)
   }, [])
+
+  useEffect(() => {
+    if (!showAvatarOperation) {
+      return
+    }
+
+    const fn: () => void = () => {
+      setAvatarOperation(false)
+    }
+    document.addEventListener('click', fn)
+    return () => {
+      document.removeEventListener('click', fn)
+    }
+  }, [showAvatarOperation])
+
+  const openUserinfoModalWindow = useCallback(() => {
+    window.modalWindow.showInside('/userinfo', {
+      width: 340,
+      height: 490
+    })
+  }, [])
+
+  const logout = useCallback(() => {
+    window.logout()
+  }, [])
+
   return (
     <div className="nav">
       <div className="my-avatar">
         {userInfo && (
-          <Avatar status={userStatus} iconUrl={userInfo.icon} size="48px" name={userInfo.name} />
+          <Avatar
+            onClick={avatarClick}
+            status={userStatus}
+            iconUrl={userInfo.icon}
+            size="48px"
+            name={userInfo.name}
+          />
+        )}
+        {userInfo && showAvatarOperation && (
+          <div className="user-avatar-operation">
+            <div className="user-avatar-operation-title">
+              <Avatar iconUrl={userInfo.icon} size="38px" name={userInfo.name} />
+              <div
+                title={`${userInfo.username}( ${userInfo.name} )`}
+                className="user-avatar-operation-title-username"
+              >
+                <span>{`${userInfo.username}( ${userInfo.name} )`}</span>
+              </div>
+            </div>
+            <div className="user-avatar-operation-desc">
+              <div onClick={openUserinfoModalWindow} className="operation-item">
+                <div className="name">我的信息</div>
+              </div>
+              {/* TODO 这版本不做 */}
+              {/* <div className="operation-item">
+                <div className="name">帐号设置</div>
+              </div> */}
+              <div onClick={logout} className="operation-item">
+                <div className="name">退出登录</div>
+              </div>
+            </div>
+          </div>
         )}
       </div>
       <NavItem to="comments" style={{ marginTop: 28 }} title="消息列表">

@@ -5,7 +5,8 @@ import {
   ipcMain,
   IpcMainEvent,
   IpcMainInvokeEvent,
-  Rectangle
+  Rectangle,
+  session
 } from 'electron'
 import AsyncLock from 'async-lock'
 import { SettingWindow } from '../windows/common'
@@ -13,7 +14,7 @@ import { WinNameEnum } from '../current'
 import { ipcEventPromiseWrapper } from '../tools/ipc'
 import { uniqueId } from '../security/random'
 import { clearTimeout } from 'timers'
-import { PRELOAD_JS_NOTIFICATION } from '../consts'
+import { PRELOAD_JS_INSIDE, PRELOAD_JS_NOTIFICATION } from '../consts'
 import { is, optimizer } from '@electron-toolkit/utils'
 
 const _lock = new AsyncLock()
@@ -379,6 +380,8 @@ export function showNotification(
 
   return _lock.acquire('bw', async (done) => {
     const bwId = uniqueId()
+    const sess = session.fromPartition(bwId)
+    sess.setPreloads([PRELOAD_JS_INSIDE])
     let bw = _browserWindowPool.shift()
     if (!bw) {
       bw = await SettingWindow(
@@ -390,7 +393,10 @@ export function showNotification(
           frame: false,
           transparent: true,
           show: false,
-          skipTaskbar: true
+          skipTaskbar: true,
+          webPreferences: {
+            session: sess
+          }
         },
         '/notification',
         false,

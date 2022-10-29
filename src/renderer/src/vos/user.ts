@@ -1,3 +1,27 @@
+export interface OrgInfo {
+  id: string
+  name: string
+  pid: string
+  icon: string
+  desc: string
+}
+
+export interface PostInfo {
+  id: string
+  name: string
+}
+
+export interface JobInfo {
+  id: string
+  name: string
+}
+
+export interface UserOrgInfo {
+  org: OrgInfo
+  post: PostInfo
+  job: JobInfo
+  isMain: boolean
+}
 /**
  * 用户信息
  */
@@ -30,4 +54,8 @@ export interface UserInfo {
    * 头像
    */
   icon: string
+  /**
+   * 机构信息
+   */
+  orgList?: UserOrgInfo[]
 }

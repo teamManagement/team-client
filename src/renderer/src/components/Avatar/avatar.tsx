@@ -1,5 +1,5 @@
 import classNames from 'classnames'
-import { FC, useMemo } from 'react'
+import { FC, useMemo, MouseEvent } from 'react'
 import { Avatar as TAvatar, Badge } from 'tdesign-react'
 import './index.scss'
 
@@ -13,6 +13,7 @@ export interface AvatarProps {
   status?: 'online' | 'offline'
   statusOffset?: [number, number]
   disabledNameAutoLen?: boolean
+  onClick?: (event: MouseEvent<HTMLDivElement>) => void
 }
 
 export const Avatar: FC<AvatarProps> = ({
@@ -23,6 +24,7 @@ export const Avatar: FC<AvatarProps> = ({
   size,
   statusOffset = [42, 8],
   disabledNameAutoLen,
+  onClick,
   ...otherProps
 }) => {
   const showName = useMemo<string | undefined>(() => {
@@ -38,7 +40,13 @@ export const Avatar: FC<AvatarProps> = ({
   const showStatus = useMemo(() => !!status, [status])
 
   return (
-    <div className="avatar">
+    <div
+      onClick={onClick}
+      className="avatar"
+      style={{
+        cursor: onClick ? 'pointer' : 'default'
+      }}
+    >
       <Badge
         className={classNames('status', status)}
         showZero={showStatus}

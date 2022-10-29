@@ -8,9 +8,17 @@ export interface CloseAppBtnProps {
   style?: React.CSSProperties
   iconStyle?: React.CSSProperties
   hide?: boolean
+  onClick?: () => void
 }
 
-export const CloseAppBtn: FC<CloseAppBtnProps> = ({ size, color, style, iconStyle, hide }) => {
+export const CloseAppBtn: FC<CloseAppBtnProps> = ({
+  size,
+  color,
+  style,
+  iconStyle,
+  hide,
+  onClick
+}) => {
   const [hover, setHover] = useState<boolean>(false)
 
   const btnEnter = useCallback(() => {
@@ -22,6 +30,10 @@ export const CloseAppBtn: FC<CloseAppBtnProps> = ({ size, color, style, iconStyl
   }, [])
 
   const btnClick = useCallback(() => {
+    if (onClick) {
+      onClick()
+      return
+    }
     if (hide) {
       window.electron.ipcRenderer.send('appHide')
       return
@@ -31,7 +43,7 @@ export const CloseAppBtn: FC<CloseAppBtnProps> = ({ size, color, style, iconStyl
 
   return (
     <Button
-      className="electron-no-drag"
+      className="electron-no-drag close-app-btn"
       onClick={btnClick}
       onMouseEnter={btnEnter}
       onMouseLeave={btnLeave}
@@ -40,7 +52,7 @@ export const CloseAppBtn: FC<CloseAppBtnProps> = ({ size, color, style, iconStyl
       variant={hover ? 'base' : 'text'}
       style={{ ...style, color: hover ? '' : color }}
       shape="circle"
-      icon={<CloseIcon style={iconStyle} />}
+      icon={<CloseIcon size={22} style={iconStyle} />}
     />
   )
 }

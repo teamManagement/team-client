@@ -1,0 +1,102 @@
+.me-info {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: #fff;
+  display: flex;
+  flex-direction: column;
+
+  > .title {
+    width: 100%;
+    height: 88px;
+    background-image: url('./userinfoBg.jpg');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    position: relative;
+
+    > .close-app-btn:hover {
+      svg {
+        color: #fff !important;
+      }
+    }
+
+    > .info-name {
+      position: absolute;
+      bottom: -24px;
+      left: 0;
+      display: flex;
+      width: 100%;
+      padding: 0 8px;
+      &,
+      * {
+        user-select: none;
+      }
+
+      > .desc {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        padding: 0 8px;
+
+        > div {
+          flex: 1;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          width: 260px;
+        }
+
+        > .desc-name {
+          font-size: 18px;
+          color: #fff;
+          font-weight: bolder;
+          cursor: default;
+        }
+
+        > .desc-idCode {
+          display: flex;
+          align-items: center;
+          //   justify-content: center;
+          font-size: 14px;
+          color: #999;
+          > span {
+            margin-left: 8px;
+            margin-top: 5px;
+          }
+        }
+      }
+    }
+  }
+
+  > .table {
+    width: 100%;
+
+    > .item {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      height: 33px;
+
+      > .label {
+        font-size: 16px;
+        color: black;
+        font-weight: bolder;
+        width: 88px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      > .content {
+        font-size: 14px;
+        color: #666;
+      }
+    }
+  }
+
+  > .org-info,
+  > .user-info {
+    width: 100%;
+    margin-top: -18px;
+  }
+}

@@ -1,3 +1,4 @@
+import { useCallback } from 'react'
 import { FC, useEffect, useState } from 'react'
 import { Notification as TdNotification } from 'tdesign-react'
 
@@ -16,6 +17,11 @@ export const Notification: FC = () => {
       clearInterval(intervalId)
     }
   }, [])
+
+  const onCloseBtnClick = useCallback(() => {
+    window.currentWindow.close()
+  }, [])
+
   return (
     <TdNotification
       className="inside-notification"
@@ -24,6 +30,7 @@ export const Notification: FC = () => {
       theme="info"
       title={notificationInfo.title}
       content={notificationInfo.body}
+      onCloseBtnClick={onCloseBtnClick}
     />
   )
 }

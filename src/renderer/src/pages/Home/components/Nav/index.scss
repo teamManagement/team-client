@@ -3,7 +3,7 @@
 .nav {
   width: 100px;
   height: 100%;
-  overflow: hidden;
+  // overflow: hidden;
   background-color: variables.$darkPurple;
   //   padding-top: 24px;
 
@@ -13,6 +13,106 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    position: relative;
+
+    .user-avatar-operation {
+      width: 265px;
+      // height: 255px;
+      height: 190px;
+      background-color: #fff;
+      position: absolute;
+      top: -20px;
+      left: 118px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 0 8px #888;
+      border-radius: 6px;
+      -webkit-border-radius: 6px;
+      -moz-border-radius: 6px;
+      -ms-border-radius: 6px;
+      -o-border-radius: 6px;
+
+      > .user-avatar-operation-title {
+        display: flex;
+        align-items: center;
+        padding: 18px;
+        width: 100%;
+        height: 82px;
+        background-color: variables.$darkPurple;
+        // position: relative;
+
+        &::before {
+          content: '';
+          display: block;
+          border: 20px solid transparent;
+          border-right-color: variables.$darkPurple;
+          position: absolute;
+          left: -40px;
+
+          // border-top: 10px solid red;
+          // border-left: 10px solid green;
+          // border-right: 10px solid orange;
+          // border-bottom: 10px solid pink;
+        }
+
+        > .user-avatar-operation-title-username {
+          flex-grow: 1;
+          color: #fff;
+          font-size: 18px;
+          font-weight: bolder;
+          padding-left: 8px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+      }
+
+      > .user-avatar-operation-desc {
+        width: 100%;
+        flex-grow: 1;
+        margin-top: 8px;
+
+        > .operation-item {
+          width: 100%;
+          height: 46px;
+          // background-color: orange;
+          display: flex;
+          align-items: center;
+          padding: 0 12px;
+          &,
+          * {
+            user-select: none;
+          }
+
+          cursor: pointer;
+          &:hover {
+            background-color: #292f4cef;
+            color: #fff;
+          }
+
+          > .name {
+            font-size: 16px;
+            font-weight: bolder;
+            flex-grow: 1;
+          }
+          &::after {
+            content: '';
+            width: 10px;
+            height: 10px;
+            border: 6px solid #999;
+            border-left-width: 0px;
+            border-bottom-width: 0px;
+            background-color: transparent;
+            transform: rotate(45deg);
+            -webkit-transform: rotate(45deg);
+            -moz-transform: rotate(45deg);
+            -ms-transform: rotate(45deg);
+            -o-transform: rotate(45deg);
+          }
+        }
+      }
+    }
 
     .status {
       > .t-badge--dot {

@@ -1,10 +1,11 @@
+import { UserInfo } from '@renderer/vos/user'
 import { useCallback, useEffect, useState } from 'react'
+import { MessagePlugin } from 'tdesign-react'
 
 export function useUserStatus(): 'online' | 'offline' {
   const [status, setStatus] = useState<'online' | 'offline'>('offline')
   useEffect(() => {
-    // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-    const fn = (data: TcpTransferInfo<any>) => {
+    const fn: (data: TcpTransferInfo<any>) => void = (data: TcpTransferInfo<any>) => {
       if (
         data.cmdCode === TcpTransferCmdCode.BLOCKING_CONNECTION ||
         data.cmdCode === TcpTransferCmdCode.RESTORE_SERVER_ERR
@@ -30,4 +31,20 @@ export function useUserStatus(): 'online' | 'offline' {
     queryUserStatus()
   }, [])
   return status
+}
+
+export function useUserinfo(): UserInfo | undefined {
+  const [userInfo, setUserInfo] = useState<UserInfo | undefined>(undefined)
+  useEffect(() => {
+    window.proxyApi
+      .httpLocalServerProxy<UserInfo>('/user/now')
+      .then((user) => {
+        console.log('获取到的用户信息: ', user)
+        setUserInfo(user)
+      })
+      .catch((e) => {
+        MessagePlugin.error('获取用户信息失败: ' + ((e as any).message || e))
+      })
+  }, [])
+  return userInfo
 }

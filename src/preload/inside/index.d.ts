@@ -1,4 +1,5 @@
 import { ElectronAPI } from '@electron-toolkit/preload'
+import { BrowserWindowConstructorOptions } from 'electron'
 
 declare global {
   //#region APP相关接口
@@ -140,6 +141,7 @@ declare global {
   //#endregion
 
   interface Window {
+    logout(): void
     currentWindow: {
       fullScreen(): Promise<void>
       unFullscreen(): Promise<void>
@@ -149,6 +151,9 @@ declare global {
       unMinimize(): Promise<void>
       alwaysOnTop(): Promise<void>
       unAlwaysOnTop(): Promise<void>
+      show(): Promise<void>
+      hide(): Promise<void>
+      close(): Promise<void>
     }
     electron: ElectronAPI & {
       ContextMenu: {
@@ -175,48 +180,9 @@ declare global {
       destroyById(id: string): Promise<void>
       destroyAlertById(id: string): Promise<void>
       getCurrentAppInfo(): AppInfo | undefined
-      // getOpenedIdList(): string[]
-      // getAlertIdList(): string[]
-      // getApplicationViewById(id: string): ApplicationView | undefined
-      // openApp(
-      //   appInfo: AppInfo,
-      //   bounds?: {
-      //     x?: number
-      //     y?: number
-      //     width?: number
-      //     widthOffset?: number
-      //     height?: number
-      //     heightOffset?: number
-      //   },
-      //   loadInsidePreload?: boolean
-      // ): Promise<ApplicationView>
-      // closeApp(id: string): Promise<void>
-      // show(
-      //   id: string,
-      //   bounds?: {
-      //     x?: number
-      //     y?: number
-      //     width?: number
-      //     widthOffset?: number
-      //     height?: number
-      //     heightOffset?: number
-      //   }
-      // ): Promise<boolean>
-      // showInAlert(
-      //   id: string,
-      //   bounds?: {
-      //     x?: number
-      //     y?: number
-      //     width?: number
-      //     widthOffset?: number
-      //     height?: number
-      //     heightOffset?: number
-      //   }
-      // ): Promise<void>
-      // destroyInAlert(id: string): Promise<void>
-      // hangUp(): Promise<void>
-      // restore(): Promise<AppInfo>
-      // getCurrentAppInfo(): Promise<AppInfo>
+    }
+    modalWindow: {
+      showInside(url: string, options: BrowserWindowConstructorOptions, attachInfo?: any): void
     }
   }
 }

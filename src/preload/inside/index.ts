@@ -19,6 +19,7 @@ import {
   showInAlertById
 } from './appViews'
 import { currentWindow } from './windows'
+import { modalWindow } from './modalWindow'
 
 // Custom APIs for renderer
 const api = {
@@ -71,7 +72,11 @@ const apiMap: { [key: string]: any } = {
     destroyAlertById,
     getCurrentAppInfo
   },
-  currentWindow
+  currentWindow,
+  modalWindow,
+  logout(): void {
+    ipcRenderer.send('ipc_LOGOUT')
+  }
 }
 
 for (const k in apiMap) {

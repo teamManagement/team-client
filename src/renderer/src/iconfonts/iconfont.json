@@ -6,6 +6,20 @@
   "description": "",
   "glyphs": [
     {
+      "icon_id": "9114430",
+      "name": "83身份证",
+      "font_class": "shenfenzheng",
+      "unicode": "e649",
+      "unicode_decimal": 58953
+    },
+    {
+      "icon_id": "7335624",
+      "name": "返回",
+      "font_class": "fanhui",
+      "unicode": "eb44",
+      "unicode_decimal": 60228
+    },
+    {
       "icon_id": "5127267",
       "name": "contact",
       "font_class": "contact",

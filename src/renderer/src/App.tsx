@@ -7,6 +7,7 @@ import Login from './pages/Login'
 import ForgotPassword from './pages/Login/SubPages/ForgotPassword'
 import RegistryAccount from './pages/Login/SubPages/RegistryAccount'
 import { Notification } from './pages/Notification'
+import { UserInfo } from './pages/UserInfo'
 
 const App: FC = () => {
   return (
@@ -19,6 +20,7 @@ const App: FC = () => {
         <Route path="/app/error" element={<AppError />} />
         <Route path="/app/alert" element={<AppAlert />} />
         <Route path="/notification" element={<Notification />} />
+        <Route path="/userinfo" element={<UserInfo />} />
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
     </HashRouter>

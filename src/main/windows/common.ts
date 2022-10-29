@@ -32,6 +32,7 @@ export async function SettingWindow(
     show: false,
     ...windowOptions,
     webPreferences: {
+      ...windowOptions.webPreferences,
       preload: preloadJsPath || PRELOAD_JS_INSIDE,
       sandbox: false
     }

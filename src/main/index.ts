@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain, IpcMainEvent, screen } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, IpcMainEvent } from 'electron'
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import log from 'electron-log'
 import { DialogTopWin } from './windows/common'
@@ -30,9 +30,11 @@ process.on('uncaughtException', (error) => {
 })
 
 async function createWindow(): Promise<void> {
-  const allDisplay = screen.getAllDisplays()
-  console.log(allDisplay)
   const hideSplashscreen = getInitSplashscreen()
+  const splashscreenWin = BrowserWindow.getAllWindows()[0]
+  splashscreenWin.setAlwaysOnTop(false)
+  splashscreenWin.show()
+  splashscreenWin.focus()
 
   log.debug('初始化electron api代理...')
   initApiProxy()
@@ -111,6 +113,13 @@ app.on('activate', () => {
 
 app.on('second-instance', () => {
   CurrentInfo.CurrentWindow?.show()
+})
+
+app.on('will-quit', () => {
+  console.log('quit...')
+  if (CurrentInfo.AppTray) {
+    CurrentInfo.AppTray.destroy()
+  }
 })
 
 app.on('ready', () => {

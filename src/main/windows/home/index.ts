@@ -6,7 +6,7 @@ import { showNotification } from '../../notification'
 import { WsHandler } from '../../socket'
 import { SettingWindow } from '../common'
 
-let platformTray: Tray | undefined = undefined
+// let platformTray: Tray | undefined = undefined
 
 export async function SettingHomeWin(
   showOperation?: (win: BrowserWindow) => void
@@ -36,11 +36,11 @@ export async function SettingHomeWin(
         }
       },
       closeFn() {
-        if (!platformTray) {
+        if (!CurrentInfo.AppTray) {
           return
         }
-        platformTray.destroy()
-        platformTray = undefined
+        CurrentInfo.AppTray.destroy()
+        CurrentInfo.AppTray = undefined
       }
     }
   )
@@ -56,7 +56,7 @@ export async function SettingHomeWin(
 }
 
 function initTray(): void {
-  if (platformTray) {
+  if (CurrentInfo.AppTray) {
     return
   }
   const menu = Menu.buildFromTemplate([
@@ -93,10 +93,10 @@ function initTray(): void {
       }
     }
   ])
-  platformTray = new Tray(AppIcon)
-  platformTray.setToolTip('Team Managed')
-  platformTray.setContextMenu(menu)
-  platformTray.addListener('double-click', () => {
+  CurrentInfo.AppTray = new Tray(AppIcon)
+  CurrentInfo.AppTray.setToolTip('Team Managed')
+  CurrentInfo.AppTray.setContextMenu(menu)
+  CurrentInfo.AppTray.addListener('double-click', () => {
     CurrentInfo.CurrentWindow?.show()
     CurrentInfo.CurrentWindow?.focus()
   })
