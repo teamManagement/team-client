@@ -25,6 +25,7 @@ declare global {
     desc: string
     shortDesc: string
     version: string
+    loading?: boolean
   }
   //#endregion
 

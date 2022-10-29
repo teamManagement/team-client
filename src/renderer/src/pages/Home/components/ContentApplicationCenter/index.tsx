@@ -25,15 +25,23 @@ export const ContentApplicationCenter: FC = () => {
   const [keyword, setKeyword] = useState<string | undefined>(undefined)
   const [openTitleDisabled, setOpenTitleDisabled] = useState<boolean>(false)
   useEffect(() => {
-    window.app.restore().then(setNowOpenApp)
+    window.app.restore().then((app) => {
+      if (app && app.loading) {
+        setLoadingDesc('正在加载应用')
+        setOpenTitleDisabled(true)
+      }
+      setNowOpenApp(app)
+    })
     return () => {
       window.app.hangUp()
     }
   }, [])
 
   useEffect(() => {
-    // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-    const appOpenedNoticeEvent = (appInfo: AppInfo, status: 'open' | 'close' | 'showTitle') => {
+    const appOpenedNoticeEvent: (
+      appInfo: AppInfo,
+      status: 'open' | 'close' | 'showTitle'
+    ) => void = (appInfo: AppInfo, status: 'open' | 'close' | 'showTitle') => {
       const id = appInfo.id
       setOpenedAppIdList((idList) => {
         const targetIdList = [...idList]
@@ -42,9 +50,16 @@ export const ContentApplicationCenter: FC = () => {
           setNowOpenApp(appInfo)
           return idList
         } else if (status === 'open') {
+          if (!appInfo.loading) {
+            setOpenTitleDisabled(false)
+            setLoadingDesc('')
+          }
+
           if (index === -1) {
+            console.log('打开...')
             targetIdList.push(id)
           } else {
+            console.log('打开原有')
             return idList
           }
         } else {
@@ -76,10 +91,12 @@ export const ContentApplicationCenter: FC = () => {
   const appOpen = useCallback(async (app: AppInfo) => {
     setLoadingDesc('正在打开应用...')
     try {
+      setOpenTitleDisabled(true)
       await window.app.openApp(app)
     } catch (e) {
       MessagePlugin.error(e as string)
     } finally {
+      setOpenTitleDisabled(false)
       setLoadingDesc('')
     }
   }, [])

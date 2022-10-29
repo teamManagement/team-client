@@ -37,6 +37,7 @@ interface AppInfo {
   desc: string
   shortDesc: string
   version: string
+  loading?: boolean
 }
 //#endregion
 
@@ -218,7 +219,15 @@ async function loadView(bw: BrowserWindow, bv: BrowserView, url: string): Promis
       throw { message: 'not found application view url' }
     }
 
-    await bv.webContents.loadURL(url)
+    await new Promise<void>((resolve, reject) => {
+      const timeoutId = setTimeout(() => {
+        reject({ message: 'loading timeout' })
+      }, 3000)
+      bv.webContents.loadURL(url).then(() => {
+        clearTimeout(timeoutId)
+        resolve()
+      })
+    })
   } catch (e) {
     const errJsonStr = JSON.stringify(e)
     const errInfo = Buffer.from(errJsonStr, 'utf8').toString('base64url')
@@ -287,9 +296,13 @@ async function openAppView(event: IpcMainInvokeEvent, appInfo: AppInfo): Promise
     viewInfo.appInfo,
     'showTitle'
   )
-  await loadView(bw, bv, appInfo.url)
-  ;(bv.webContents as any)._appInfo = appInfo
+
   _wrapperEndOpenInfo = viewInfo
+  viewInfo.appInfo.loading = true
+
+  await loadView(bw, bv, appInfo.url)
+  delete viewInfo.appInfo.loading
+  ;(bv.webContents as any)._appInfo = appInfo
   if (is.dev) {
     optimizer.watchWindowShortcuts(bv as any)
   }
