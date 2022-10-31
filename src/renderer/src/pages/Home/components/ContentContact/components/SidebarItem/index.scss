@@ -1,0 +1,40 @@
+.content-contact-sidebar-item {
+  width: 100%;
+  height: 64px;
+  display: flex;
+
+  cursor: pointer;
+  margin-bottom: 8px;
+
+  &:hover,
+  &.active {
+    background-color: #92a1eb33;
+  }
+
+  padding: 0 8px;
+
+  > .icon-wrapper {
+    width: 42px;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+
+    > .icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 15px;
+    }
+  }
+
+  > .desc {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-self: center;
+    padding-left: 18px;
+    font-size: 18px;
+    font-weight: bolder;
+  }
+}

@@ -30,7 +30,7 @@ export const NavItem: FC<NavItemProps> = ({ style, to, title, className, childre
   }, [to])
   const targetItemClassName = useMemo(() => {
     return classnames(className, 'nav-item', {
-      active: location.pathname === targetTo
+      active: location.pathname.startsWith(targetTo)
     })
   }, [location.pathname])
 

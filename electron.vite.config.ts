@@ -16,7 +16,8 @@ export default defineConfig({
         input: {
           inside: resolve(__dirname, 'src/preload/inside/index.ts'),
           newWindowOpen: resolve(__dirname, 'src/preload/newWindowOpen/index.ts'),
-          notification: resolve(__dirname, 'src/preload/notification/index.ts')
+          notification: resolve(__dirname, 'src/preload/notification/index.ts'),
+          applicationSdk: resolve(__dirname, 'src/preload/applicationSdkPreload/index.ts')
         },
         external: ['@electron-toolkit/preload']
       }

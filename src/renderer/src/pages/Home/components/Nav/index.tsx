@@ -86,9 +86,10 @@ export const Nav: FC = () => {
       <NavItem to="contact" title="通讯录">
         <IconFont name="contact" />
       </NavItem>
-      <NavItem to="cloudDisk" title="云盘">
+      {/* TODO 本版本暂缓开发 */}
+      {/* <NavItem to="cloudDisk" title="云盘">
         <IconFont name="yunyingpan" />
-      </NavItem>
+      </NavItem> */}
       <NavItem to="applicationCenter" title="应用中心">
         <IconFont name="yingyong" />
       </NavItem>

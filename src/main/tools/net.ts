@@ -129,7 +129,10 @@ function _sendHttpRequestBase<T>(url: string, options?: RequestOption): Promise<
             return
           }
 
-          resData.result = resData.result || {}
+          if (typeof resData.result === undefined) {
+            resData.result = {}
+          }
+
           resolve(resData.result)
         } catch (e) {
           reject({

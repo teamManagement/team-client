@@ -10,7 +10,7 @@ export const Content: FC = () => {
     <div className="content-wrapper">
       <Routes>
         <Route path="comments" element={<ContentComments />} />
-        <Route path="contact" element={<ContentContact />} />
+        <Route path="contact/*" element={<ContentContact />} />
         <Route path="applicationCenter" element={<ContentApplicationCenter />} />
         <Route path="*" element={<Navigate to="/home/comments" />} />
       </Routes>

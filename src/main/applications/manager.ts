@@ -9,7 +9,11 @@ import {
   Rectangle,
   session
 } from 'electron'
-import { PRELOAD_JS_INSIDE, PRELOAD_JS_NEW_WINDOW_OPEN } from '../consts'
+import {
+  PRELOAD_JS_APPLICATION_SDK,
+  PRELOAD_JS_INSIDE,
+  PRELOAD_JS_NEW_WINDOW_OPEN
+} from '../consts'
 import { SettingWindow } from '../windows/common'
 import { CurrentInfo, WinNameEnum } from '../current'
 import { ipcEventPromiseWrapper } from '../tools/ipc'
@@ -20,12 +24,12 @@ enum AppType {
   LOCAL_WEB
 }
 
-enum IconType {
+export enum IconType {
   URL,
   ICON_FONT
 }
 
-interface AppInfo {
+export interface AppInfo {
   id: string
   name: string
   inside: boolean
@@ -220,10 +224,14 @@ async function loadView(bw: BrowserWindow, bv: BrowserView, url: string): Promis
     }
 
     await new Promise<void>((resolve, reject) => {
+      bv.webContents.addListener('dom-ready', () => {
+        console.log('dom加载完成')
+      })
       const timeoutId = setTimeout(() => {
         reject({ message: 'loading timeout' })
       }, 3000)
       bv.webContents.loadURL(url).then(() => {
+        console.log('加载ok。。。')
         clearTimeout(timeoutId)
         resolve()
       })
@@ -232,7 +240,9 @@ async function loadView(bw: BrowserWindow, bv: BrowserView, url: string): Promis
     const errJsonStr = JSON.stringify(e)
     const errInfo = Buffer.from(errJsonStr, 'utf8').toString('base64url')
     if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-      await bv.webContents.loadURL(`${appErrorPageUrl}?errInfo=${errInfo}`)
+      await bv.webContents.loadURL(`${appErrorPageUrl}?errInfo=${errInfo}`, {
+        extraHeaders: 'pragma: no-cache\n'
+      })
     } else {
       await bv.webContents.loadFile(appErrorPageUrl, {
         hash: appErrorPageHashName,
@@ -270,7 +280,7 @@ async function openAppView(event: IpcMainInvokeEvent, appInfo: AppInfo): Promise
   }
 
   const appSession = session.fromPartition(appInfo.id)
-  appSession.setPreloads([PRELOAD_JS_NEW_WINDOW_OPEN])
+  appSession.setPreloads([PRELOAD_JS_NEW_WINDOW_OPEN, PRELOAD_JS_APPLICATION_SDK])
 
   const bv = new BrowserView({
     webPreferences: {
