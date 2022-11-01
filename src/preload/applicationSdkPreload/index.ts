@@ -1,4 +1,6 @@
-import { contextBridge } from 'electron'
+import { contextBridge, ipcRenderer } from 'electron'
+import { cache } from './cache'
+import { currentInfo } from './current'
 import { exec } from './exec'
 import { proxy } from './proxy'
 import { store } from './store'
@@ -6,10 +8,11 @@ import { store } from './store'
 const teamworkSDK = {
   store,
   exec,
-  proxy
+  proxy,
+  cache,
+  currentInfo
 }
 
-console.log('preload loading ...')
 if (process.contextIsolated) {
   contextBridge.exposeInMainWorld('teamworkSDK', teamworkSDK)
 } else {

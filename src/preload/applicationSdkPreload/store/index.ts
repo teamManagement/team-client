@@ -16,14 +16,15 @@ export const store = {
 
     return sendInvokeIpcEvent('set', key, val)
   },
-  get(key: string, defaultValue?: any): Promise<any> {
-    if (defaultValue) {
-      defaultValue = JSON.stringify(defaultValue)
+  async get(key: string, defaultValue?: any): Promise<any> {
+    const response = await sendInvokeIpcEvent('get', key, defaultValue)
+    if (typeof response !== 'undefined') {
+      return response
     }
-    return sendInvokeIpcEvent('get', key, defaultValue)
+    return defaultValue
   },
   has(key: string): Promise<boolean> {
-    return sendInvokeIpcEvent('hash', key)
+    return sendInvokeIpcEvent('has', key)
   },
   delete(key: string): Promise<void> {
     return sendInvokeIpcEvent('delete', key)

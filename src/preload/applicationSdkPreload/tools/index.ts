@@ -9,7 +9,7 @@ export function tryJsonParseDataHandler(data: any): any {
 }
 
 const applicationPreloadIpcEventName = 'ipc-application-preload-with-promise'
-
+export const applicationPreloadIpcSyncEventName = 'ipc-application-preload-with-sync'
 export function sendInvokeIpcEventWrapperEventNameAndDataCallBack(
   operationName: string,
   dataCallBack: ((data: any) => void) | undefined

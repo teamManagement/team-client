@@ -1,13 +1,15 @@
-import { ipcMain } from 'electron'
+import { ipcMain, IpcMainEvent } from 'electron'
 import { AppInfo } from '../applications/manager'
 import { ipcEventPromiseWrapper } from '../tools/ipc'
+import { _cacheHandler } from './cache'
 import { _execHandler } from './exec'
 import { _proxyHandler } from './proxy'
 import { _storeHandler } from './store'
 
 const applicationPreloadIpcEventName = 'ipc-application-preload-with-promise'
+const applicationPreloadIpcSyncEventName = 'ipc-application-preload-with-sync'
 
-type OperationName = 'store' | 'exec' | 'proxy'
+type OperationName = 'store' | 'exec' | 'proxy' | 'cache'
 
 export function _initApplicationPreload(): void {
   ipcMain.handle(
@@ -24,9 +26,24 @@ export function _initApplicationPreload(): void {
           return _execHandler(appInfo, eventName, ...data)
         case 'proxy':
           return _proxyHandler(appInfo, eventName, ...data)
+        case 'cache':
+          return _cacheHandler(appInfo, eventName, ...data)
         default:
           return Promise.reject(new Error('未知的操作事件'))
       }
     })
+  )
+  ipcMain.addListener(
+    applicationPreloadIpcSyncEventName,
+    (event: IpcMainEvent, eventName: string) => {
+      switch (eventName) {
+        case 'currentInfo':
+          event.returnValue = (event.sender as any)._appInfo
+          break
+        default:
+          event.returnValue = undefined
+          return
+      }
+    }
   )
 }

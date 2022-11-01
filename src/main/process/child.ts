@@ -3,10 +3,11 @@ import logs from 'electron-log'
 import os from 'os'
 import process from 'process'
 import { spawn, SpawnOptionsWithoutStdio } from 'child_process'
-import { localServerFilePath, mkcertFilePath } from './vars'
+import { localServerFilePath, mkcertFilePath, packageLocalServerFilePath } from './vars'
 import path from 'path'
 import { is } from '@electron-toolkit/utils'
-import { alertPanic } from '../windows/alerts'
+import { USER_LOCAL_CONFIG_DIR } from '../consts'
+import { fileToSha512 } from '../tools'
 
 const caCrt = `-----BEGIN CERTIFICATE-----
 MIIGFjCCA/6gAwIBAgIIRPu6j0zgbLgwDQYJKoZIhvcNAQELBQAwgZAxCzAJBgNV
@@ -138,26 +139,79 @@ export async function installLocalServer(): Promise<boolean> {
     return true
   }
 
-  const startResultCode = await spawnProcess(`${localServerFilePath} -cmd=check`)
-  if (startResultCode !== 0) {
-    logs.error('启动本地服务失败')
-    if (startResultCode === 255) {
-      alertPanic('本地服务组件资源被占用, 请联系管理员进行问题排查!!')
+  let stat: fs.Stats
+  try {
+    try {
+      stat = fs.statSync(localServerFilePath)
+    } catch (e) {
+      fs.copyFileSync(packageLocalServerFilePath, localServerFilePath)
+      stat = fs.statSync(localServerFilePath)
     }
+    if (
+      stat.isFile() &&
+      (await fileToSha512(localServerFilePath)) !== (await fileToSha512(packageLocalServerFilePath))
+    ) {
+      await spawnProcess(`${localServerFilePath} -cmd=stop -configDir=${USER_LOCAL_CONFIG_DIR}`)
+      await spawnProcess(
+        `${localServerFilePath} -cmd=uninstall -configDir=${USER_LOCAL_CONFIG_DIR}`
+      )
+      try {
+        fs.unlinkSync(localServerFilePath)
+      } catch (e) {
+        //nothing
+      }
+
+      try {
+        fs.copyFileSync(packageLocalServerFilePath, localServerFilePath)
+      } catch (e) {
+        logs.error('将包内本地服务包移动至用户目录下失败: ', JSON.stringify(e))
+        return false
+      }
+    }
+  } catch (e) {
+    logs.error('本地服务检测失败: ', JSON.stringify(e))
     return false
   }
 
-  setTimeout(async () => {
-    for (;;) {
-      const startResultCode = await spawnProcess(`${localServerFilePath}`)
-      if (startResultCode !== 0) {
-        logs.error('启动本地服务失败')
-        if (startResultCode === 255) {
-          alertPanic('本地服务组件资源被占用, 请联系管理员进行问题排查!!')
-        }
-      }
-    }
-  }, 0)
+  await spawnProcess(`${localServerFilePath} -cmd=stop -configDir=${USER_LOCAL_CONFIG_DIR}`)
+  await spawnProcess(`${localServerFilePath} -cmd=uninstall -configDir=${USER_LOCAL_CONFIG_DIR}`)
+  if (
+    (await spawnProcess(
+      `${localServerFilePath} -cmd=install -configDir=${USER_LOCAL_CONFIG_DIR}`
+    )) !== 0
+  ) {
+    logs.error('本地服务安装失败')
+    return false
+  }
+  if (
+    (await spawnProcess(
+      `${localServerFilePath} -cmd=start -configDir=${USER_LOCAL_CONFIG_DIR}`
+    )) !== 0
+  ) {
+    logs.error('启动本地服务失败')
+    return false
+  }
+
+  // const startResultCode = await spawnProcess(`${localServerFilePath} -cmd=check`)
+  // if (startResultCode !== 0) {
+  //   logs.error('启动本地服务失败')
+  //   if (startResultCode === 255) {
+  //     alertPanic('本地服务组件资源被占用, 请联系管理员进行问题排查!!')
+  //   }
+  //   return false
+  // }
+
+  // setTimeout(async () => {
+  //   for (;;) {
+  //     const startResultCode = await spawnProcess(`${localServerFilePath}`)
+  //     if (startResultCode !== 0) {
+  //       logs.error('启动本地服务失败')
+  //       if (startResultCode === 255) {
+  //         alertPanic('本地服务组件资源被占用, 请联系管理员进行问题排查!!')
+  //       }
+  //     }
+  //   }
+  // }, 0)
 
   return true
 }

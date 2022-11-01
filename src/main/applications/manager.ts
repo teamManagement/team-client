@@ -310,9 +310,10 @@ async function openAppView(event: IpcMainInvokeEvent, appInfo: AppInfo): Promise
   _wrapperEndOpenInfo = viewInfo
   viewInfo.appInfo.loading = true
 
+  // 将对象信息attach动作提前，解决页面中js加载过快但dom元素加载过慢导致的SDK无法获取信息的bug
+  ;(bv.webContents as any)._appInfo = appInfo
   await loadView(bw, bv, appInfo.url)
   delete viewInfo.appInfo.loading
-  ;(bv.webContents as any)._appInfo = appInfo
   if (is.dev) {
     optimizer.watchWindowShortcuts(bv as any)
   }

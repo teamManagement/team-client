@@ -12,6 +12,9 @@ export function ipcEventPromiseWrapper(
 
       return { error: false, data }
     } catch (e: any) {
+      if (typeof e === 'string') {
+        return { error: true, msg: e }
+      }
       const err = e as Error
       return { error: true, msg: err.message }
     }

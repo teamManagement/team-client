@@ -1,30 +1,9 @@
 import process from 'process'
-import fs from 'fs'
-import { createHash } from 'crypto'
 import logs from 'electron-log'
-import { localServerFilePath, mkcertFilePath, packageInfo } from './vars'
+import { mkcertFilePath, packageLocalServerFilePath } from './vars'
 import { is } from '@electron-toolkit/utils'
-
-function fileToSha512(filePath: string): Promise<string> {
-  return new Promise<string>((resolve, reject) => {
-    const h = createHash('sha512')
-    let ok = false
-    const fileReader = fs.createReadStream(filePath)
-    fileReader.addListener('error', (err) => {
-      ok = true
-      reject(err)
-    })
-    fileReader.addListener('data', (buf) => {
-      h.update(buf)
-    })
-    fileReader.addListener('end', () => {
-      if (ok) {
-        return
-      }
-      resolve(h.digest('hex'))
-    })
-  })
-}
+import { fileToSha512 } from '../tools'
+import { packageInfo } from '../consts/packageInfo'
 
 export async function verifyExternalProgramHash(): Promise<boolean> {
   try {
@@ -41,7 +20,7 @@ export async function verifyExternalProgramHash(): Promise<boolean> {
     }
 
     if (
-      (await fileToSha512(localServerFilePath)) !==
+      (await fileToSha512(packageLocalServerFilePath)) !==
       packageInfo.signature.localServer[process.platform]
     ) {
       logs.error('本地服务文件HASH验证失败')

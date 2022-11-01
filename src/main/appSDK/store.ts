@@ -1,13 +1,12 @@
-import Store from 'electron-store'
 import { AppInfo } from '../applications/manager'
-import logs from 'electron-log'
+import { sendHttpRequestToLocalServer } from '../tools'
 
-const store = new Store({
-  encryptionKey: 'aes-256-cbc',
-  clearInvalidConfig: true,
-  fileExtension: 'store'
-})
-logs.debug('store 文件存储路径: ', store.path)
+// const store = new Store({
+//   encryptionKey: 'aes-256-cbc',
+//   clearInvalidConfig: true,
+//   fileExtension: 'store'
+// })
+// logs.debug('store 文件存储路径: ', store.path)
 
 type StoreEventName = 'set' | 'get' | 'has' | 'delete' | 'clear'
 export function _storeHandler(
@@ -19,7 +18,7 @@ export function _storeHandler(
     case 'set':
       return set(appInfo, data[0], data[1])
     case 'get':
-      return get(appInfo, data[0], data[1])
+      return get(appInfo, data[0])
     case 'has':
       return has(appInfo, data[0])
     case 'delete':
@@ -31,25 +30,23 @@ export function _storeHandler(
   }
 }
 
-function _getStoreKey(appInfo: AppInfo, key: string): string {
-  if (typeof key === 'undefined' || key === '') {
-    throw new Error('缺失store的key')
-  }
-  return `_${appInfo.id}.${key}`
-}
-
 /**
  * 存储
  * @param appInfo 应用信息
  * @param key key
  * @param value value
  */
-async function set(appInfo: AppInfo, key: string, value: any): Promise<void> {
+function set(appInfo: AppInfo, key: string, value: any): Promise<void> {
   if (typeof key === 'undefined') {
     throw new Error('无法存储undefined数据, 如要删除请调用delete方法')
   }
 
-  store.set(_getStoreKey(appInfo, key), value)
+  return sendHttpRequestToLocalServer(`/app/store/set/${appInfo.id}`, {
+    jsonData: {
+      name: key,
+      value: JSON.stringify(value)
+    }
+  })
 }
 
 /**
@@ -59,8 +56,14 @@ async function set(appInfo: AppInfo, key: string, value: any): Promise<void> {
  * @param defaultValue 默认value
  * @returns value
  */
-async function get(appInfo: AppInfo, key: string, defaultValue?: string): Promise<string> {
-  return store.get(_getStoreKey(appInfo, key), defaultValue) as any
+async function get(appInfo: AppInfo, key: string): Promise<string | undefined> {
+  const response = await sendHttpRequestToLocalServer<string>(
+    `/app/store/get/${appInfo.id}?name=${key}`
+  )
+  if (typeof response !== 'undefined') {
+    return JSON.parse(response)
+  }
+  return undefined
 }
 
 /**
@@ -69,8 +72,8 @@ async function get(appInfo: AppInfo, key: string, defaultValue?: string): Promis
  * @param key key
  * @returns 是否存在
  */
-async function has(appInfo: AppInfo, key: string): Promise<boolean> {
-  return store.has(_getStoreKey(appInfo, key))
+function has(appInfo: AppInfo, key: string): Promise<boolean> {
+  return sendHttpRequestToLocalServer(`/app/store/has/${appInfo.id}?name=${key}`)
 }
 
 /**
@@ -78,13 +81,13 @@ async function has(appInfo: AppInfo, key: string): Promise<boolean> {
  * @param app 应用信息
  * @param key key
  */
-async function deleteKey(app: AppInfo, key: string): Promise<void> {
+async function deleteKey(appInfo: AppInfo, key: string): Promise<void> {
   if (!key || key.length === 0) {
     return
   }
-  store.delete(_getStoreKey(app, key))
+  return sendHttpRequestToLocalServer(`/app/store/delete/${appInfo.id}?name=${key}`)
 }
 
 async function clear(appInfo: AppInfo): Promise<void> {
-  store.delete('_' + appInfo.id)
+  return sendHttpRequestToLocalServer(`/app/store/clear/${appInfo.id}`)
 }
