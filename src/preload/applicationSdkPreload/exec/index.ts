@@ -14,8 +14,9 @@ export const exec = {
   },
   run(
     cmd: string,
+    args?: string[],
     options?: { env?: [key: string]; cwd?: string }
   ): Promise<{ exitCode: number; stderr?: string; stdout?: string }> {
-    return sendInvokeIpcEvent('run', cmd, options)
+    return sendInvokeIpcEvent('run', cmd, args, options)
   }
 }

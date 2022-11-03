@@ -314,6 +314,7 @@ async function openAppView(event: IpcMainInvokeEvent, appInfo: AppInfo): Promise
   ;(bv.webContents as any)._appInfo = appInfo
   await loadView(bw, bv, appInfo.url)
   delete viewInfo.appInfo.loading
+  bv.webContents.openDevTools()
   if (is.dev) {
     optimizer.watchWindowShortcuts(bv as any)
   }

@@ -124,6 +124,11 @@ export function spawnProcess(
       )}, Options: ${JSON.stringify(options)}`
     )
     const child = spawn(cmdSplit[0], cmdSplit.slice(1), options)
+    if (options.detached) {
+      child.unref()
+      resolve(0)
+      return
+    }
     child.stderr.on('data', (d) => {
       logs.debug('子命令输出错误信息: ', d.toString())
     })
@@ -133,12 +138,7 @@ export function spawnProcess(
   })
 }
 
-export async function installLocalServer(): Promise<boolean> {
-  if (is.dev) {
-    logs.debug('检测到是开发环境, 取消本地服务的启动')
-    return true
-  }
-
+export async function checkLocalServer(): Promise<boolean> {
   let stat: fs.Stats
   try {
     try {
@@ -151,6 +151,7 @@ export async function installLocalServer(): Promise<boolean> {
       stat.isFile() &&
       (await fileToSha512(localServerFilePath)) !== (await fileToSha512(packageLocalServerFilePath))
     ) {
+      // if (process.platform !== 'win32') {
       await spawnProcess(`${localServerFilePath} -cmd=stop -configDir=${USER_LOCAL_CONFIG_DIR}`)
       await spawnProcess(
         `${localServerFilePath} -cmd=uninstall -configDir=${USER_LOCAL_CONFIG_DIR}`
@@ -160,6 +161,7 @@ export async function installLocalServer(): Promise<boolean> {
       } catch (e) {
         //nothing
       }
+      // }
 
       try {
         fs.copyFileSync(packageLocalServerFilePath, localServerFilePath)
@@ -172,7 +174,42 @@ export async function installLocalServer(): Promise<boolean> {
     logs.error('本地服务检测失败: ', JSON.stringify(e))
     return false
   }
+  return true
+}
 
+export async function installLocalServer(): Promise<boolean> {
+  if (is.dev) {
+    logs.debug('检测到是开发环境, 取消本地服务的启动')
+    return true
+  }
+
+  if (!(await checkLocalServer())) {
+    return false
+  }
+
+  // if (process.platform === 'win32') {
+  //   const startResultCode = await spawnProcess(`${localServerFilePath} -cmd=check`)
+  //   if (startResultCode !== 0) {
+  //     logs.error('启动本地服务失败')
+  //     if (startResultCode === 255) {
+  //       alertPanic('本地服务组件资源被占用, 请联系管理员进行问题排查!!')
+  //     }
+  //     return false
+  //   }
+
+  //   setTimeout(async () => {
+  //     for (;;) {
+  //       const startResultCode = await spawnProcess(`${localServerFilePath}`)
+  //       if (startResultCode !== 0) {
+  //         logs.error('启动本地服务失败')
+  //         if (startResultCode === 255) {
+  //           alertPanic('本地服务组件资源被占用, 请联系管理员进行问题排查!!')
+  //         }
+  //       }
+  //     }
+  //   }, 0)
+  //   return true
+  // }
   await spawnProcess(`${localServerFilePath} -cmd=stop -configDir=${USER_LOCAL_CONFIG_DIR}`)
   await spawnProcess(`${localServerFilePath} -cmd=uninstall -configDir=${USER_LOCAL_CONFIG_DIR}`)
   if (

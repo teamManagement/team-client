@@ -152,10 +152,8 @@ async function appendMenuItem(
   if (menuItemOptions.id) {
     // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
     menuItemOptions.click = () => {
-      BrowserWindow.getFocusedWindow()?.webContents.send(
-        ContextMenuEventName.MENU_ITEM_CLICK,
-        menuItemOptions.id
-      )
+      // BrowserWindow.getFocusedWindow()?.webContents.send(
+      event.sender.send(ContextMenuEventName.MENU_ITEM_CLICK, menuItemOptions.id)
     }
   }
 

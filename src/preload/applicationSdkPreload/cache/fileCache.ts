@@ -8,6 +8,12 @@ const sendInvokeIpcEvent = sendInvokeIpcEventWrapperEventNameAndDataCallBack(
   'cache',
   tryJsonParseDataHandler
 )
+
+const sendInvokeIpcEventWithNoDataHandler = sendInvokeIpcEventWrapperEventNameAndDataCallBack(
+  'cache',
+  undefined
+)
+
 export const file = {
   /**
    * 创建文件缓存
@@ -16,7 +22,7 @@ export const file = {
    * @returns 缓存ID
    */
   store(localPath: string, expire?: number): Promise<string> {
-    return sendInvokeIpcEvent('file.store', localPath, expire)
+    return sendInvokeIpcEventWithNoDataHandler('file.store', localPath, expire)
   },
   /**
    * 删除文件缓存

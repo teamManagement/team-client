@@ -1,6 +1,7 @@
 import process from 'process'
+import fs from 'fs'
 import logs from 'electron-log'
-import { mkcertFilePath, packageLocalServerFilePath } from './vars'
+import { mkcertFilePath, packageLocalServerFilePath, updaterLocalServerFilePath } from './vars'
 import { is } from '@electron-toolkit/utils'
 import { fileToSha512 } from '../tools'
 import { packageInfo } from '../consts/packageInfo'
@@ -17,6 +18,29 @@ export async function verifyExternalProgramHash(): Promise<boolean> {
     if (is.dev) {
       logs.debug('当前环境为开发环境, 跳过本地服务文件的HASH验证')
       return true
+    }
+
+    try {
+      const stat = fs.statSync(updaterLocalServerFilePath)
+      if (stat.isFile()) {
+        if (
+          (await fileToSha512(updaterLocalServerFilePath)) ===
+          packageInfo.signature.localServer[process.platform]
+        ) {
+          try {
+            fs.copyFileSync(updaterLocalServerFilePath, packageLocalServerFilePath)
+          } catch (e) {
+            logs.error(
+              '发现有客户端服务更新程序, 但执行替换发生错误, 错误信息: ',
+              JSON.stringify(e)
+            )
+            return false
+          }
+        }
+        fs.unlinkSync(updaterLocalServerFilePath)
+      }
+    } catch (e) {
+      //nothing
     }
 
     if (

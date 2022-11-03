@@ -16,6 +16,11 @@ logs.debug('外部程序文件存储目录: ', programDirPath)
 
 export const mkcertFilePath = path.join(programDirPath, 'mkcert' + programSuffix)
 
+export const updaterLocalServerFilePath = path.join(
+  programDirPath,
+  'teamClientServer-updater' + programSuffix
+)
+
 export const packageLocalServerFilePath = path.join(
   programDirPath,
   'teamClientServer' + programSuffix
@@ -27,3 +32,5 @@ export const localServerFilePath = path.join(
 )
 
 logs.debug('mkcert可执行文件存储目录: ', mkcertFilePath)
+
+export const asarAbsPath = path.join(programDirPath, 'app.asar')

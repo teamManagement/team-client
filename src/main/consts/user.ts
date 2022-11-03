@@ -1,6 +1,7 @@
 import { app } from 'electron'
 import path from 'path'
 import fs from 'fs'
+import { userInfo } from 'os'
 
 // 用户家目录
 export const USER_HOME = app.getPath('home')
@@ -14,3 +15,5 @@ try {
 
 // 用户配置目录
 export const USER_LOCAL_CONFIG_DIR = userLocalConfigDir
+
+export const SYS_USERINFO = userInfo()

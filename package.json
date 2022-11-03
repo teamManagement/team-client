@@ -9,8 +9,8 @@
       "win32": "e7e17f3fd77daa704f88ff4dc6a22795ce0dc18b5db980bb2e5dbe823ca84f54ee8bd81e5e3d816668e4a841e53cb2bd487939e6ad805f5866926d6ddfdff086"
     },
     "localServer": {
-      "linux": "1e000cd9ae896685782444ae4dc412913fc47531669b95462b1058c6d0c6608852fa364e7ed1f303a341403d64c09b414526e17d3ff200107d5cf5645507eb58",
-      "win32": "57f88547788f32740d61e67639eca3140d04a7df215d8c8bcbeb7539a0cb8a606af312ab93368dcf5ffe0107d566a4bfa1e42700b9c5641b382b907b36752911"
+      "linux": "019bc9c3878398b63aab9106863444c581afbf1c99e07b42309a5416a5dc60834e9c890a70392ef6b91ce244fee8b1f907713bbbe6b8cf39589821fc3b93e90b",
+      "win32": "0ef6bce26ae941f656da4e01f93bd2d7600aa30cfae99a50ec875e80ada0a6b01744ec6978bba24c41acd7fc6dad28b5e10c8f20ee7f857f50dbd437b46a4e1a"
     }
   },
   "author": "苏林鑫",
@@ -49,6 +49,7 @@
     "react-router-dom": "6",
     "react-spring": "^9.5.3",
     "sass": "^1.54.9",
+    "sudo-prompt": "^9.2.1",
     "tdesign-icons-react": "^0.1.6",
     "tdesign-react": "^0.40.6",
     "ws": "^8.9.0"

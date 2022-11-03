@@ -3,15 +3,16 @@ import { AppInfo } from '../applications/manager'
 import { ipcEventPromiseWrapper } from '../tools/ipc'
 import { _cacheHandler } from './cache'
 import { _execHandler } from './exec'
+import { _hostsHandler } from './hosts'
 import { _proxyHandler } from './proxy'
 import { _storeHandler } from './store'
 
 const applicationPreloadIpcEventName = 'ipc-application-preload-with-promise'
 const applicationPreloadIpcSyncEventName = 'ipc-application-preload-with-sync'
 
-type OperationName = 'store' | 'exec' | 'proxy' | 'cache'
+type OperationName = 'store' | 'exec' | 'proxy' | 'cache' | 'hosts'
 
-export function _initApplicationPreload(): void {
+export function _initAppSDK(): void {
   ipcMain.handle(
     applicationPreloadIpcEventName,
     ipcEventPromiseWrapper((event, operationName: OperationName, eventName: any, ...data: any) => {
@@ -28,6 +29,8 @@ export function _initApplicationPreload(): void {
           return _proxyHandler(appInfo, eventName, ...data)
         case 'cache':
           return _cacheHandler(appInfo, eventName, ...data)
+        case 'hosts':
+          return _hostsHandler(appInfo, eventName, ...data)
         default:
           return Promise.reject(new Error('未知的操作事件'))
       }

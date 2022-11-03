@@ -20,11 +20,13 @@ asarUnpack:
   - '**/*.{node,dll}'
 afterSign: build/notarize.js
 win:
-  executableName: team-client
+  executableName: teamwork
+  requestedExecutionLevel: highestAvailable
+
 nsis:
   oneClick: false
   perMachine: false
-  allowElevation: false
+  allowElevation: true
   allowToChangeInstallationDirectory: true
   installerIcon: build/icon.ico
   uninstallerIcon: build/icon.ico

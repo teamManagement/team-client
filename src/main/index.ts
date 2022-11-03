@@ -14,6 +14,7 @@ import { initApiProxy } from './apiProxy'
 import { alertPanic } from './windows/alerts'
 import { initApplicationViewManager } from './applications/manager'
 import { initNotificationEvent } from './notification'
+import { startUpdaterListener } from './updater'
 
 app.commandLine.appendSwitch('--disable-http-cache')
 
@@ -30,6 +31,25 @@ process.on('uncaughtException', (error) => {
 })
 
 async function createWindow(): Promise<void> {
+  if (process.argv.includes('__updater_start__')) {
+    let debugWorkDir: string | undefined = undefined
+    for (const v of process.argv) {
+      if (v.startsWith('__debug_work_dir__')) {
+        debugWorkDir = v.split('=')[1]
+      }
+    }
+
+    if (typeof debugWorkDir === 'string' && debugWorkDir.length > 0) {
+      log.info('更新应用之后重新唤起, DEBUG_WORK_DIR: ', debugWorkDir)
+      app.relaunch({ args: [debugWorkDir] })
+    } else {
+      log.info('更新应用之后重新唤起')
+      app.relaunch({ args: [] })
+    }
+
+    app.exit(0)
+    return
+  }
   const hideSplashscreen = getInitSplashscreen()
   const splashscreenWin = BrowserWindow.getAllWindows()[0]
   splashscreenWin.setAlwaysOnTop(false)
@@ -77,6 +97,9 @@ async function createWindow(): Promise<void> {
     log.debug('注册消息通知事件...')
     initNotificationEvent()
     log.debug('注册消息通知事件完毕！！！')
+
+    log.debug('启动更新监听')
+    startUpdaterListener()
 
     if (connResult) {
       if ((await wsHandler.loginOk()) || (await wsHandler.autoLogin())) {
