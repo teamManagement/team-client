@@ -1,7 +1,7 @@
 interface Window {
   teamworkSDK: {
     contextmenu: {
-      build(): Menu
+      build(menuItems: MenuItemOptions, menuId?: string): Menu
       clear(id: string): void
       clearAll(): void
     }
