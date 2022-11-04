@@ -1,5 +1,10 @@
 interface Window {
   teamworkSDK: {
+    contextmenu: {
+      build(): Menu
+      clear(id: string): void
+      clearAll(): void
+    }
     store: {
       set(key: string, val: any): Promise<void>
       get<T>(key: string, defaultValue?: any): Promise<T>
