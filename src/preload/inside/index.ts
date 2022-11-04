@@ -11,12 +11,14 @@ import {
   hangUp,
   hideById,
   hideEndOpenedApp,
+  install,
   listenStatusNotice,
   openApp,
   removeStatusNotice,
   restore,
   showById,
-  showInAlertById
+  showInAlertById,
+  uninstall
 } from './appViews'
 import { currentWindow } from './windows'
 import { modalWindow } from './modalWindow'
@@ -70,7 +72,9 @@ const apiMap: { [key: string]: any } = {
     hideEndOpenedApp,
     destroyById,
     destroyAlertById,
-    getCurrentAppInfo
+    getCurrentAppInfo,
+    install,
+    uninstall
   },
   currentWindow,
   modalWindow,

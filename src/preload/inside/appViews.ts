@@ -83,7 +83,15 @@ enum ApplicationViewEventNames {
   /**
    * app弹出窗口可以进行展示
    */
-  APP_INFO_GET_BY_CONTENT = 'ipc-APP_VIEW_INFO_GET_BY_CONTENT'
+  APP_INFO_GET_BY_CONTENT = 'ipc-APP_VIEW_INFO_GET_BY_CONTENT',
+  /**
+   * 应用安装
+   */
+  INSTALL = 'ipc-APP_INSTALL',
+  /**
+   * 应用卸载
+   */
+  UNINSTALL = 'ipc-APP_UNINSTALL'
 }
 
 const _appOpenStatusNoticeFn: {
@@ -167,6 +175,14 @@ export function destroyById(id: string): Promise<void> {
 
 export function destroyAlertById(id: string): Promise<void> {
   return _ipcInvoke(ApplicationViewEventNames.DESTROY_ALERT, id)
+}
+
+export function install(id: string): Promise<void> {
+  return _ipcInvoke(ApplicationViewEventNames.INSTALL, id)
+}
+
+export function uninstall(id: string): Promise<void> {
+  return _ipcInvoke(ApplicationViewEventNames.UNINSTALL, id)
 }
 
 // export class ApplicationView {

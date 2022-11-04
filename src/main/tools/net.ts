@@ -44,6 +44,7 @@ export interface RequestOption {
   jsonData?: any
   dataWrite?: (writer: DataWrite) => void
   header?: { [key: string]: string }
+  timeout?: number
 }
 
 function _sendHttpRequestBase<T>(url: string, options?: RequestOption): Promise<T> {
@@ -88,7 +89,18 @@ function _sendHttpRequestBase<T>(url: string, options?: RequestOption): Promise<
       } as ResponseError)
     })
 
+    const timeoutId = setTimeout(() => {
+      request.abort()
+      reject({
+        error: true,
+        httpCode: 408,
+        message: 'request time out',
+        code: '408'
+      } as ResponseError)
+    }, options.timeout || 5000)
+
     request.on('response', (res) => {
+      clearTimeout(timeoutId)
       let buffer: Buffer | undefined = undefined
 
       res.on('data', (data) => {

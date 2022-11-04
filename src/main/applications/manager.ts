@@ -17,6 +17,7 @@ import {
 import { SettingWindow } from '../windows/common'
 import { CurrentInfo, WinNameEnum } from '../current'
 import { ipcEventPromiseWrapper } from '../tools/ipc'
+import { sendHttpRequestToLocalServer } from '../tools'
 
 //#region APP相关接口
 enum AppType {
@@ -99,7 +100,15 @@ enum ApplicationViewEventNames {
   /**
    * app弹出窗口可以进行展示
    */
-  APP_INFO_GET_BY_CONTENT = 'ipc-APP_VIEW_INFO_GET_BY_CONTENT'
+  APP_INFO_GET_BY_CONTENT = 'ipc-APP_VIEW_INFO_GET_BY_CONTENT',
+  /**
+   * 应用安装
+   */
+  INSTALL = 'ipc-APP_INSTALL',
+  /**
+   * 应用卸载
+   */
+  UNINSTALL = 'ipc-APP_UNINSTALL'
 }
 
 interface ViewInfo {
@@ -565,6 +574,36 @@ export function initApplicationViewManager(): void {
   ipcMain.handle(ApplicationViewEventNames.HANG_UP, ipcEventPromiseWrapper(hangUp))
   ipcMain.handle(ApplicationViewEventNames.RESTORE, ipcEventPromiseWrapper(restore))
   ipcMain.addListener(ApplicationViewEventNames.OPENED_APP_ID_LIST, appOpenedIdListGet)
+
+  ipcMain.handle(
+    ApplicationViewEventNames.INSTALL,
+    ipcEventPromiseWrapper(async (_event, appId) => {
+      if (!appId) {
+        return new Error('未知的应用ID')
+      }
+      await sendHttpRequestToLocalServer('/app/install/' + appId, {
+        timeout: 1000000000
+      })
+
+      CurrentInfo.getWin(WinNameEnum.HOME)?.webContents.send('desktop-refresh')
+      return
+    })
+  )
+
+  ipcMain.handle(
+    ApplicationViewEventNames.UNINSTALL,
+    ipcEventPromiseWrapper(async (_event, appId) => {
+      if (!appId) {
+        return new Error('未知的应用ID')
+      }
+      await sendHttpRequestToLocalServer('/app/uninstall/' + appId, {
+        timeout: 1000000000
+      })
+
+      CurrentInfo.getWin(WinNameEnum.HOME)?.webContents.send('desktop-refresh')
+      return
+    })
+  )
 }
 
 export function clearAllApplicationViews(): void {

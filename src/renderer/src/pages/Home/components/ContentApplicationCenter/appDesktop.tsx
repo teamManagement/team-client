@@ -80,6 +80,16 @@ export const AppDesktop: FC<AppDesktop> = ({
   }, [])
 
   useEffect(() => {
+    const desktopRefresh: () => void = () => {
+      queryAppList()
+    }
+    window.electron.ipcRenderer.on('desktop-refresh', desktopRefresh)
+    return () => {
+      window.electron.ipcRenderer.removeListener('desktop-refresh', desktopRefresh)
+    }
+  }, [queryAppList])
+
+  useEffect(() => {
     appDesktopContextMenu.registerItemClick('refresh', forceRefreshAppList)
   }, [])
 
