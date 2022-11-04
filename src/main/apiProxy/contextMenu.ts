@@ -31,8 +31,12 @@ export function initContextMenuApiProxy(): void {
       returnWrapper(appendMenuItem(event, menuitemOptions, menuId))
   )
 
-  ipcMain.handle(ContextMenuEventName.MENU_POPUP, (event, menuId?: string) =>
-    returnWrapper(popup(event, menuId))
+  // ipcMain.handle(ContextMenuEventName.MENU_POPUP, (event, menuId?: string) =>
+  //   returnWrapper(popup(event, menuId))
+  // )
+
+  ipcMain.handle(ContextMenuEventName.MENU_POPUP, (event, menuId: string, menuItems?: string) =>
+    returnWrapper(contextmenuPopup(event, menuId, menuItems))
   )
 
   ipcMain.handle(ContextMenuEventName.MENU_ITEM_CLEAR, (event, menuId?: string) =>
@@ -160,15 +164,44 @@ async function appendMenuItem(
   menu.append(new MenuItem(menuItemOptions))
 }
 
-async function popup(event: IpcMainInvokeEvent, menuId?: string): Promise<void> {
-  const menu = getMenuById(event, menuId)
-  menu.popup({
-    window: BrowserWindow.fromWebContents(event.sender) || (BrowserWindow.getFocusedWindow() as any)
-  })
-}
+// async function popup(event: IpcMainInvokeEvent, menuId?: string): Promise<void> {
+//   const menu = getMenuById(event, menuId)
+//   menu.popup({
+//     window: BrowserWindow.fromWebContents(event.sender) || (BrowserWindow.getFocusedWindow() as any)
+//   })
+// }
 
 async function clearItems(event: IpcMainInvokeEvent, menuId?: string): Promise<void> {
   menuId = menuId || event.sender.id + ''
   delete contextMenuMap[menuId]
   contextMenuMap[menuId] = new Menu()
+}
+
+async function contextmenuPopup(
+  event: IpcMainInvokeEvent,
+  menuId: string,
+  menuItemsJsonStr?: string
+): Promise<void> {
+  if (!menuId) {
+    throw new Error('菜单ID不能为空')
+  }
+
+  if (!menuItemsJsonStr) {
+    return
+  }
+  const menuItems: MenuItemOptions[] = JSON.parse(menuItemsJsonStr)
+
+  for (const item of menuItems) {
+    if (item.id) {
+      // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+      item.click = () => {
+        event.sender.send('ipc-contextmenu-click', menuId, item.id)
+      }
+    }
+  }
+
+  const menu = Menu.buildFromTemplate(menuItems)
+  menu.popup({
+    window: BrowserWindow.fromWebContents(event.sender) || (BrowserWindow.getFocusedWindow() as any)
+  })
 }

@@ -1,4 +1,5 @@
 import { contextBridge } from 'electron'
+import { contextmenu } from '../_commons/contextmenu'
 import { cache } from './cache'
 import { currentInfo } from './current'
 import { exec } from './exec'
@@ -12,7 +13,8 @@ const teamworkSDK = {
   proxy,
   cache,
   hosts,
-  currentInfo
+  currentInfo,
+  contextmenu
 }
 
 if (process.contextIsolated) {

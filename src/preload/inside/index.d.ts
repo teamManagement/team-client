@@ -125,7 +125,7 @@ declare global {
     checked?: boolean
     registerAccelerator?: boolean
     submenu?: MenuItemOptions[]
-    id?: string
+    click?: () => void
     before?: string[]
     after?: string[]
     beforeGroupContaining?: string[]
@@ -137,6 +137,14 @@ declare global {
     registerItemClick(id: string, fn: () => void | any): void
     clearItems(): Promise<void>
     popup(): Promise<void>
+  }
+
+  class Menu {
+    public constructor(menuItems: MenuItemOptions[], menuId?: string)
+    items(): MenuItem[] | undefined
+    popup(): Promise<void>
+    click(itemId: string): void
+    id(): string
   }
 
   //#endregion
@@ -164,6 +172,11 @@ declare global {
     }
     api: {
       login(username: string, password: string): Promise<void>
+      contextmenu: {
+        build(menuItems: MenuItemOptions[], menuId?: string): Menu
+        clear(menuId: string): void
+        clearAll(): void
+      }
     }
     proxyApi: ProxyApi
     app: {

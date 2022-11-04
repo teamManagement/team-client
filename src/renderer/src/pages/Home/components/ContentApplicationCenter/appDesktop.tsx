@@ -1,18 +1,18 @@
-import { FC, useCallback, useMemo, useState, MouseEvent, useEffect } from 'react'
+import { FC, useCallback, useMemo, useState, MouseEvent, useEffect, useRef } from 'react'
 import AppItem from '@renderer/components/AppItem'
 import { MessagePlugin } from 'tdesign-react'
 import Loading from '@renderer/components/Loading'
 
 // 用?解决appErr路由引发的对象不存在的bug
-const appDesktopContextMenu = window.electron?.ContextMenu.getById('appDesktopContextMenu')
+// const appDesktopContextMenu = window.electron?.ContextMenu.getById('appDesktopContextMenu')
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-;(async () => {
-  if (!appDesktopContextMenu) {
-    return
-  }
-  await appDesktopContextMenu.clearItems()
-  await appDesktopContextMenu.appendMenuItem({ id: 'refresh', label: '刷新' })
-})()
+// ;(async () => {
+//   if (!appDesktopContextMenu) {
+//     return
+//   }
+//   await appDesktopContextMenu.clearItems()
+//   await appDesktopContextMenu.appendMenuItem({ id: 'refresh', label: '刷新' })
+// })()
 
 const appStoreInfo: AppInfo = {
   id: '0',
@@ -48,6 +48,7 @@ export const AppDesktop: FC<AppDesktop> = ({
   keyword,
   onOpen
 }) => {
+  const contextMenu = useRef<Menu | null>()
   const [appList, setAppList] = useState<AppInfo[]>([])
   const [loadingDesc, setLoadingDesc] = useState<string>('')
 
@@ -90,8 +91,25 @@ export const AppDesktop: FC<AppDesktop> = ({
   }, [queryAppList])
 
   useEffect(() => {
-    appDesktopContextMenu.registerItemClick('refresh', forceRefreshAppList)
+    contextMenu.current = window.api.contextmenu.build([
+      {
+        label: '刷新',
+        // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+        click() {
+          forceRefreshAppList()
+        }
+      }
+    ])
+
+    return () => {
+      window.api.contextmenu.clearAll()
+      contextMenu.current = null
+    }
   }, [])
+
+  // useEffect(() => {
+  //   appDesktopContextMenu.registerItemClick('refresh', forceRefreshAppList)
+  // }, [])
 
   useEffect(() => {
     queryAppList()
@@ -127,7 +145,9 @@ export const AppDesktop: FC<AppDesktop> = ({
     if (!showContextMenu) {
       return
     }
-    appDesktopContextMenu.popup()
+    if (contextMenu.current) {
+      contextMenu.current.popup()
+    }
   }, [])
 
   return (

@@ -22,6 +22,8 @@ import {
 } from './appViews'
 import { currentWindow } from './windows'
 import { modalWindow } from './modalWindow'
+import { id } from '../_commons/id'
+import { contextmenu } from '../_commons/contextmenu'
 
 // Custom APIs for renderer
 const api = {
@@ -32,7 +34,8 @@ const api = {
     }
 
     return response
-  }
+  },
+  contextmenu
 }
 
 enum AppType {
@@ -46,6 +49,7 @@ enum IconType {
 }
 
 const apiMap: { [key: string]: any } = {
+  id,
   electron: {
     ...electronAPI,
     ContextMenu: {
@@ -53,7 +57,7 @@ const apiMap: { [key: string]: any } = {
       getById: ContextMenu.getById
     }
   },
-  api: api,
+  api,
   AppType: AppType,
   IconType: IconType,
   proxyApi: proxyApi,
