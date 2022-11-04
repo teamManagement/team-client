@@ -388,6 +388,10 @@ async function currentAppShowInAlert(event: IpcMainInvokeEvent): Promise<void> {
 async function showViewInAlert(_event: IpcMainInvokeEvent, id: string): Promise<void> {
   const viewInfo = checkViewById(id)
 
+  if (_wrapperEndOpenInfo === viewInfo) {
+    _wrapperEndOpenInfo = undefined
+  }
+
   const win = viewInfo.win
   if (win) {
     if (win.isMinimized()) {

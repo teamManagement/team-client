@@ -20,7 +20,7 @@ const appStoreInfo: AppInfo = {
   inside: true,
   type: (window as any).AppType?.REMOTE_WEB,
   remoteSiteUrl: 'https://baidu.com',
-  url: 'https://www.baidu.com/',
+  url: 'http://192.168.3.81:3000',
   icon: 'https://127.0.0.1:65528/icons/appstore.png',
   iconType: (window as any).IconType?.URL,
   desc: '应用商店',
