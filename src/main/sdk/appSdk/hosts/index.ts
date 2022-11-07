@@ -1,6 +1,6 @@
 import fs from 'fs'
-import { AppInfo } from '../../applications/manager'
-import { sudExec as sudoExec } from '../../tools'
+import { sudoExec } from '../../../tools'
+import { AppInfo } from '../../insideSdk/applications'
 
 type EventName = 'add' | 'export' | 'cover' | 'clear' | 'addToHeader' | 'delete'
 

@@ -91,7 +91,14 @@ enum ApplicationViewEventNames {
   /**
    * 应用卸载
    */
-  UNINSTALL = 'ipc-APP_UNINSTALL'
+  UNINSTALL = 'ipc-APP_UNINSTALL',
+  /**
+   * 增加debug应用
+   */
+  INSTALL_DEBUG_APP = 'ipc-APP_INSTALL_DEBUG_APP'
+  /**
+   * 卸载debug应用
+   */
 }
 
 const _appOpenStatusNoticeFn: {
@@ -183,6 +190,10 @@ export function install(id: string): Promise<void> {
 
 export function uninstall(id: string): Promise<void> {
   return _ipcInvoke(ApplicationViewEventNames.UNINSTALL, id)
+}
+
+export function installDebug(appInfo: AppInfo): Promise<void> {
+  return _ipcInvoke(ApplicationViewEventNames.INSTALL_DEBUG_APP, appInfo)
 }
 
 // export class ApplicationView {

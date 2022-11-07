@@ -35,10 +35,10 @@ export const CloseAppBtn: FC<CloseAppBtnProps> = ({
       return
     }
     if (hide) {
-      window.electron.ipcRenderer.send('appHide')
+      window.teamworkInsideSdk.electron.ipcRenderer.send('appHide')
       return
     }
-    window.electron.ipcRenderer.send('appExit', 0)
+    window.teamworkInsideSdk.electron.ipcRenderer.send('appExit', 0)
   }, [])
 
   return (

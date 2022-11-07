@@ -1,6 +1,6 @@
 import { spawn } from 'child-process-promise'
-import { AppInfo } from '../../applications/manager'
-import { sendHttpRequestToLocalServer } from '../../tools'
+import { sendHttpRequestToLocalServer } from '../../../tools'
+import { AppInfo } from '../../insideSdk/applications'
 
 type EventName = 'lookPath' | 'run' | 'proxy'
 

@@ -1,18 +1,8 @@
 import { FC, useCallback, useMemo, useState, MouseEvent, useEffect, useRef } from 'react'
+import { contextmenu } from '@byzk/teamwork-sdk'
 import AppItem from '@renderer/components/AppItem'
 import { MessagePlugin } from 'tdesign-react'
 import Loading from '@renderer/components/Loading'
-
-// 用?解决appErr路由引发的对象不存在的bug
-// const appDesktopContextMenu = window.electron?.ContextMenu.getById('appDesktopContextMenu')
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-// ;(async () => {
-//   if (!appDesktopContextMenu) {
-//     return
-//   }
-//   await appDesktopContextMenu.clearItems()
-//   await appDesktopContextMenu.appendMenuItem({ id: 'refresh', label: '刷新' })
-// })()
 
 const appStoreInfo: AppInfo = {
   id: '0',
@@ -56,7 +46,7 @@ export const AppDesktop: FC<AppDesktop> = ({
     setLoadingDesc('正在刷新应用列表...')
     try {
       const appList: AppInfo[] =
-        (await window.proxyApi.httpLocalServerProxy('/app/force/refresh')) || []
+        (await window.teamworkInsideSdk.api.proxyHttpLocalServer('/app/force/refresh')) || []
       appList.push(appStoreInfo)
       setAppList(appList)
     } catch (e) {
@@ -70,7 +60,7 @@ export const AppDesktop: FC<AppDesktop> = ({
     setLoadingDesc('正在加载应用列表...')
     try {
       const appList: AppInfo[] =
-        (await window.proxyApi.httpLocalServerProxy('/app/info/desktop/list')) || []
+        (await window.teamworkInsideSdk.api.proxyHttpLocalServer('/app/info/desktop/list')) || []
       appList.push(appStoreInfo)
       setAppList(appList)
     } catch (e) {
@@ -84,14 +74,17 @@ export const AppDesktop: FC<AppDesktop> = ({
     const desktopRefresh: () => void = () => {
       queryAppList()
     }
-    window.electron.ipcRenderer.on('desktop-refresh', desktopRefresh)
+    window.teamworkInsideSdk.electron.ipcRenderer.on('desktop-refresh', desktopRefresh)
     return () => {
-      window.electron.ipcRenderer.removeListener('desktop-refresh', desktopRefresh)
+      window.teamworkInsideSdk.electron.ipcRenderer.removeListener(
+        'desktop-refresh',
+        desktopRefresh
+      )
     }
   }, [queryAppList])
 
   useEffect(() => {
-    contextMenu.current = window.api.contextmenu.build([
+    contextMenu.current = contextmenu.build([
       {
         label: '刷新',
         // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -102,7 +95,7 @@ export const AppDesktop: FC<AppDesktop> = ({
     ])
 
     return () => {
-      window.api.contextmenu.clearAll()
+      contextmenu.clearAll()
       contextMenu.current = null
     }
   }, [])

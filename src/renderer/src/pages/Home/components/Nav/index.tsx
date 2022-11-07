@@ -39,7 +39,7 @@ export const Nav: FC = () => {
   }, [])
 
   const logout = useCallback(() => {
-    window.logout()
+    window.teamworkInsideSdk.api.logout()
   }, [])
 
   return (

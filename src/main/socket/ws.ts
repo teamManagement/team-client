@@ -6,9 +6,9 @@ import { randomBytes2HexStr, uniqueId } from '../security/random'
 import AsyncLock from 'async-lock'
 import { IpcMainInvokeEvent, ipcMain, WebContents } from 'electron'
 import { alertMsgAndRelaunch as alertMsgAndBreakToLogin } from '../windows/alerts'
-import { clearAllApplicationViews } from '../applications/manager'
 import { CurrentInfo, WinNameEnum } from '../current'
 import { SettingLoginWin } from '../windows/login'
+import { clearAllApplicationViews } from '../sdk/insideSdk/applications'
 const WebSocket = require('ws')
 
 const lock = new AsyncLock()

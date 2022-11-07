@@ -114,7 +114,7 @@ export const RegistryAccount: FC = () => {
     const loadingInstance = loading(true)
     setDisabledSendEmailBtn(true)
     try {
-      const emailAddress = await window.proxyApi.httpWebServerProxy<string>(
+      const emailAddress = await window.teamworkInsideSdk.api.proxyHttpCoreServer<string>(
         'check/username/send/verify/' + username,
         {
           jsonData: {
@@ -148,7 +148,7 @@ export const RegistryAccount: FC = () => {
       const idCode = form.getFieldValue!('idCode')
       const verifyCode = form.getFieldValue!('verifyCode')
       const password = sha1().update(form.getFieldValue!('password')).digest('hex')
-      await window.proxyApi.httpWebServerProxy('/user/register', {
+      await window.teamworkInsideSdk.api.proxyHttpCoreServer('/user/register', {
         jsonData: {
           username,
           email,

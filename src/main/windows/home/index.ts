@@ -1,8 +1,8 @@
 import { app, BrowserWindow, Menu, Tray } from 'electron'
-import { browserWindowListenViewResize } from '../../applications/manager'
 import { CurrentInfo, WinNameEnum } from '../../current'
 import { AppIcon } from '../../icons'
 import { showNotification } from '../../notification'
+import { browserWindowListenViewResize } from '../../sdk/insideSdk/applications'
 import { WsHandler } from '../../socket'
 import { SettingWindow } from '../common'
 

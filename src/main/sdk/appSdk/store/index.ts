@@ -1,5 +1,5 @@
-import { AppInfo } from '../../applications/manager'
-import { sendHttpRequestToLocalServer } from '../../tools'
+import { sendHttpRequestToLocalServer } from '../../../tools'
+import { AppInfo } from '../../insideSdk/applications'
 
 // const store = new Store({
 //   encryptionKey: 'aes-256-cbc',

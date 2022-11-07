@@ -19,7 +19,7 @@ export const Notification: FC = () => {
   }, [])
 
   const onCloseBtnClick = useCallback(() => {
-    window.currentWindow.close()
+    window.teamworkInsideSdk.currentWindow.close()
   }, [])
 
   return (

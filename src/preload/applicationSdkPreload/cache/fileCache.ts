@@ -1,8 +1,6 @@
-import { currentInfo } from '../current'
-import {
-  sendInvokeIpcEventWrapperEventNameAndDataCallBack,
-  tryJsonParseDataHandler
-} from '../tools'
+import { tryJsonParseDataHandler } from '../../_commons/tools'
+import { current } from '../current'
+import { sendInvokeIpcEventWrapperEventNameAndDataCallBack } from '../tools'
 
 const sendInvokeIpcEvent = sendInvokeIpcEventWrapperEventNameAndDataCallBack(
   'cache',
@@ -46,6 +44,6 @@ export const file = {
     if (!cacheId) {
       throw new Error('文件缓存ID不能为空')
     }
-    return `https://127.0.0.1:65528/cache/file/download/${currentInfo.id}/${cacheId}`
+    return `https://127.0.0.1:65528/cache/file/download/${current.appInfo.id}/${cacheId}`
   }
 }

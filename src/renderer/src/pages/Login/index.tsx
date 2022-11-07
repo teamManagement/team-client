@@ -47,7 +47,7 @@ export const Login: FC = () => {
     const password = sha1().update(form.getFieldValue!('password')).digest('hex')
     const loadingInstance = loadingFn(true)
     try {
-      await window.api.login(username, password)
+      await window.teamworkInsideSdk.api.login(username, password)
     } catch (e) {
       MessagePlugin.error((e as any).message || e)
     } finally {
@@ -63,7 +63,7 @@ export const Login: FC = () => {
 
     setLoading(true)
     try {
-      const userIcon = await window.proxyApi.httpWebServerProxy<string>(
+      const userIcon = await window.teamworkInsideSdk.api.proxyHttpCoreServer<string>(
         'check/username/' + username
       )
       const iconInfo = { url: '', name: '' }

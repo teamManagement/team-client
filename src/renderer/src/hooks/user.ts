@@ -15,14 +15,14 @@ export function useUserStatus(): 'online' | 'offline' {
         setStatus('online')
       }
     }
-    window.proxyApi.registerServerMsgHandler(fn)
+    const fnId = window.teamworkInsideSdk.api.registerServerMsgHandler(fn)
     return () => {
-      window.proxyApi.removeServerMsgHandler(fn)
+      window.teamworkInsideSdk.api.removeServerMsgHandler(fnId)
     }
   }, [])
   const queryUserStatus = useCallback(async () => {
     try {
-      setStatus(await window.proxyApi.httpLocalServerProxy('/user/status'))
+      setStatus(await window.teamworkInsideSdk.api.proxyHttpLocalServer('/user/status'))
     } catch (e) {
       setStatus('offline')
     }
@@ -36,8 +36,8 @@ export function useUserStatus(): 'online' | 'offline' {
 export function useUserinfo(): UserInfo | undefined {
   const [userInfo, setUserInfo] = useState<UserInfo | undefined>(undefined)
   useEffect(() => {
-    window.proxyApi
-      .httpLocalServerProxy<UserInfo>('/user/now')
+    window.teamworkInsideSdk.api
+      .proxyHttpLocalServer<UserInfo>('/user/now')
       .then((user) => {
         console.log('获取到的用户信息: ', user)
         setUserInfo(user)

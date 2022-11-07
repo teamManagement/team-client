@@ -1,7 +1,5 @@
-import {
-  tryJsonParseDataHandler,
-  sendInvokeIpcEventWrapperEventNameAndDataCallBack
-} from '../tools'
+import { tryJsonParseDataHandler } from '../../_commons/tools'
+import { sendInvokeIpcEventWrapperEventNameAndDataCallBack } from '../tools'
 
 const sendInvokeIpcEvent = sendInvokeIpcEventWrapperEventNameAndDataCallBack(
   'store',

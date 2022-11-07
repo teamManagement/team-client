@@ -51,7 +51,7 @@ export const ForgotPassword: FC = () => {
     const loadingInstance = loading(true)
     setDisableEmailBtn(true)
     try {
-      const emailAddress = await window.proxyApi.httpWebServerProxy<string>(
+      const emailAddress = await window.teamworkInsideSdk.api.proxyHttpCoreServer<string>(
         'forgot/send/email/' + username
       )
       MessagePlugin.success(`验证码已发送至${emailAddress}请注意查收`)
@@ -98,7 +98,7 @@ export const ForgotPassword: FC = () => {
     const loadingInstance = loading(true)
     try {
       const username = form.getFieldValue!('username')
-      await window.proxyApi.httpWebServerProxy('forgot/password/' + username, {
+      await window.teamworkInsideSdk.api.proxyHttpCoreServer('forgot/password/' + username, {
         jsonData: {
           verifyCode: form.getFieldValue!('verifyCode'),
           password: sha1().update(form.getFieldValue!('password')).digest('hex')

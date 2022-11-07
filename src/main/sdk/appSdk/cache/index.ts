@@ -1,4 +1,4 @@
-import { AppInfo } from '../../applications/manager'
+import { AppInfo } from '../../insideSdk/applications'
 import { _fileCacheHandler } from './fileCache'
 import { _strCacheHandler } from './strCache'
 

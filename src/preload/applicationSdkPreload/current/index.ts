@@ -1,5 +1,4 @@
-import { ipcRenderer } from 'electron'
-import { applicationPreloadIpcSyncEventName } from '../tools'
+import { sendSyncIpcEventWrapperEventNameAndDataCallBack } from '../tools'
 
 //#region APP相关接口
 enum AppType {
@@ -26,7 +25,13 @@ interface AppInfo {
   version: string
 }
 
-export const currentInfo: AppInfo = ipcRenderer.sendSync(
-  applicationPreloadIpcSyncEventName,
-  'currentInfo'
-)
+// const sendSyncIpcEvent = sendSyncIpcEventWrapperEventNameAndDataCallBack('current', undefined)
+
+/**
+ * 当前应用信息
+ */
+// const appInfo: AppInfo = sendSyncIpcEvent('appInfo')
+
+export const current = {
+  appInfo: {}
+}

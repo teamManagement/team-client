@@ -9,7 +9,7 @@ import './index.scss'
 export const UserInfo: FC = () => {
   const userinfo = useUserinfo()
   const closeWin = useCallback(() => {
-    window.currentWindow.close()
+    window.teamworkInsideSdk.currentWindow.close()
   }, [])
 
   const orgInfo = useMemo(() => {

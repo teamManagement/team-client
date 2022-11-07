@@ -89,18 +89,27 @@ function _sendHttpRequestBase<T>(url: string, options?: RequestOption): Promise<
       } as ResponseError)
     })
 
-    // const timeoutId = setTimeout(() => {
-    //   request.abort()
-    //   reject({
-    //     error: true,
-    //     httpCode: 408,
-    //     message: 'request time out',
-    //     code: '408'
-    //   } as ResponseError)
-    // }, options.timeout || 5000)
+    if (typeof options.timeout !== 'number') {
+      options.timeout = 5000
+    }
+
+    let timeoutId: any = undefined
+    if (options.timeout >= 0) {
+      timeoutId = setTimeout(() => {
+        request.abort()
+        reject({
+          error: true,
+          httpCode: 408,
+          message: 'request time out',
+          code: '408'
+        } as ResponseError)
+      }, options.timeout)
+    }
 
     request.on('response', (res) => {
-      // clearTimeout(timeoutId)
+      if (typeof timeoutId !== 'undefined') {
+        clearTimeout(timeoutId)
+      }
       let buffer: Buffer | undefined = undefined
 
       res.on('data', (data) => {
@@ -167,7 +176,10 @@ export function sendHttpRequestToLocalServer<T>(url: string, options?: RequestOp
   return _sendHttpRequestBase(url, options)
 }
 
-export function sendHttpRequestToWebServer<T>(url: string, options?: RequestOption): Promise<T> {
+export function sendHttpRequestToCoreHttpServer<T>(
+  url: string,
+  options?: RequestOption
+): Promise<T> {
   if (!url.startsWith('/')) {
     url = '/' + url
   }

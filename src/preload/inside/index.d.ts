@@ -1,5 +1,4 @@
 import { ElectronAPI } from '@electron-toolkit/preload'
-import { BrowserWindowConstructorOptions } from 'electron'
 
 declare global {
   //#region APP相关接口
@@ -150,53 +149,92 @@ declare global {
   //#endregion
 
   interface Window {
-    logout(): void
-    currentWindow: {
-      fullScreen(): Promise<void>
-      unFullscreen(): Promise<void>
-      maximize(): Promise<void>
-      unMaximize(): Promise<void>
-      minimize(): Promise<void>
-      unMinimize(): Promise<void>
-      alwaysOnTop(): Promise<void>
-      unAlwaysOnTop(): Promise<void>
-      show(): Promise<void>
-      hide(): Promise<void>
-      close(): Promise<void>
-    }
-    electron: ElectronAPI & {
-      ContextMenu: {
-        get(): ContextMenu
-        getById(menuId: string): ContextMenu
+    teamworkInsideSdk: {
+      electron: ElectronAPI
+      id: {
+        seq(): number
+        uuid(): string
+      }
+      // contextmenu: {
+      //   build(menuItems: MenuItemOptions[], menuId?: string): Menu
+      //   clear(id: string): void
+      //   clearAll(): void
+      // }
+      api: {
+        login(username: string, password: string): Promise<void>
+        logout(): void
+        proxyHttpCoreServer<T>(url: string, options?: HttpOptions): Promise<T>
+        proxyHttpLocalServer<T>(url: string, options?: HttpOptions): Promise<T>
+        registerServerMsgHandler<T>(fn: (data: TcpTransferInfo<T>) => void): string
+        removeServerMsgHandler(fnId: string): void
+      }
+      currentWindow: {
+        fullScreen(): Promise<void>
+        unFullscreen(): Promise<void>
+        maximize(): Promise<void>
+        unMaximize(): Promise<void>
+        minimize(): Promise<void>
+        unMinimize(): Promise<void>
+        alwaysOnTop(): Promise<void>
+        unAlwaysOnTop(): Promise<void>
+        show(): Promise<void>
+        hide(): Promise<void>
+        close(): Promise<void>
+      }
+      applications: {
+        getOpenedIdList(): string[]
+        listenStatusNotice(
+          id: string,
+          fn: (appInfo: AppInfo, status: 'open' | 'close') => void
+        ): void
+        removeStatusNotice(id: string): void
+        openApp(appInfo: AppInfo): Promise<void>
+        showById(id: string): Promise<void>
+        showInAlertById(id: string): Promise<void>
+        currentShowInAlert(): Promise<void>
+        hideById(id: string): Promise<void>
+        hangUp(): Promise<void>
+        restore(): Promise<AppInfo>
+        hideEndOpenedApp(): Promise<void>
+        destroyById(id: string): Promise<void>
+        destroyAlertById(id: string): Promise<void>
+        getCurrentAppInfo(): AppInfo | undefined
       }
     }
-    api: {
-      login(username: string, password: string): Promise<void>
-      contextmenu: {
-        build(menuItems: MenuItemOptions[], menuId?: string): Menu
-        clear(menuId: string): void
-        clearAll(): void
-      }
-    }
-    proxyApi: ProxyApi
-    app: {
-      getOpenedIdList(): string[]
-      listenStatusNotice(id: string, fn: (appInfo: AppInfo, status: 'open' | 'close') => void): void
-      removeStatusNotice(id: string): void
-      openApp(appInfo: AppInfo): Promise<void>
-      showById(id: string): Promise<void>
-      showInAlertById(id: string): Promise<void>
-      currentShowInAlert(): Promise<void>
-      hideById(id: string): Promise<void>
-      hangUp(): Promise<void>
-      restore(): Promise<AppInfo>
-      hideEndOpenedApp(): Promise<void>
-      destroyById(id: string): Promise<void>
-      destroyAlertById(id: string): Promise<void>
-      getCurrentAppInfo(): AppInfo | undefined
-    }
-    modalWindow: {
-      showInside(url: string, options: BrowserWindowConstructorOptions, attachInfo?: any): void
-    }
+
+    // & {
+    //   ContextMenu: {
+    //     get(): ContextMenu
+    //     getById(menuId: string): ContextMenu
+    //   }
+    // }
+    // api: {
+    //   login(username: string, password: string): Promise<void>
+    //   contextmenu: {
+    //     build(menuItems: MenuItemOptions[], menuId?: string): Menu
+    //     clear(menuId: string): void
+    //     clearAll(): void
+    //   }
+    // }
+    // proxyApi: ProxyApi
+    // app: {
+    //   getOpenedIdList(): string[]
+    //   listenStatusNotice(id: string, fn: (appInfo: AppInfo, status: 'open' | 'close') => void): void
+    //   removeStatusNotice(id: string): void
+    //   openApp(appInfo: AppInfo): Promise<void>
+    //   showById(id: string): Promise<void>
+    //   showInAlertById(id: string): Promise<void>
+    //   currentShowInAlert(): Promise<void>
+    //   hideById(id: string): Promise<void>
+    //   hangUp(): Promise<void>
+    //   restore(): Promise<AppInfo>
+    //   hideEndOpenedApp(): Promise<void>
+    //   destroyById(id: string): Promise<void>
+    //   destroyAlertById(id: string): Promise<void>
+    //   getCurrentAppInfo(): AppInfo | undefined
+    // }
+    // modalWindow: {
+    //   showInside(url: string, options: BrowserWindowConstructorOptions, attachInfo?: any): void
+    // }
   }
 }

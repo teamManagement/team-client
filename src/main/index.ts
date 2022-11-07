@@ -12,9 +12,9 @@ import { initMainProcessEvents } from './events'
 import { installCaCert, installLocalServer, verifyExternalProgramHash } from './process'
 import { initApiProxy } from './apiProxy'
 import { alertPanic } from './windows/alerts'
-import { initApplicationViewManager } from './applications/manager'
 import { initNotificationEvent } from './notification'
 import { startUpdaterListener } from './updater'
+import { initSdk } from './sdk'
 
 app.commandLine.appendSwitch('--disable-http-cache')
 
@@ -75,6 +75,9 @@ async function createWindow(): Promise<void> {
     return
   }
 
+  log.debug('加载主线程SDK处理事件...')
+  initSdk()
+
   log.debug('启动本地服务...')
   if (!(await installLocalServer())) {
     alertPanic(
@@ -90,9 +93,9 @@ async function createWindow(): Promise<void> {
     WsHandler.initServerMsgTransferEvents()
     log.debug('注册socket消息转发事件完毕!')
 
-    log.debug('注册应用视图事件...')
-    initApplicationViewManager()
-    log.debug('注册应用试图相关事件完毕!')
+    // log.debug('注册应用视图事件...')
+    // initApplicationViewManager()
+    // log.debug('注册应用试图相关事件完毕!')
 
     log.debug('注册消息通知事件...')
     initNotificationEvent()

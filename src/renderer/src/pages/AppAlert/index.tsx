@@ -14,36 +14,38 @@ import './index.scss'
 export const AppAlert: FC = () => {
   const [isFull, setIsFull] = useState<boolean>(false)
   const [isOnTop, setIsOnTop] = useState<boolean>(false)
-  const [appInfo] = useState<AppInfo | undefined>(window.app.getCurrentAppInfo())
+  const [appInfo] = useState<AppInfo | undefined>(
+    window.teamworkInsideSdk.applications.getCurrentAppInfo()
+  )
 
   const onFullscreen = useCallback(() => {
     setIsFull((full) => {
       if (full) {
-        window.currentWindow.unMaximize()
+        window.teamworkInsideSdk.currentWindow.unMaximize()
       } else {
-        window.currentWindow.maximize()
+        window.teamworkInsideSdk.currentWindow.maximize()
       }
       return !full
     })
   }, [])
 
   const onHide = useCallback(() => {
-    window.currentWindow.minimize()
+    window.teamworkInsideSdk.currentWindow.minimize()
   }, [])
 
   const onClose = useCallback(() => {
     if (!appInfo) {
       return
     }
-    window.app.destroyAlertById(appInfo.id)
+    window.teamworkInsideSdk.applications.destroyAlertById(appInfo.id)
   }, [appInfo])
 
   const onAlwaysTop = useCallback(() => {
     setIsOnTop((top) => {
       if (top) {
-        window.currentWindow.unAlwaysOnTop()
+        window.teamworkInsideSdk.currentWindow.unAlwaysOnTop()
       } else {
-        window.currentWindow.alwaysOnTop()
+        window.teamworkInsideSdk.currentWindow.alwaysOnTop()
       }
       return !top
     })
