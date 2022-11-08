@@ -25,13 +25,13 @@ interface AppInfo {
   version: string
 }
 
-// const sendSyncIpcEvent = sendSyncIpcEventWrapperEventNameAndDataCallBack('current', undefined)
+const sendSyncIpcEvent = sendSyncIpcEventWrapperEventNameAndDataCallBack('current', undefined)
 
 /**
  * 当前应用信息
  */
-// const appInfo: AppInfo = sendSyncIpcEvent('appInfo')
+const appInfo: AppInfo = sendSyncIpcEvent('appInfo')
 
 export const current = {
-  appInfo: {}
+  appInfo: appInfo
 }

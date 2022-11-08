@@ -37,72 +37,72 @@ import { AppInfo } from '../sdk/insideSdk/applications'
 //   appErrorPageUrl = process.env['ELECTRON_RENDERER_URL'] + '/#' + appErrorPageHashName
 // }
 
-enum ApplicationViewEventNames {
-  /**
-   * 创建应用展示视图
-   */
-  OPEN_APP_VIEW = 'ipc-APP_VIEW_OPEN_APP',
-  /**
-   * 展示视图
-   */
-  SHOW_VIEW = 'ipc-APP_VIEW_APP_SHOW',
-  /**
-   * 在alert中显示
-   */
-  SHOW_IN_ALERT = 'ipc-APP_VIEW_SHOW_IN_ALERT',
-  /**
-   * 在弹窗中显示通过当前打开的应用
-   */
-  SHOW_IN_ALERT_NOW_BY_OPENED = 'ipc-APP_VIEW_SHOW_IN_ALERT_BY_NOW_OPENED',
-  /**
-   * 隐藏视图
-   */
-  HIDE_VIEW = 'ipc-APP_VIEW_HIDE',
-  /**
-   * 销毁应用视图
-   */
-  DESTROY_VIEW = 'ipc-APP_VIEW_DESTROY',
-  /**
-   * 销毁alert中的视图
-   */
-  DESTROY_ALERT = 'ipc-APP_VIEW_DESTROY_IN_ALERT',
-  /**
-   * 挂起应用视图
-   */
-  HANG_UP = 'ip-APP_VIEW_HANG_UP',
-  /**
-   * 恢复应用视图
-   */
-  RESTORE = 'ip-APP_VIEW_RESTORE',
-  /**
-   * 已经打开的应用id列表
-   */
-  OPENED_APP_ID_LIST = 'ip-APP_VIEW_OPENED_ID_LIST_GET',
-  /**
-   * 隐藏最后打开的应用
-   */
-  HIDE_END_VIEW = 'ipc-APP_VIEW_HIDE_END_OPENED',
-  /**
-   * app弹出窗口可以进行展示
-   */
-  APP_INFO_GET_BY_CONTENT = 'ipc-APP_VIEW_INFO_GET_BY_CONTENT',
-  /**
-   * 应用安装
-   */
-  INSTALL = 'ipc-APP_INSTALL',
-  /**
-   * 应用卸载
-   */
-  UNINSTALL = 'ipc-APP_UNINSTALL',
-  /**
-   * 增加debug应用
-   */
-  INSTALL_DEBUG_APP = 'ipc-APP_INSTALL_DEBUG_APP',
-  /**
-   * 卸载debug应用
-   */
-  UNINSTALL_DEBUG_APP = 'ipc-APP_UNINSTALL_DEBUG_APP'
-}
+// enum ApplicationViewEventNames {
+//   /**
+//    * 创建应用展示视图
+//    */
+//   OPEN_APP_VIEW = 'ipc-APP_VIEW_OPEN_APP',
+//   /**
+//    * 展示视图
+//    */
+//   SHOW_VIEW = 'ipc-APP_VIEW_APP_SHOW',
+//   /**
+//    * 在alert中显示
+//    */
+//   SHOW_IN_ALERT = 'ipc-APP_VIEW_SHOW_IN_ALERT',
+//   /**
+//    * 在弹窗中显示通过当前打开的应用
+//    */
+//   SHOW_IN_ALERT_NOW_BY_OPENED = 'ipc-APP_VIEW_SHOW_IN_ALERT_BY_NOW_OPENED',
+//   /**
+//    * 隐藏视图
+//    */
+//   HIDE_VIEW = 'ipc-APP_VIEW_HIDE',
+//   /**
+//    * 销毁应用视图
+//    */
+//   DESTROY_VIEW = 'ipc-APP_VIEW_DESTROY',
+//   /**
+//    * 销毁alert中的视图
+//    */
+//   DESTROY_ALERT = 'ipc-APP_VIEW_DESTROY_IN_ALERT',
+//   /**
+//    * 挂起应用视图
+//    */
+//   HANG_UP = 'ip-APP_VIEW_HANG_UP',
+//   /**
+//    * 恢复应用视图
+//    */
+//   RESTORE = 'ip-APP_VIEW_RESTORE',
+//   /**
+//    * 已经打开的应用id列表
+//    */
+//   OPENED_APP_ID_LIST = 'ip-APP_VIEW_OPENED_ID_LIST_GET',
+//   /**
+//    * 隐藏最后打开的应用
+//    */
+//   HIDE_END_VIEW = 'ipc-APP_VIEW_HIDE_END_OPENED',
+//   /**
+//    * app弹出窗口可以进行展示
+//    */
+//   APP_INFO_GET_BY_CONTENT = 'ipc-APP_VIEW_INFO_GET_BY_CONTENT',
+//   /**
+//    * 应用安装
+//    */
+//   INSTALL = 'ipc-APP_INSTALL',
+//   /**
+//    * 应用卸载
+//    */
+//   UNINSTALL = 'ipc-APP_UNINSTALL',
+//   /**
+//    * 增加debug应用
+//    */
+//   INSTALL_DEBUG_APP = 'ipc-APP_INSTALL_DEBUG_APP',
+//   /**
+//    * 卸载debug应用
+//    */
+//   UNINSTALL_DEBUG_APP = 'ipc-APP_UNINSTALL_DEBUG_APP'
+// }
 
 // interface ViewInfo {
 //   view: BrowserView
@@ -571,46 +571,41 @@ export function initApplicationViewManager(): void {
   // ipcMain.handle(ApplicationViewEventNames.HANG_UP, ipcEventPromiseWrapper(hangUp))
   // ipcMain.handle(ApplicationViewEventNames.RESTORE, ipcEventPromiseWrapper(restore))
   // ipcMain.addListener(ApplicationViewEventNames.OPENED_APP_ID_LIST, appOpenedIdListGet)
-
-  ipcMain.handle(
-    ApplicationViewEventNames.INSTALL,
-    ipcEventPromiseWrapper(async (_event, appId) => {
-      if (!appId) {
-        return new Error('未知的应用ID')
-      }
-      await sendHttpRequestToLocalServer('/app/install/' + appId, {
-        timeout: -1
-      })
-
-      CurrentInfo.getWin(WinNameEnum.HOME)?.webContents.send('desktop-refresh')
-      return
-    })
-  )
-
-  ipcMain.handle(
-    ApplicationViewEventNames.UNINSTALL,
-    ipcEventPromiseWrapper(async (_event, appId) => {
-      if (!appId) {
-        return new Error('未知的应用ID')
-      }
-      await sendHttpRequestToLocalServer('/app/uninstall/' + appId, {
-        timeout: -1
-      })
-
-      CurrentInfo.getWin(WinNameEnum.HOME)?.webContents.send('desktop-refresh')
-      return
-    })
-  )
-
-  ipcMain.handle(
-    ApplicationViewEventNames.INSTALL_DEBUG_APP,
-    ipcEventPromiseWrapper(async (_event, appInfo: AppInfo) => {
-      await sendHttpRequestToLocalServer('/app/debug/install', {
-        jsonData: appInfo
-      })
-      CurrentInfo.getWin(WinNameEnum.HOME)?.webContents.send('desktop-refresh')
-    })
-  )
+  // ipcMain.handle(
+  //   ApplicationViewEventNames.INSTALL,
+  //   ipcEventPromiseWrapper(async (_event, appId) => {
+  //     if (!appId) {
+  //       return new Error('未知的应用ID')
+  //     }
+  //     await sendHttpRequestToLocalServer('/app/install/' + appId, {
+  //       timeout: -1
+  //     })
+  //     CurrentInfo.getWin(WinNameEnum.HOME)?.webContents.send('desktop-refresh')
+  //     return
+  //   })
+  // )
+  // ipcMain.handle(
+  //   ApplicationViewEventNames.UNINSTALL,
+  //   ipcEventPromiseWrapper(async (_event, appId) => {
+  //     if (!appId) {
+  //       return new Error('未知的应用ID')
+  //     }
+  //     await sendHttpRequestToLocalServer('/app/uninstall/' + appId, {
+  //       timeout: -1
+  //     })
+  //     CurrentInfo.getWin(WinNameEnum.HOME)?.webContents.send('desktop-refresh')
+  //     return
+  //   })
+  // )
+  // ipcMain.handle(
+  //   ApplicationViewEventNames.INSTALL_DEBUG_APP,
+  //   ipcEventPromiseWrapper(async (_event, appInfo: AppInfo) => {
+  //     await sendHttpRequestToLocalServer('/app/debug/install', {
+  //       jsonData: appInfo
+  //     })
+  //     CurrentInfo.getWin(WinNameEnum.HOME)?.webContents.send('desktop-refresh')
+  //   })
+  // )
 }
 
 // export function clearAllApplicationViews(): void {
