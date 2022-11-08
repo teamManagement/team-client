@@ -5,6 +5,7 @@ import NavItem from '../NavItem'
 import IconFont from '@renderer/components/IconFont'
 import { useUserinfo, useUserStatus } from '@renderer/hooks'
 import { useCallback } from 'react'
+import { api, modalWindow } from '@byzk/teamwork-inside-sdk'
 
 export const Nav: FC = () => {
   const userInfo = useUserinfo()
@@ -31,15 +32,8 @@ export const Nav: FC = () => {
     }
   }, [showAvatarOperation])
 
-  const openUserinfoModalWindow = useCallback(() => {
-    window.modalWindow.showInside('/userinfo', {
-      width: 340,
-      height: 490
-    })
-  }, [])
-
   const logout = useCallback(() => {
-    window.teamworkInsideSdk.api.logout()
+    api.logout()
   }, [])
 
   return (
@@ -66,7 +60,7 @@ export const Nav: FC = () => {
               </div>
             </div>
             <div className="user-avatar-operation-desc">
-              <div onClick={openUserinfoModalWindow} className="operation-item">
+              <div onClick={modalWindow.showUserinfo} className="operation-item">
                 <div className="name">我的信息</div>
               </div>
               {/* TODO 这版本不做 */}

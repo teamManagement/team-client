@@ -15,6 +15,7 @@ import { alertPanic } from './windows/alerts'
 import { initNotificationEvent } from './notification'
 import { startUpdaterListener } from './updater'
 import { initSdk } from './sdk'
+import { SettingUserinfoAlert } from './windows/userinfo'
 
 app.commandLine.appendSwitch('--disable-http-cache')
 
@@ -106,14 +107,17 @@ async function createWindow(): Promise<void> {
 
     if (connResult) {
       if ((await wsHandler.loginOk()) || (await wsHandler.autoLogin())) {
-        SettingHomeWin((win) => {
+        await SettingHomeWin(async (win) => {
           win.show()
           hideSplashscreen()
+
+          log.debug('加载用户信息界面...')
+          await SettingUserinfoAlert()
         })
         return
       }
     }
-    SettingLoginWin(hideSplashscreen)
+    await SettingLoginWin(hideSplashscreen)
   } catch (e) {
     console.log(e)
     dialog.showMessageBoxSync(DialogTopWin(), {

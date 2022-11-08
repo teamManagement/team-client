@@ -1,6 +1,7 @@
 import { useCallback } from 'react'
 import { FC, useEffect, useState } from 'react'
 import { Notification as TdNotification } from 'tdesign-react'
+import { currentWindow } from '@byzk/teamwork-inside-sdk'
 
 export const Notification: FC = () => {
   const [notificationInfo] = useState<NotificationTemplateInfo>(window.notification.getInfo())
@@ -19,7 +20,7 @@ export const Notification: FC = () => {
   }, [])
 
   const onCloseBtnClick = useCallback(() => {
-    window.teamworkInsideSdk.currentWindow.close()
+    currentWindow.close()
   }, [])
 
   return (

@@ -10,6 +10,7 @@ import {
   JumpIcon,
   PoweroffIcon
 } from 'tdesign-icons-react'
+import { applications, AppInfo } from '@byzk/teamwork-inside-sdk'
 import 'antd/dist/antd.css'
 import './index.scss'
 import { AppDesktop } from './appDesktop'
@@ -20,14 +21,12 @@ export const ContentApplicationCenter: FC = () => {
   const applicationCenterEle = useRef<HTMLDivElement>(null)
 
   const [loadingDesc, setLoadingDesc] = useState<string>('')
-  const [openedAppIdList, setOpenedAppIdList] = useState<string[]>(
-    window.teamworkInsideSdk.applications.getOpenedIdList()
-  )
+  const [openedAppIdList, setOpenedAppIdList] = useState<string[]>(applications.getOpenedIdList())
   const [nowOpenApp, setNowOpenApp] = useState<AppInfo | undefined>(undefined)
   const [keyword, setKeyword] = useState<string | undefined>(undefined)
   const [openTitleDisabled, setOpenTitleDisabled] = useState<boolean>(false)
   useEffect(() => {
-    window.teamworkInsideSdk.applications.restore().then((app) => {
+    applications.restore().then((app) => {
       if (app && app.loading) {
         setLoadingDesc('正在加载应用')
         setOpenTitleDisabled(true)
@@ -35,7 +34,7 @@ export const ContentApplicationCenter: FC = () => {
       setNowOpenApp(app)
     })
     return () => {
-      window.teamworkInsideSdk.applications.hangUp()
+      applications.hangUp()
     }
   }, [])
 
@@ -84,9 +83,9 @@ export const ContentApplicationCenter: FC = () => {
     }
 
     const listenId = 'appStatusListener'
-    window.teamworkInsideSdk.applications.listenStatusNotice(listenId, appOpenedNoticeEvent)
+    applications.listenStatusNotice(listenId, appOpenedNoticeEvent)
     return () => {
-      window.teamworkInsideSdk.applications.removeStatusNotice(listenId)
+      applications.removeStatusNotice(listenId)
     }
   }, [])
 
@@ -94,7 +93,7 @@ export const ContentApplicationCenter: FC = () => {
     setLoadingDesc('正在打开应用...')
     try {
       setOpenTitleDisabled(true)
-      await window.teamworkInsideSdk.applications.openApp(app)
+      await applications.openApp(app)
     } catch (e) {
       MessagePlugin.error(e as string)
     } finally {
@@ -107,7 +106,7 @@ export const ContentApplicationCenter: FC = () => {
     if (!nowOpenApp) {
       return
     }
-    await window.teamworkInsideSdk.applications.destroyById(nowOpenApp.id)
+    await applications.destroyById(nowOpenApp.id)
   }, [nowOpenApp])
 
   const onAppAlert = useCallback(async () => {
@@ -116,7 +115,7 @@ export const ContentApplicationCenter: FC = () => {
       if (!nowOpenApp) {
         return
       }
-      await window.teamworkInsideSdk.applications.currentShowInAlert()
+      await applications.currentShowInAlert()
       setNowOpenApp(undefined)
     } catch (e) {
       MessagePlugin.error((e as any).message || e)
@@ -126,7 +125,7 @@ export const ContentApplicationCenter: FC = () => {
   }, [nowOpenApp])
 
   const onCallbackToDesktop = useCallback(() => {
-    window.teamworkInsideSdk.applications.hideEndOpenedApp()
+    applications.hideEndOpenedApp()
     setNowOpenApp(undefined)
   }, [])
 

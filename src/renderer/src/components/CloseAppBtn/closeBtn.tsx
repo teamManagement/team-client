@@ -1,6 +1,7 @@
 import React, { FC, useCallback, useState } from 'react'
 import { Button } from 'tdesign-react'
 import { CloseIcon } from 'tdesign-icons-react'
+import { electron } from '@byzk/teamwork-inside-sdk'
 
 export interface CloseAppBtnProps {
   size?: 'small' | 'medium' | 'large'
@@ -35,10 +36,10 @@ export const CloseAppBtn: FC<CloseAppBtnProps> = ({
       return
     }
     if (hide) {
-      window.teamworkInsideSdk.electron.ipcRenderer.send('appHide')
+      electron.ipcRenderer.send('appHide')
       return
     }
-    window.teamworkInsideSdk.electron.ipcRenderer.send('appExit', 0)
+    electron.ipcRenderer.send('appExit', 0)
   }, [])
 
   return (

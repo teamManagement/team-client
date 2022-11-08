@@ -14,7 +14,8 @@ export const applicationWebcontentsMap: {
 export enum WinNameEnum {
   NONE = 'none',
   LOGIN = 'login',
-  HOME = 'home'
+  HOME = 'home',
+  USERINFO = 'userinfo'
 }
 
 /**

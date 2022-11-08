@@ -13,6 +13,7 @@ import {
   message,
   DialogPlugin
 } from 'tdesign-react'
+import { api } from '@byzk/teamwork-inside-sdk'
 import Title from '../Title'
 import './index.scss'
 
@@ -51,15 +52,13 @@ export const ForgotPassword: FC = () => {
     const loadingInstance = loading(true)
     setDisableEmailBtn(true)
     try {
-      const emailAddress = await window.teamworkInsideSdk.api.proxyHttpCoreServer<string>(
-        'forgot/send/email/' + username
-      )
+      const emailAddress = await api.proxyHttpCoreServer<string>('forgot/send/email/' + username)
       MessagePlugin.success(`验证码已发送至${emailAddress}请注意查收`)
       setWaitTime(60)
       setDisableInput(false)
     } catch (e) {
       setDisableEmailBtn(false)
-      const errInfo = e as ResponseError
+      const errInfo = e as any
       MessagePlugin.error(errInfo.message)
     } finally {
       loadingInstance.hide()
@@ -98,7 +97,7 @@ export const ForgotPassword: FC = () => {
     const loadingInstance = loading(true)
     try {
       const username = form.getFieldValue!('username')
-      await window.teamworkInsideSdk.api.proxyHttpCoreServer('forgot/password/' + username, {
+      await api.proxyHttpCoreServer('forgot/password/' + username, {
         jsonData: {
           verifyCode: form.getFieldValue!('verifyCode'),
           password: sha1().update(form.getFieldValue!('password')).digest('hex')
@@ -119,7 +118,7 @@ export const ForgotPassword: FC = () => {
         closeBtn: false
       })
     } catch (e) {
-      const resErr = e as ResponseError
+      const resErr = e as any
       message.error(resErr.message)
     } finally {
       loadingInstance.hide()

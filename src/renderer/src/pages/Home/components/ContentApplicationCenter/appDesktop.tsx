@@ -1,5 +1,5 @@
 import { FC, useCallback, useMemo, useState, MouseEvent, useEffect, useRef } from 'react'
-import { contextmenu } from '@byzk/teamwork-sdk'
+import { contextmenu, api, electron, AppInfo, Menu } from '@byzk/teamwork-inside-sdk'
 import AppItem from '@renderer/components/AppItem'
 import { MessagePlugin } from 'tdesign-react'
 import Loading from '@renderer/components/Loading'
@@ -45,8 +45,7 @@ export const AppDesktop: FC<AppDesktop> = ({
   const forceRefreshAppList = useCallback(async () => {
     setLoadingDesc('正在刷新应用列表...')
     try {
-      const appList: AppInfo[] =
-        (await window.teamworkInsideSdk.api.proxyHttpLocalServer('/app/force/refresh')) || []
+      const appList: AppInfo[] = (await api.proxyHttpLocalServer('/app/force/refresh')) || []
       appList.push(appStoreInfo)
       setAppList(appList)
     } catch (e) {
@@ -59,8 +58,7 @@ export const AppDesktop: FC<AppDesktop> = ({
   const queryAppList = useCallback(async () => {
     setLoadingDesc('正在加载应用列表...')
     try {
-      const appList: AppInfo[] =
-        (await window.teamworkInsideSdk.api.proxyHttpLocalServer('/app/info/desktop/list')) || []
+      const appList: AppInfo[] = (await api.proxyHttpLocalServer('/app/info/desktop/list')) || []
       appList.push(appStoreInfo)
       setAppList(appList)
     } catch (e) {
@@ -74,12 +72,9 @@ export const AppDesktop: FC<AppDesktop> = ({
     const desktopRefresh: () => void = () => {
       queryAppList()
     }
-    window.teamworkInsideSdk.electron.ipcRenderer.on('desktop-refresh', desktopRefresh)
+    electron.ipcRenderer.on('desktop-refresh', desktopRefresh)
     return () => {
-      window.teamworkInsideSdk.electron.ipcRenderer.removeListener(
-        'desktop-refresh',
-        desktopRefresh
-      )
+      electron.ipcRenderer.removeListener('desktop-refresh', desktopRefresh)
     }
   }, [queryAppList])
 

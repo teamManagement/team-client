@@ -6,6 +6,7 @@ import { TcpTransferCmdCode } from './api/serverMsgTransfer'
 import { currentWindow } from './currentWindow'
 import { applications } from './applications'
 import { contextmenu } from '../_commons/contextmenu'
+import { modalWindow } from './modalWindow'
 import '../applicationSdkPreload'
 
 // Custom APIs for renderer
@@ -77,7 +78,8 @@ const apiMap = {
     api,
     currentWindow,
     applications,
-    contextmenu
+    contextmenu,
+    modalWindow
   },
   TcpTransferCmdCode,
   AppType,

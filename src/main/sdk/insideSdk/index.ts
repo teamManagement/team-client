@@ -3,6 +3,7 @@ import { RegisterFn, SdkHandlerParam, SdkRegistryInfo } from '..'
 import { _apiHandler } from './api'
 import { _applicationsHandler, _applicationsSyncHandler } from './applications'
 import { _currentWindowHandler } from './currentWindow'
+import { _modalWindowHandler } from './modalWindow'
 
 const insideSdkIpcEventName = 'ipc-inside-sdk-with-promise'
 const insideSdkSyncEventName = 'ipc-inside-sdk-with-sync'
@@ -54,7 +55,8 @@ const syncEventHandlerInfo: SdkRegistryInfo<void> = {
     param.eventName = param.otherData.splice(0, 1)[0]
   },
   eventSyncHandleMap: {
-    applications: _applicationsSyncHandler
+    applications: _applicationsSyncHandler,
+    modalWindow: _modalWindowHandler
   }
 }
 

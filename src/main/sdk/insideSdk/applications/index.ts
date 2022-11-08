@@ -15,6 +15,7 @@ import {
   PRELOAD_JS_NEW_WINDOW_OPEN
 } from '../../../consts'
 import { CurrentInfo, WinNameEnum } from '../../../current'
+import { sendHttpRequestToLocalServer } from '../../../tools'
 import { SettingWindow } from '../../../windows/common'
 
 //#region APP相关接口
@@ -517,6 +518,17 @@ async function hideEndOpenedApp(event: IpcMainInvokeEvent): Promise<void> {
   hideById(event, _wrapperEndOpenInfo.appInfo.id)
 }
 
+async function _callLocalServerAndFlushDesktop(appId: string, url: string): Promise<void> {
+  if (!appId) {
+    throw new Error('未知的应用ID')
+  }
+  await sendHttpRequestToLocalServer(url, {
+    timeout: -1
+  })
+  CurrentInfo.getWin(WinNameEnum.HOME)?.webContents.send('desktop-refresh')
+  return
+}
+
 const applicationsHandlers = {
   openApp,
   showById,
@@ -527,7 +539,13 @@ const applicationsHandlers = {
   restore,
   hideEndOpenedApp,
   destroyById,
-  destroyAlertById
+  destroyAlertById,
+  install(_event: IpcMainInvokeEvent, appId: string): Promise<void> {
+    return _callLocalServerAndFlushDesktop(appId, '/app/install/' + appId)
+  },
+  uninstall(_event: IpcMainInvokeEvent, appId: string): Promise<void> {
+    return _callLocalServerAndFlushDesktop(appId, '/app/uninstall/' + appId)
+  }
 }
 
 /**

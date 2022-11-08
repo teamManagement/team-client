@@ -27,7 +27,7 @@ async function createModalWindow(
   await new Promise<void>((resolve, reject) => {
     try {
       SettingWindow(
-        WinNameEnum.NONE,
+        WinNameEnum.USERINFO,
         {
           ...options,
           parent,

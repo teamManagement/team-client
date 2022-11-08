@@ -9,43 +9,42 @@ import {
   RemoveIcon
 } from 'tdesign-icons-react'
 import { Button } from 'tdesign-react'
+import { applications, currentWindow, AppInfo } from '@byzk/teamwork-inside-sdk'
 import './index.scss'
 
 export const AppAlert: FC = () => {
   const [isFull, setIsFull] = useState<boolean>(false)
   const [isOnTop, setIsOnTop] = useState<boolean>(false)
-  const [appInfo] = useState<AppInfo | undefined>(
-    window.teamworkInsideSdk.applications.getCurrentAppInfo()
-  )
+  const [appInfo] = useState<AppInfo | undefined>(applications.getCurrentAppInfo())
 
   const onFullscreen = useCallback(() => {
     setIsFull((full) => {
       if (full) {
-        window.teamworkInsideSdk.currentWindow.unMaximize()
+        currentWindow.unmaximize()
       } else {
-        window.teamworkInsideSdk.currentWindow.maximize()
+        currentWindow.maximize()
       }
       return !full
     })
   }, [])
 
   const onHide = useCallback(() => {
-    window.teamworkInsideSdk.currentWindow.minimize()
+    currentWindow.minimize()
   }, [])
 
   const onClose = useCallback(() => {
     if (!appInfo) {
       return
     }
-    window.teamworkInsideSdk.applications.destroyAlertById(appInfo.id)
+    applications.destroyAlertById(appInfo.id)
   }, [appInfo])
 
   const onAlwaysTop = useCallback(() => {
     setIsOnTop((top) => {
       if (top) {
-        window.teamworkInsideSdk.currentWindow.unAlwaysOnTop()
+        currentWindow.unAlwaysOnTop()
       } else {
-        window.teamworkInsideSdk.currentWindow.alwaysOnTop()
+        currentWindow.alwaysOnTop()
       }
       return !top
     })

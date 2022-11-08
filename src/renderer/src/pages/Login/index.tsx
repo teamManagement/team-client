@@ -14,6 +14,7 @@ import {
 } from 'tdesign-react'
 import { UserIcon, LockOnIcon } from 'tdesign-icons-react'
 import { sha1 } from 'hash.js'
+import { api } from '@byzk/teamwork-inside-sdk'
 import Avatar from '@renderer/components/Avatar'
 import CloseAppBtn from '@renderer/components/CloseAppBtn'
 import defaultHeadImg from '../../assets/imgs/default-header.png'
@@ -47,7 +48,7 @@ export const Login: FC = () => {
     const password = sha1().update(form.getFieldValue!('password')).digest('hex')
     const loadingInstance = loadingFn(true)
     try {
-      await window.teamworkInsideSdk.api.login(username, password)
+      await api.login(username, password)
     } catch (e) {
       MessagePlugin.error((e as any).message || e)
     } finally {
@@ -63,9 +64,7 @@ export const Login: FC = () => {
 
     setLoading(true)
     try {
-      const userIcon = await window.teamworkInsideSdk.api.proxyHttpCoreServer<string>(
-        'check/username/' + username
-      )
+      const userIcon = await api.proxyHttpCoreServer<string>('check/username/' + username)
       const iconInfo = { url: '', name: '' }
       if (userIcon.startsWith('name:')) {
         iconInfo.name = userIcon.substring(5)
@@ -74,7 +73,7 @@ export const Login: FC = () => {
       }
       setIcon(iconInfo)
     } catch (e) {
-      const errInfo = e as ResponseError
+      const errInfo = e as any
       MessagePlugin.error({ content: errInfo.message, placement: 'center' })
       setIcon({ url: defaultHeadImg, name: undefined })
     } finally {

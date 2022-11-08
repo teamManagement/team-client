@@ -13,9 +13,10 @@ import {
 import { LinkIcon, LocationIcon, LockOnIcon, SecuredIcon, UserIcon } from 'tdesign-icons-react'
 import { useCountDown } from 'ahooks'
 import { useNavigate } from 'react-router-dom'
+import { api } from '@byzk/teamwork-inside-sdk'
+import { sha1 } from 'hash.js'
 import Title from '../Title'
 import './index.scss'
-import { sha1 } from 'hash.js'
 
 export const RegistryAccount: FC = () => {
   const navigate = useNavigate()
@@ -114,7 +115,7 @@ export const RegistryAccount: FC = () => {
     const loadingInstance = loading(true)
     setDisabledSendEmailBtn(true)
     try {
-      const emailAddress = await window.teamworkInsideSdk.api.proxyHttpCoreServer<string>(
+      const emailAddress = await api.proxyHttpCoreServer<string>(
         'check/username/send/verify/' + username,
         {
           jsonData: {
@@ -129,7 +130,7 @@ export const RegistryAccount: FC = () => {
       setDisabledInput(false)
     } catch (e) {
       setDisabledSendEmailBtn(false)
-      const errInfo = e as ResponseError
+      const errInfo = e as any
       MessagePlugin.error(errInfo.message)
     } finally {
       loadingInstance.hide()
@@ -148,7 +149,7 @@ export const RegistryAccount: FC = () => {
       const idCode = form.getFieldValue!('idCode')
       const verifyCode = form.getFieldValue!('verifyCode')
       const password = sha1().update(form.getFieldValue!('password')).digest('hex')
-      await window.teamworkInsideSdk.api.proxyHttpCoreServer('/user/register', {
+      await api.proxyHttpCoreServer('/user/register', {
         jsonData: {
           username,
           email,
@@ -172,7 +173,7 @@ export const RegistryAccount: FC = () => {
         closeBtn: false
       })
     } catch (e) {
-      const resErr = e as ResponseError
+      const resErr = e as any
       message.error(resErr.message)
     } finally {
       loadingInstance.hide()

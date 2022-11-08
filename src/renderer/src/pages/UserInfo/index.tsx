@@ -4,12 +4,13 @@ import IconFont from '@renderer/components/IconFont'
 import { useUserinfo } from '@renderer/hooks'
 import { FC, useCallback, useMemo } from 'react'
 import { Divider } from 'tdesign-react'
+import { currentWindow } from '@byzk/teamwork-inside-sdk'
 import './index.scss'
 
 export const UserInfo: FC = () => {
   const userinfo = useUserinfo()
   const closeWin = useCallback(() => {
-    window.teamworkInsideSdk.currentWindow.close()
+    currentWindow.close()
   }, [])
 
   const orgInfo = useMemo(() => {

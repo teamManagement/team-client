@@ -138,6 +138,20 @@ export const applications = {
     return sendInvokeIpcEvent('destroyAlertById', id)
   },
   /**
+   * 根据应用ID安装应用
+   * @param appId 应用ID
+   */
+  install(appId: string): Promise<void> {
+    return sendInvokeIpcEvent('install', appId)
+  },
+  /**
+   * 根据应用ID卸载应用
+   * @param appId 应用ID
+   */
+  uninstall(appId: string): Promise<void> {
+    return sendInvokeIpcEvent('uninstall', appId)
+  },
+  /**
    * 获取已经打开的应用列表
    * @returns 打开的应用列表
    */

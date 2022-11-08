@@ -1,6 +1,7 @@
 import { UserInfo } from '@renderer/vos/user'
 import { useCallback, useEffect, useState } from 'react'
 import { MessagePlugin } from 'tdesign-react'
+import { api, TcpTransferInfo, TcpTransferCmdCode } from '@byzk/teamwork-inside-sdk'
 
 export function useUserStatus(): 'online' | 'offline' {
   const [status, setStatus] = useState<'online' | 'offline'>('offline')
@@ -15,14 +16,14 @@ export function useUserStatus(): 'online' | 'offline' {
         setStatus('online')
       }
     }
-    const fnId = window.teamworkInsideSdk.api.registerServerMsgHandler(fn)
+    const fnId = api.registerServerMsgHandler(fn)
     return () => {
-      window.teamworkInsideSdk.api.removeServerMsgHandler(fnId)
+      api.removeServerMsgHandler(fnId)
     }
   }, [])
   const queryUserStatus = useCallback(async () => {
     try {
-      setStatus(await window.teamworkInsideSdk.api.proxyHttpLocalServer('/user/status'))
+      setStatus(await api.proxyHttpLocalServer('/user/status'))
     } catch (e) {
       setStatus('offline')
     }
@@ -36,7 +37,7 @@ export function useUserStatus(): 'online' | 'offline' {
 export function useUserinfo(): UserInfo | undefined {
   const [userInfo, setUserInfo] = useState<UserInfo | undefined>(undefined)
   useEffect(() => {
-    window.teamworkInsideSdk.api
+    api
       .proxyHttpLocalServer<UserInfo>('/user/now')
       .then((user) => {
         console.log('获取到的用户信息: ', user)
