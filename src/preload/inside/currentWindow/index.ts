@@ -72,5 +72,12 @@ export const currentWindow = {
    */
   close(): Promise<void> {
     return sendInvokeIpcEvent('close')
+  },
+
+  /**
+   * 打开窗体中BrowserView的开发者工具
+   */
+  openBrowserViewDevTools(): Promise<void> {
+    return sendInvokeIpcEvent('openBrowserViewDevTools')
   }
 }

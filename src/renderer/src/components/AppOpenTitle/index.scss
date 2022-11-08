@@ -20,9 +20,13 @@ $appOpenTitleIconSize: 38px;
   }
 
   // .operation-start {
+  //   justify-content: flex-end;
+  //   height: 100%;
+  //   display: flex;
   // }
 
-  .operation-end {
+  .operation-end,
+  .operation-start {
     justify-content: flex-end;
     height: 100%;
     display: flex;

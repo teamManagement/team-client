@@ -9,8 +9,9 @@ import {
   RemoveIcon
 } from 'tdesign-icons-react'
 import { Button } from 'tdesign-react'
-import { applications, currentWindow, AppInfo } from '@byzk/teamwork-inside-sdk'
+import { applications, currentWindow, electron, AppInfo } from '@byzk/teamwork-inside-sdk'
 import './index.scss'
+import IconFont from '@renderer/components/IconFont'
 
 export const AppAlert: FC = () => {
   const [isFull, setIsFull] = useState<boolean>(false)
@@ -72,16 +73,26 @@ export const AppAlert: FC = () => {
           drag
           title={appInfo.name}
           iconUrl={appInfo.icon}
-          startEle={
+          startEle={[
             <Button
               onClick={onAlwaysTop}
-              key="pin"
+              key="alwaysOnTop"
               title="置顶"
               shape="square"
               variant="text"
               icon={onTopIcon}
-            />
-          }
+            />,
+            (electron.isDev || appInfo.debugging) && (
+              <Button
+                key="debugging"
+                onClick={currentWindow.openBrowserViewDevTools}
+                title="打开控制面板"
+                shape="square"
+                variant="text"
+                icon={<IconFont size="21px" name="bug" />}
+              />
+            )
+          ]}
           endEle={[
             // TODO 事件实现逻辑有点复杂
             // TODO 需要将应用桌面的nowApp信息变化监听从render中移动到preload并由主进程进行触发

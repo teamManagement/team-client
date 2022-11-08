@@ -1,4 +1,4 @@
-import { is, optimizer } from '@electron-toolkit/utils'
+import { is } from '@electron-toolkit/utils'
 import {
   BrowserView,
   BrowserWindow,
@@ -42,6 +42,7 @@ export interface AppInfo {
   shortDesc: string
   version: string
   loading?: boolean
+  debugging?: boolean
 }
 //#endregion
 
@@ -282,11 +283,9 @@ async function openApp(event: IpcMainInvokeEvent, appInfo: AppInfo): Promise<voi
   //     appSession.setPreloads([PRELOAD_JS_NEW_WINDOW_OPEN, PRELOAD_JS_APPLICATION_SDK])
   appSession.setPreloads([PRELOAD_JS_NEW_WINDOW_OPEN])
 
-  preload = PRELOAD_JS_APPLICATION_SDK
-
   const bv = new BrowserView({
     webPreferences: {
-      preload: preload,
+      preload,
       sandbox: false,
       session: appSession
     }
@@ -316,10 +315,9 @@ async function openApp(event: IpcMainInvokeEvent, appInfo: AppInfo): Promise<voi
   ;(bv.webContents as any)._appInfo = appInfo
   await loadView(bw, bv, appInfo.url)
   delete viewInfo.appInfo.loading
-  bv.webContents.openDevTools()
-  if (is.dev) {
-    optimizer.watchWindowShortcuts(bv as any)
-  }
+  // if (is.dev || appInfo.debugging) {
+  //   optimizer.watchWindowShortcuts(bv as any)
+  // }
   CurrentInfo.getWin(WinNameEnum.HOME)?.webContents.send(
     'ipc-app-open-status-notice',
     viewInfo.appInfo,
@@ -518,12 +516,17 @@ async function hideEndOpenedApp(event: IpcMainInvokeEvent): Promise<void> {
   hideById(event, _wrapperEndOpenInfo.appInfo.id)
 }
 
-async function _callLocalServerAndFlushDesktop(appId: string, url: string): Promise<void> {
+async function _callLocalServerAndFlushDesktop(
+  appId: string,
+  url: string,
+  jsonData?: any
+): Promise<void> {
   if (!appId) {
     throw new Error('未知的应用ID')
   }
   await sendHttpRequestToLocalServer(url, {
-    timeout: -1
+    timeout: -1,
+    jsonData
   })
   CurrentInfo.getWin(WinNameEnum.HOME)?.webContents.send('desktop-refresh')
   return
@@ -545,6 +548,12 @@ const applicationsHandlers = {
   },
   uninstall(_event: IpcMainInvokeEvent, appId: string): Promise<void> {
     return _callLocalServerAndFlushDesktop(appId, '/app/uninstall/' + appId)
+  },
+  installWithDebug(_event: IpcMainInvokeEvent, appInfo: AppInfo): Promise<void> {
+    return _callLocalServerAndFlushDesktop(appInfo.id, '/app/debug/install', appInfo)
+  },
+  uninstallWithDebug(_event: IpcMainInvokeEvent, appId: string): Promise<void> {
+    return _callLocalServerAndFlushDesktop(appId, '/app/debug/uninstall/' + appId)
   }
 }
 

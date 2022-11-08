@@ -1,4 +1,6 @@
+import { is } from '@electron-toolkit/utils'
 import { BrowserWindow, IpcMainInvokeEvent } from 'electron'
+import { AppInfo } from '../applications'
 
 const currentWindowHandlers = {
   /**
@@ -93,6 +95,29 @@ const currentWindowHandlers = {
    */
   close(win: BrowserWindow): void {
     win.close()
+  },
+  /**
+   * 打开窗体中BrowserView的开发者工具
+   * @param win 要操作的窗体
+   */
+  openBrowserViewDevTools(win: BrowserWindow): void {
+    const view = win.getBrowserView()
+    if (!view) {
+      return
+    }
+
+    const bvWebContents = view.webContents
+    const appInfo: AppInfo = (bvWebContents as any)._appInfo
+    let debugging = is.dev
+    if (!debugging) {
+      debugging = (appInfo && appInfo.debugging) || false
+    }
+
+    if (!debugging) {
+      return
+    }
+
+    bvWebContents.openDevTools()
   }
 }
 

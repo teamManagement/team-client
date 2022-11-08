@@ -1,7 +1,7 @@
 import { sendInvokeIpcEvent, sendSyncIpcEvent } from '../../_commons/tools'
 
 const applicationPreloadIpcEventName = 'ipc-application-preload-with-promise'
-export const applicationPreloadIpcSyncEventName = 'ipc-application-preload-with-sync'
+const applicationPreloadIpcSyncEventName = 'ipc-application-preload-with-sync'
 
 export function sendInvokeIpcEventWrapperEventNameAndDataCallBack(
   operationName: string,
@@ -24,7 +24,7 @@ export function sendSyncIpcEventWrapperEventNameAndDataCallBack(
 ): (eventName: string, ...data: any) => any {
   return (eventName, ...data: any) => {
     return sendSyncIpcEvent(
-      applicationPreloadIpcEventName,
+      applicationPreloadIpcSyncEventName,
       operationName,
       eventName,
       dataCallBack,

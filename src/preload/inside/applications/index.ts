@@ -145,11 +145,25 @@ export const applications = {
     return sendInvokeIpcEvent('install', appId)
   },
   /**
+   * 安装应用为debug应用
+   * @param appInfo 应用信息
+   */
+  installWithDebug(appInfo: AppInfo): Promise<void> {
+    return sendInvokeIpcEvent('installWithDebug', appInfo)
+  },
+  /**
    * 根据应用ID卸载应用
    * @param appId 应用ID
    */
   uninstall(appId: string): Promise<void> {
     return sendInvokeIpcEvent('uninstall', appId)
+  },
+  /**
+   * 卸载调试中的应用
+   * @param appId 应用ID
+   */
+  uninstallWithDebug(appId: string): Promise<void> {
+    return sendInvokeIpcEvent('uninstallWithDebug', appId)
   },
   /**
    * 获取已经打开的应用列表

@@ -6,6 +6,13 @@
   "description": "",
   "glyphs": [
     {
+      "icon_id": "6598314",
+      "name": "bug",
+      "font_class": "bug",
+      "unicode": "e8e8",
+      "unicode_decimal": 59624
+    },
+    {
       "icon_id": "9114430",
       "name": "83身份证",
       "font_class": "shenfenzheng",

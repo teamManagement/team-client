@@ -1,22 +1,6 @@
-import { FC, useCallback, useMemo, useState, MouseEvent, useEffect, useRef } from 'react'
-import { contextmenu, api, electron, AppInfo, Menu } from '@byzk/teamwork-inside-sdk'
+import { FC, useCallback, useMemo, MouseEvent, useEffect, useRef } from 'react'
+import { contextmenu, AppInfo, ContextMenu } from '@byzk/teamwork-inside-sdk'
 import AppItem from '@renderer/components/AppItem'
-import { MessagePlugin } from 'tdesign-react'
-import Loading from '@renderer/components/Loading'
-
-const appStoreInfo: AppInfo = {
-  id: '0',
-  name: '应用商店',
-  inside: true,
-  type: (window as any).AppType?.REMOTE_WEB,
-  remoteSiteUrl: 'https://baidu.com',
-  url: 'http://192.168.3.81:3000',
-  icon: 'https://127.0.0.1:65528/icons/appstore.png',
-  iconType: (window as any).IconType?.URL,
-  desc: '应用商店',
-  shortDesc: '应用商店',
-  version: '0.0.1'
-}
 
 export interface AppDesktopContextMenuEvent {
   refresh: () => Promise<void>
@@ -29,6 +13,9 @@ export interface AppDesktop {
   keyword?: string
   openedAppIdList: string[]
   onOpen: (app: AppInfo) => void
+  appList: AppInfo[]
+  forceRefreshAppList: () => void
+  onlyShowDebugging?: boolean
 }
 
 export const AppDesktop: FC<AppDesktop> = ({
@@ -36,47 +23,12 @@ export const AppDesktop: FC<AppDesktop> = ({
   onlyShowOpened,
   openedAppIdList,
   keyword,
-  onOpen
+  onOpen,
+  appList,
+  forceRefreshAppList,
+  onlyShowDebugging
 }) => {
-  const contextMenu = useRef<Menu | null>()
-  const [appList, setAppList] = useState<AppInfo[]>([])
-  const [loadingDesc, setLoadingDesc] = useState<string>('')
-
-  const forceRefreshAppList = useCallback(async () => {
-    setLoadingDesc('正在刷新应用列表...')
-    try {
-      const appList: AppInfo[] = (await api.proxyHttpLocalServer('/app/force/refresh')) || []
-      appList.push(appStoreInfo)
-      setAppList(appList)
-    } catch (e) {
-      MessagePlugin.error('刷新应用列表失败: ' + (e as any).message)
-    } finally {
-      setLoadingDesc('')
-    }
-  }, [])
-
-  const queryAppList = useCallback(async () => {
-    setLoadingDesc('正在加载应用列表...')
-    try {
-      const appList: AppInfo[] = (await api.proxyHttpLocalServer('/app/info/desktop/list')) || []
-      appList.push(appStoreInfo)
-      setAppList(appList)
-    } catch (e) {
-      MessagePlugin.error('获取应用列表失败: ' + (e as any).message)
-    } finally {
-      setLoadingDesc('')
-    }
-  }, [])
-
-  useEffect(() => {
-    const desktopRefresh: () => void = () => {
-      queryAppList()
-    }
-    electron.ipcRenderer.on('desktop-refresh', desktopRefresh)
-    return () => {
-      electron.ipcRenderer.removeListener('desktop-refresh', desktopRefresh)
-    }
-  }, [queryAppList])
+  const contextMenu = useRef<ContextMenu | null>()
 
   useEffect(() => {
     contextMenu.current = contextmenu.build([
@@ -95,16 +47,16 @@ export const AppDesktop: FC<AppDesktop> = ({
     }
   }, [])
 
-  // useEffect(() => {
-  //   appDesktopContextMenu.registerItemClick('refresh', forceRefreshAppList)
-  // }, [])
-
-  useEffect(() => {
-    queryAppList()
-  }, [queryAppList])
-
   const appElementList = useMemo(() => {
     const convertAppList = appList.filter((val) => {
+      if (onlyShowDebugging && !val.debugging) {
+        return false
+      }
+
+      if (!onlyShowDebugging && val.debugging) {
+        return false
+      }
+
       if (onlyShowOpened && !openedAppIdList.includes(val.id)) {
         return false
       }
@@ -141,7 +93,6 @@ export const AppDesktop: FC<AppDesktop> = ({
   return (
     <div className="app-desktop" onContextMenu={onContextMenuWrapper}>
       {appElementList}
-      {loadingDesc && <Loading desc={loadingDesc} />}
     </div>
   )
 }

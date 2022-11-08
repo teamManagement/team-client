@@ -8,14 +8,37 @@ import {
   FormatHorizontalAlignCenterIcon,
   RollbackIcon,
   JumpIcon,
-  PoweroffIcon
+  PoweroffIcon,
+  LogoAndroidIcon
 } from 'tdesign-icons-react'
-import { applications, AppInfo } from '@byzk/teamwork-inside-sdk'
+import {
+  applications,
+  electron,
+  api,
+  currentWindow,
+  AppInfo,
+  AppType
+} from '@byzk/teamwork-inside-sdk'
 import 'antd/dist/antd.css'
 import './index.scss'
 import { AppDesktop } from './appDesktop'
 import Loading from '@renderer/components/Loading'
 import AppOpenTitle from '@renderer/components/AppOpenTitle'
+import IconFont from '@renderer/components/IconFont'
+
+const appStoreInfo: AppInfo = {
+  id: '0',
+  name: '应用商店',
+  inside: true,
+  type: AppType.REMOTE_WEB,
+  remoteSiteUrl: 'https://baidu.com',
+  url: 'http://192.168.3.81:3000',
+  icon: 'https://127.0.0.1:65528/icons/appstore.png',
+  iconType: (window as any).IconType?.URL,
+  desc: '应用商店',
+  shortDesc: '应用商店',
+  version: '0.1.0'
+}
 
 export const ContentApplicationCenter: FC = () => {
   const applicationCenterEle = useRef<HTMLDivElement>(null)
@@ -25,6 +48,60 @@ export const ContentApplicationCenter: FC = () => {
   const [nowOpenApp, setNowOpenApp] = useState<AppInfo | undefined>(undefined)
   const [keyword, setKeyword] = useState<string | undefined>(undefined)
   const [openTitleDisabled, setOpenTitleDisabled] = useState<boolean>(false)
+  const [haveDebugApp, setHaveDebugApp] = useState<boolean>(false)
+  const [appList, setAppList] = useState<AppInfo[]>([])
+
+  const filterDebugApp = useCallback((appList: AppInfo[]) => {
+    setHaveDebugApp(
+      !!appList.find((app) => {
+        return app.debugging
+      })
+    )
+  }, [])
+
+  const forceRefreshAppList = useCallback(async () => {
+    setLoadingDesc('正在刷新应用列表...')
+    try {
+      await api.proxyHttpLocalServer('/app/force/refresh')
+      queryAppList()
+      // appList.push(appStoreInfo)
+      // filterDebugApp(appList)
+      // setAppList(appList)
+    } catch (e) {
+      MessagePlugin.error('刷新应用列表失败: ' + (e as any).message)
+    } finally {
+      setLoadingDesc('')
+    }
+  }, [])
+
+  const queryAppList = useCallback(async () => {
+    setLoadingDesc('正在加载应用列表...')
+    try {
+      const appList: AppInfo[] = (await api.proxyHttpLocalServer('/app/info/desktop/list')) || []
+      appList.push(appStoreInfo)
+      filterDebugApp(appList)
+      setAppList(appList)
+    } catch (e) {
+      MessagePlugin.error('获取应用列表失败: ' + (e as any).message)
+    } finally {
+      setLoadingDesc('')
+    }
+  }, [])
+
+  useEffect(() => {
+    const desktopRefresh: () => void = () => {
+      queryAppList()
+    }
+    electron.ipcRenderer.on('desktop-refresh', desktopRefresh)
+    return () => {
+      electron.ipcRenderer.removeListener('desktop-refresh', desktopRefresh)
+    }
+  }, [queryAppList])
+
+  useEffect(() => {
+    queryAppList()
+  }, [queryAppList])
+
   useEffect(() => {
     applications.restore().then((app) => {
       if (app && app.loading) {
@@ -130,12 +207,37 @@ export const ContentApplicationCenter: FC = () => {
   }, [])
 
   const appDesktopTabs = useMemo(() => {
-    const result = [
+    const result: any[] = []
+
+    if (haveDebugApp) {
+      result.push({
+        label: (
+          <span className="app-item">
+            <LogoAndroidIcon />
+            <span>正在调试</span>
+          </span>
+        ),
+        key: 'debugging',
+        children: (
+          <AppDesktop
+            onlyShowDebugging
+            keyword={keyword}
+            onOpen={appOpen}
+            openedAppIdList={openedAppIdList}
+            showContextMenu
+            appList={appList}
+            forceRefreshAppList={forceRefreshAppList}
+          />
+        )
+      })
+    }
+
+    result.push(
       {
         label: (
           <span className="app-item">
             <AppIcon />
-            <span>全部</span>
+            <span>全部应用</span>
           </span>
         ),
         key: 'default',
@@ -145,10 +247,12 @@ export const ContentApplicationCenter: FC = () => {
             onOpen={appOpen}
             openedAppIdList={openedAppIdList}
             showContextMenu
+            appList={appList}
+            forceRefreshAppList={forceRefreshAppList}
           />
         )
       } // 务必填写 key
-    ]
+    )
 
     if (openedAppIdList.length > 0) {
       result.push({
@@ -158,20 +262,22 @@ export const ContentApplicationCenter: FC = () => {
             <span>正在使用</span>
           </span>
         ),
-        key: 'item-2',
+        key: 'item-nowUsing',
         children: (
           <AppDesktop
             keyword={keyword}
             onOpen={appOpen}
             openedAppIdList={openedAppIdList}
             onlyShowOpened
+            appList={appList}
+            forceRefreshAppList={forceRefreshAppList}
           />
         )
       })
     }
 
     return result
-  }, [openedAppIdList, keyword])
+  }, [appList, openedAppIdList, keyword])
 
   const searchInputOnChange = useCallback((val: InputValue) => {
     setKeyword(val.toString())
@@ -204,16 +310,28 @@ export const ContentApplicationCenter: FC = () => {
               icon={<PoweroffIcon size="22px" />}
             />
           ]}
-          startEle={
+          startEle={[
             <Button
+              key="callback"
               disabled={openTitleDisabled}
               onClick={onCallbackToDesktop}
               title="返回桌面"
               shape="square"
               variant="text"
               icon={<RollbackIcon size="22px" />}
-            />
-          }
+            />,
+            (electron.isDev || nowOpenApp.debugging) && (
+              <Button
+                key="debugging"
+                onClick={currentWindow.openBrowserViewDevTools}
+                disabled={openTitleDisabled}
+                title="打开控制面板"
+                shape="square"
+                variant="text"
+                icon={<IconFont size="21px" name="bug" />}
+              />
+            )
+          ]}
         />
       )}
       <div className="search">
