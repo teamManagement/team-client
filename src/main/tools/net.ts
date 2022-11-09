@@ -133,7 +133,7 @@ function _sendHttpRequestBase<T>(url: string, options?: RequestOption): Promise<
             } as ResponseError)
             return
           }
-          resolve({} as T)
+          resolve(undefined as T)
           return
         }
         const bufStr = buffer!.toString()
@@ -150,9 +150,9 @@ function _sendHttpRequestBase<T>(url: string, options?: RequestOption): Promise<
             return
           }
 
-          if (typeof resData.result === 'undefined') {
-            resData.result = {}
-          }
+          // if (typeof resData.result === 'undefined') {
+          //   resData.result = {}
+          // }
 
           resolve(resData.result)
         } catch (e) {

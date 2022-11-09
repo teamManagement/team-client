@@ -94,10 +94,6 @@ async function createWindow(): Promise<void> {
     WsHandler.initServerMsgTransferEvents()
     log.debug('注册socket消息转发事件完毕!')
 
-    // log.debug('注册应用视图事件...')
-    // initApplicationViewManager()
-    // log.debug('注册应用试图相关事件完毕!')
-
     log.debug('注册消息通知事件...')
     initNotificationEvent()
     log.debug('注册消息通知事件完毕！！！')
@@ -110,10 +106,10 @@ async function createWindow(): Promise<void> {
         await SettingHomeWin(async (win) => {
           win.show()
           hideSplashscreen()
-
-          log.debug('加载用户信息界面...')
-          await SettingUserinfoAlert()
         })
+
+        log.debug('加载用户信息界面...')
+        await SettingUserinfoAlert()
         return
       }
     }

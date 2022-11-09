@@ -117,7 +117,8 @@ const currentWindowHandlers = {
       return
     }
 
-    bvWebContents.openDevTools()
+    bvWebContents.openDevTools({ activate: true, mode: 'detach' })
+    bvWebContents.devToolsWebContents?.focus()
   }
 }
 
