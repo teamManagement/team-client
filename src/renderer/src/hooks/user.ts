@@ -1,7 +1,7 @@
-import { UserInfo } from '@renderer/vos/user'
 import { useCallback, useEffect, useState } from 'react'
 import { MessagePlugin } from 'tdesign-react'
 import { api, TcpTransferInfo, TcpTransferCmdCode } from '@byzk/teamwork-inside-sdk'
+import { UserInfo } from '@byzk/teamwork-sdk'
 
 export function useUserStatus(): 'online' | 'offline' {
   const [status, setStatus] = useState<'online' | 'offline'>('offline')

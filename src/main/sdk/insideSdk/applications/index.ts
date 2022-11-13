@@ -190,7 +190,7 @@ async function loadView(bw: BrowserWindow, bv: BrowserView, url: string): Promis
       })
       const timeoutId = setTimeout(() => {
         reject({ message: 'loading timeout' })
-      }, 3000)
+      }, 30000)
       bv.webContents.loadURL(url).then(() => {
         console.log('加载ok。。。')
         clearTimeout(timeoutId)

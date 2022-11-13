@@ -2,6 +2,12 @@
   height: 38px;
   padding-left: 18px;
   padding-top: 18px;
+  display: flex;
+  overflow: hidden;
+
+  .container {
+    flex-grow: 1;
+  }
 
   .item-content {
     cursor: pointer;

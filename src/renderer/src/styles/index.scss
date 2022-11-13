@@ -9,6 +9,10 @@
   -webkit-app-region: no-drag;
 }
 
+* {
+  user-select: none;
+}
+
 body {
   position: absolute;
   top: 0;

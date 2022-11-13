@@ -1,0 +1,77 @@
+@use '../../../../../../styles/mixin';
+$itemSize: 68px;
+.contact-wrapper-content {
+  margin-top: 18px;
+  width: 100%;
+  flex-grow: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  height: 0;
+
+  > .content-item {
+    width: 100%;
+    height: $itemSize;
+    display: flex;
+    cursor: pointer;
+
+    &:hover {
+      background-color: #292f4ccc;
+      color: #fff;
+    }
+
+    > .blank {
+      width: 20px;
+    }
+
+    > .icon {
+      width: $itemSize;
+      height: $itemSize;
+    }
+
+    > .item-desc {
+      flex-grow: 1;
+      height: 100%;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      padding-left: 8px;
+
+      > .desc-wrapper {
+        flex-grow: 1;
+        display: flex;
+        overflow: hidden;
+
+        @include mixin.flex-text-overflow;
+        // > div {
+        //   white-space: nowrap;
+        //   text-overflow: ellipsis;
+        // }
+      }
+
+      > .title {
+        font-size: 14px;
+        font-weight: bolder;
+        align-items: flex-end;
+
+        &.noDesc {
+          align-items: center;
+        }
+      }
+
+      > .desc {
+        font-size: 12px;
+        color: #888888;
+        align-items: flex-start;
+        padding-top: 8px;
+      }
+    }
+
+    > .item-navigate {
+      width: 88px;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      padding-left: 8px;
+    }
+  }
+}

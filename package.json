@@ -9,8 +9,8 @@
       "win32": "e7e17f3fd77daa704f88ff4dc6a22795ce0dc18b5db980bb2e5dbe823ca84f54ee8bd81e5e3d816668e4a841e53cb2bd487939e6ad805f5866926d6ddfdff086"
     },
     "localServer": {
-      "linux": "019bc9c3878398b63aab9106863444c581afbf1c99e07b42309a5416a5dc60834e9c890a70392ef6b91ce244fee8b1f907713bbbe6b8cf39589821fc3b93e90b",
-      "win32": "0ef6bce26ae941f656da4e01f93bd2d7600aa30cfae99a50ec875e80ada0a6b01744ec6978bba24c41acd7fc6dad28b5e10c8f20ee7f857f50dbd437b46a4e1a"
+      "linux": "e0dbade25aeded751cb350fcf9a8450b6d352e7cc01078b18f98453931fcff0db2f97f8806e0bade84368a8d8e1775d742609fe5c8c22ccf97f4b74cc52e8f1a",
+      "win32": "0bbf75a37ca6f69b4cf55707d0b91d27f44354cc1cf324e4d160d9e1919ef96aab8fa9beead6f9ea631924bd58a72deb6434c124bc4ea006a8f9aee2680f3918"
     }
   },
   "author": "苏林鑫",
@@ -30,6 +30,7 @@
     "build-storybook": "build-storybook"
   },
   "dependencies": {
+    "@alifd/next": "^1.26.6",
     "@electron-toolkit/preload": "^1.0.2",
     "@electron-toolkit/utils": "^1.0.2",
     "@shen9401/react-im-input": "^1.0.10",
