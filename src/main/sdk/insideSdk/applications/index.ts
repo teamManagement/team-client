@@ -191,11 +191,17 @@ async function loadView(bw: BrowserWindow, bv: BrowserView, url: string): Promis
       const timeoutId = setTimeout(() => {
         reject({ message: 'loading timeout' })
       }, 30000)
-      bv.webContents.loadURL(url).then(() => {
-        console.log('加载ok。。。')
-        clearTimeout(timeoutId)
-        resolve()
-      })
+      bv.webContents
+        .loadURL(url)
+        .then(() => {
+          console.log('加载ok。。。')
+          clearTimeout(timeoutId)
+          resolve()
+        })
+        .catch((e) => {
+          clearTimeout(timeoutId)
+          reject(e)
+        })
     })
   } catch (e) {
     const errJsonStr = JSON.stringify(e)

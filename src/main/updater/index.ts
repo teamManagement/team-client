@@ -11,12 +11,17 @@ import { is } from '@electron-toolkit/utils'
  * 开启更新监听
  */
 export function startUpdaterListener(): void {
+  if (!is.dev) {
+    logs.debug('开发模式, 跳过更新检查')
+    return
+  }
   setTimeout(async () => {
     for (;;) {
       try {
         logs.debug('开始检查更新')
         const clientServerPath = await sendHttpRequestToLocalServer(
-          `/updater/check/${packageInfo.version}`
+          `/updater/check/${packageInfo.version}`,
+          { timeout: -1 }
         )
         logs.debug('检查更新接口返回数据: ', clientServerPath)
 
@@ -30,6 +35,7 @@ export function startUpdaterListener(): void {
 
         logs.debug('向本地服务发送辅助更新请求')
         await sendHttpRequestToLocalServer(`/updater/update`, {
+          timeout: -1,
           jsonData: {
             workDir: app.getAppPath(),
             exec: app.getPath('exe'),
@@ -43,14 +49,14 @@ export function startUpdaterListener(): void {
         app.exit(0)
         return
       } catch (e) {
-        //nothing
+        console.log('检查更新信息失败: ', JSON.stringify(e))
       }
 
       logs.debug('本次检查更新未发现需要更新, 进入下一次等待')
       await new Promise<void>((resolve) => {
         setTimeout(() => {
           resolve()
-        }, 1000 * 60 * 10)
+        }, 1000 * 60 * 5)
       })
     }
   }, 0)

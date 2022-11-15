@@ -12,7 +12,8 @@ export const Content: FC = () => {
         <Route path="comments" element={<ContentComments />} />
         <Route path="contact/*" element={<ContentContact />} />
         <Route path="applicationCenter" element={<ContentApplicationCenter />} />
-        <Route path="*" element={<Navigate to="/home/comments" />} />
+        {/* <Route path="*" element={<Navigate to="/home/comments" />} /> */}
+        <Route path="*" element={<Navigate to="/home/applicationCenter" />} />
       </Routes>
     </div>
   )

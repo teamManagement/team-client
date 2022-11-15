@@ -52,7 +52,9 @@ export const ForgotPassword: FC = () => {
     const loadingInstance = loading(true)
     setDisableEmailBtn(true)
     try {
-      const emailAddress = await api.proxyHttpCoreServer<string>('forgot/send/email/' + username)
+      const emailAddress = await api.proxyHttpCoreServer<string>('forgot/send/email/' + username, {
+        timeout: -1
+      })
       MessagePlugin.success(`验证码已发送至${emailAddress}请注意查收`)
       setWaitTime(60)
       setDisableInput(false)

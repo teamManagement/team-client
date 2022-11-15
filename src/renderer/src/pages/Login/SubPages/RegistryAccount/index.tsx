@@ -118,6 +118,7 @@ export const RegistryAccount: FC = () => {
       const emailAddress = await api.proxyHttpCoreServer<string>(
         'check/username/send/verify/' + username,
         {
+          timeout: -1,
           jsonData: {
             idCode,
             email

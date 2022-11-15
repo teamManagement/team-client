@@ -19,6 +19,7 @@ import { SettingUserinfoAlert } from './windows/userinfo'
 
 app.commandLine.appendSwitch('--disable-http-cache')
 
+log.debug('程序参数: ', JSON.stringify(process.argv))
 log.debug('日志文件路径: ', log.transports.file.getFile().path)
 
 const instanceLock = app.requestSingleInstanceLock()
@@ -33,6 +34,7 @@ process.on('uncaughtException', (error) => {
 
 async function createWindow(): Promise<void> {
   if (process.argv.includes('__updater_start__')) {
+    log.debug('进入程序文件更新流程...')
     let debugWorkDir: string | undefined = undefined
     for (const v of process.argv) {
       if (v.startsWith('__debug_work_dir__')) {
