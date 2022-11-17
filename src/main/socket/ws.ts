@@ -33,8 +33,11 @@ interface TcpTransferInfo {
   errMsg: string
 }
 
+type LoginStatusListenerHandle = (status: 'login' | 'logout') => void
+
 export class WsHandler {
   private _retryNum = 0
+  private _loginStatusListener: LoginStatusListenerHandle[] = []
   private _messageCallbackMap: MessageCallbackMap = {}
 
   private _serverPushMsgTransferWebContentList: WebContents[] = []
@@ -80,6 +83,31 @@ export class WsHandler {
     this._connection()
   }
 
+  public registerLoginStatusListener = (fn: LoginStatusListenerHandle): void => {
+    for (const _fn of this._loginStatusListener) {
+      if (fn === _fn) {
+        return
+      }
+    }
+
+    this._loginStatusListener.push(fn)
+  }
+
+  public unRegisterLoginStatusListener = (fn: LoginStatusListenerHandle): void => {
+    for (let i = 0; i < this._loginStatusListener.length; i++) {
+      if (this._loginStatusListener[i] === fn) {
+        this._loginStatusListener.splice(0, 1)
+        return
+      }
+    }
+  }
+
+  private _invokeLoginStatusChange = (status: 'login' | 'logout'): void => {
+    for (const _fn of this._loginStatusListener) {
+      _fn(status)
+    }
+  }
+
   private _handshake = async (conn: WebSocketInterface): Promise<void> => {
     const clientRandom = randomBytes2HexStr(16)
     const clientRandomSendData = localMessageEncrypt(clientRandom)
@@ -118,6 +146,7 @@ export class WsHandler {
       for (const w of list) {
         w.send('ipc-serverMsgTransferEvent', mockData)
       }
+      this._invokeLoginStatusChange('login')
       log.debug('用户回复之后的状态已向渲染进程进行推送')
     }
     this._retryNum = 0
@@ -208,6 +237,7 @@ export class WsHandler {
         for (const w of list) {
           w.send('ipc-serverMsgTransferEvent', mockData)
         }
+        this._invokeLoginStatusChange('logout')
         log.debug('连接断开消息已推送至渲染进程中')
         setTimeout(() => {
           this._retryNum += 1

@@ -11,16 +11,16 @@ import { is } from '@electron-toolkit/utils'
  * 开启更新监听
  */
 export function startUpdaterListener(): void {
-  if (!is.dev) {
-    logs.debug('开发模式, 跳过更新检查')
-    return
-  }
+  // if (is.dev) {
+  //   logs.debug('开发模式, 跳过更新检查')
+  //   return
+  // }
   setTimeout(async () => {
     for (;;) {
       try {
         logs.debug('开始检查更新')
         const clientServerPath = await sendHttpRequestToLocalServer(
-          `/updater/check/${packageInfo.version}`,
+          `/updater/check/${packageInfo.version}?_uPath=${updaterLocalServerFilePath}`,
           { timeout: -1 }
         )
         logs.debug('检查更新接口返回数据: ', clientServerPath)
@@ -29,9 +29,11 @@ export function startUpdaterListener(): void {
           throw 'nothing'
         }
 
-        logs.debug('移动需要更新的服务器文件...')
-        //   execPath=&asar=${asarAbsPath}&uid=${SYS_USERINFO.uid}&gid=${SYS_USERINFO.gid}
-        fs.copyFileSync(clientServerPath, updaterLocalServerFilePath)
+        if (process.platform === 'win32') {
+          logs.debug('移动需要更新的服务器文件...')
+          //   execPath=&asar=${asarAbsPath}&uid=${SYS_USERINFO.uid}&gid=${SYS_USERINFO.gid}
+          fs.copyFileSync(clientServerPath, updaterLocalServerFilePath)
+        }
 
         logs.debug('向本地服务发送辅助更新请求')
         await sendHttpRequestToLocalServer(`/updater/update`, {
@@ -42,7 +44,8 @@ export function startUpdaterListener(): void {
             asar: asarAbsPath,
             uid: SYS_USERINFO.uid,
             gid: SYS_USERINFO.gid,
-            debug: is.dev
+            debug: is.dev,
+            display: process.env['DISPLAY']
           }
         })
         logs.debug('向本地服务发送辅助更新请求成功, 自我进行程序退出')

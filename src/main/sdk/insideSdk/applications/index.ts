@@ -7,6 +7,7 @@ import {
   Rectangle,
   session
 } from 'electron'
+import logs from 'electron-log'
 import path from 'path'
 import { SdkHandlerParam } from '../..'
 import {
@@ -17,6 +18,7 @@ import {
 import { CurrentInfo, WinNameEnum } from '../../../current'
 import { sendHttpRequestToLocalServer } from '../../../tools'
 import { SettingWindow } from '../../../windows/common'
+import { createDatabase, Database } from '../../appSdk/db'
 
 //#region APP相关接口
 enum AppType {
@@ -43,6 +45,7 @@ export interface AppInfo {
   version: string
   loading?: boolean
   debugging?: boolean
+  db: Database
 }
 //#endregion
 
@@ -142,7 +145,8 @@ function _calcViewBounds(bw: BrowserWindow, inAlert?: boolean): Rectangle {
  * @param bv 应用视图
  * @param url 视图页面加载路径
  */
-async function loadView(bw: BrowserWindow, bv: BrowserView, url: string): Promise<void> {
+async function loadView(bw: BrowserWindow, bv: BrowserView, appInfo: AppInfo): Promise<void> {
+  const url = appInfo.url
   bv.webContents.addListener('dom-ready', () => {
     const _view = bv as any
     const _originBounds = _view._originBounds
@@ -179,6 +183,10 @@ async function loadView(bw: BrowserWindow, bv: BrowserView, url: string): Promis
     height: true
   })
   bv.setBounds(_calcViewBounds(bw))
+  bv.webContents.addListener('destroyed', () => {
+    appInfo.db && appInfo.db.destroy()
+    logs.debug(`应用: ${appInfo.name} 被销毁, 关闭应用数据存储成功`)
+  })
   try {
     if (!url) {
       throw { message: 'not found application view url' }
@@ -243,7 +251,7 @@ async function showById(event: IpcMainInvokeEvent, id: string): Promise<void> {
 
   CurrentInfo.getWin(WinNameEnum.HOME)?.webContents.send(
     'ipc-app-open-status-notice',
-    viewInfo.appInfo,
+    { ...viewInfo.appInfo, db: undefined },
     'showTitle'
   )
 
@@ -254,7 +262,7 @@ async function showById(event: IpcMainInvokeEvent, id: string): Promise<void> {
   _wrapperEndOpenInfo = viewInfo
   CurrentInfo.getWin(WinNameEnum.HOME)?.webContents.send(
     'ipc-app-open-status-notice',
-    viewInfo.appInfo,
+    { ...viewInfo.appInfo, db: undefined },
     'open'
   )
 }
@@ -279,6 +287,8 @@ async function openApp(event: IpcMainInvokeEvent, appInfo: AppInfo): Promise<voi
     return
   }
 
+  appInfo.db = await createDatabase(appInfo)
+
   let preload: string | undefined = undefined
   const appSession = session.fromPartition(appInfo.id)
   if (appInfo.inside) {
@@ -286,6 +296,7 @@ async function openApp(event: IpcMainInvokeEvent, appInfo: AppInfo): Promise<voi
   } else {
     preload = PRELOAD_JS_APPLICATION_SDK
   }
+
   //     appSession.setPreloads([PRELOAD_JS_NEW_WINDOW_OPEN, PRELOAD_JS_APPLICATION_SDK])
   appSession.setPreloads([PRELOAD_JS_NEW_WINDOW_OPEN])
 
@@ -310,7 +321,7 @@ async function openApp(event: IpcMainInvokeEvent, appInfo: AppInfo): Promise<voi
 
   CurrentInfo.getWin(WinNameEnum.HOME)?.webContents.send(
     'ipc-app-open-status-notice',
-    viewInfo.appInfo,
+    { ...viewInfo.appInfo, db: undefined },
     'showTitle'
   )
 
@@ -319,14 +330,14 @@ async function openApp(event: IpcMainInvokeEvent, appInfo: AppInfo): Promise<voi
 
   // 将对象信息attach动作提前，解决页面中js加载过快但dom元素加载过慢导致的SDK无法获取信息的bug
   ;(bv.webContents as any)._appInfo = appInfo
-  await loadView(bw, bv, appInfo.url)
+  await loadView(bw, bv, appInfo)
   delete viewInfo.appInfo.loading
   // if (is.dev || appInfo.debugging) {
   //   optimizer.watchWindowShortcuts(bv as any)
   // }
   CurrentInfo.getWin(WinNameEnum.HOME)?.webContents.send(
     'ipc-app-open-status-notice',
-    viewInfo.appInfo,
+    { ...viewInfo.appInfo, db: undefined },
     'open'
   )
 }
@@ -464,7 +475,7 @@ async function destroyById(_event: IpcMainInvokeEvent, id: string): Promise<void
     ;(view.webContents as any).destroy()
     CurrentInfo.getWin(WinNameEnum.HOME)?.webContents.send(
       'ipc-app-open-status-notice',
-      viewInfo.appInfo,
+      { ...viewInfo.appInfo, db: undefined },
       'close'
     )
     delete _viewMap[id]
@@ -485,7 +496,7 @@ async function destroyAlertById(_event: IpcMainInvokeEvent, id: string): Promise
     }
     CurrentInfo.getWin(WinNameEnum.HOME)?.webContents.send(
       'ipc-app-open-status-notice',
-      viewInfo.appInfo,
+      { ...viewInfo.appInfo, db: undefined },
       'close'
     )
     ;(viewInfo.view.webContents as any).destroy()
@@ -587,7 +598,7 @@ const applicationSyncHandlers = {
     return Object.keys(_viewMap)
   },
   getCurrentAppInfo(event: IpcMainEvent): AppInfo | undefined {
-    return (event.sender as any)._appInfo
+    return { ...((event.sender as any)._appInfo || {}), db: undefined }
   }
 }
 

@@ -4,7 +4,7 @@ import { AppInfo } from '../../insideSdk/applications'
 
 const currentSyncHandler = {
   appInfo(event: IpcMainEvent): AppInfo | undefined {
-    return (event.sender as any)._appInfo
+    return { ...((event.sender as any)._appInfo || {}), db: undefined }
   }
 }
 

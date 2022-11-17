@@ -7,7 +7,8 @@ import { localServerFilePath, mkcertFilePath, packageLocalServerFilePath } from 
 import path from 'path'
 import { is } from '@electron-toolkit/utils'
 import { USER_LOCAL_CONFIG_DIR } from '../consts'
-import { fileToSha512 } from '../tools'
+import { fileToSha512, sudoLinuxBashShellStr } from '../tools'
+import { linuxProcessLocalServerStart, linuxProcessLocalServerStop } from './teamplate'
 
 const caCrt = `-----BEGIN CERTIFICATE-----
 MIIGFjCCA/6gAwIBAgIIRPu6j0zgbLgwDQYJKoZIhvcNAQELBQAwgZAxCzAJBgNV
@@ -151,17 +152,29 @@ export async function checkLocalServer(): Promise<boolean> {
       stat.isFile() &&
       (await fileToSha512(localServerFilePath)) !== (await fileToSha512(packageLocalServerFilePath))
     ) {
-      // if (process.platform !== 'win32') {
-      await spawnProcess(`${localServerFilePath} -cmd=stop -configDir=${USER_LOCAL_CONFIG_DIR}`)
-      await spawnProcess(
-        `${localServerFilePath} -cmd=uninstall -configDir=${USER_LOCAL_CONFIG_DIR}`
-      )
-      try {
-        fs.unlinkSync(localServerFilePath)
-      } catch (e) {
-        //nothing
+      if (process.platform !== 'win32') {
+        try {
+          await sudoLinuxBashShellStr(
+            linuxProcessLocalServerStop,
+            localServerFilePath,
+            USER_LOCAL_CONFIG_DIR
+          )
+        } catch (e) {
+          //nothing
+        }
+      } else {
+        // if (process.platform !== 'win32') {
+        await spawnProcess(`${localServerFilePath} -cmd=stop -configDir=${USER_LOCAL_CONFIG_DIR}`)
+        await spawnProcess(
+          `${localServerFilePath} -cmd=uninstall -configDir=${USER_LOCAL_CONFIG_DIR}`
+        )
+        try {
+          fs.unlinkSync(localServerFilePath)
+        } catch (e) {
+          //nothing
+        }
+        // }
       }
-      // }
 
       try {
         fs.copyFileSync(packageLocalServerFilePath, localServerFilePath)
@@ -210,6 +223,19 @@ export async function installLocalServer(): Promise<boolean> {
   //   }, 0)
   //   return true
   // }
+  if (process.platform !== 'win32') {
+    try {
+      await sudoLinuxBashShellStr(
+        linuxProcessLocalServerStart,
+        localServerFilePath,
+        USER_LOCAL_CONFIG_DIR
+      )
+      return true
+    } catch (e) {
+      logs.error('本地服务安装启动失败: ', JSON.stringify(e))
+      return false
+    }
+  }
   await spawnProcess(`${localServerFilePath} -cmd=stop -configDir=${USER_LOCAL_CONFIG_DIR}`)
   await spawnProcess(`${localServerFilePath} -cmd=uninstall -configDir=${USER_LOCAL_CONFIG_DIR}`)
   if (

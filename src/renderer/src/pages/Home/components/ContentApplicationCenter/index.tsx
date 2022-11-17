@@ -39,7 +39,7 @@ const appStoreInfo: AppInfo = {
   desc: '应用商店',
   shortDesc: '应用商店',
   version: '0.1.0'
-}
+} as AppInfo
 
 export const ContentApplicationCenter: FC = () => {
   const applicationCenterEle = useRef<HTMLDivElement>(null)
@@ -65,9 +65,6 @@ export const ContentApplicationCenter: FC = () => {
     try {
       await api.proxyHttpLocalServer('/app/force/refresh')
       queryAppList()
-      // appList.push(appStoreInfo)
-      // filterDebugApp(appList)
-      // setAppList(appList)
     } catch (e) {
       MessagePlugin.error('刷新应用列表失败: ' + (e as any).message)
     } finally {
