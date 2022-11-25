@@ -70,12 +70,14 @@ async function createWindow(): Promise<void> {
 
   log.debug('外部程序文件Hash验证通过')
 
-  log.debug('安装团队协作平台CA根证书...')
-  if (!(await installCaCert())) {
-    alertPanic(
-      '安装团队协作平台根证书失败, 请尝试重新打开本应用, 如多次均提示本错误, 请联系管理员使用外部修复工具进行修复!!!'
-    )
-    return
+  if (!is.dev) {
+    log.debug('安装团队协作平台CA根证书...')
+    if (!(await installCaCert())) {
+      alertPanic(
+        '安装团队协作平台根证书失败, 请尝试重新打开本应用, 如多次均提示本错误, 请联系管理员使用外部修复工具进行修复!!!'
+      )
+      return
+    }
   }
 
   log.debug('加载主线程SDK处理事件...')
