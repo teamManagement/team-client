@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
-import { MessagePlugin } from 'tdesign-react'
 import { api, TcpTransferInfo, TcpTransferCmdCode } from '@byzk/teamwork-inside-sdk'
-import { UserInfo } from '@byzk/teamwork-sdk'
+import { UserInfo, current } from '@byzk/teamwork-sdk'
 
 export function useUserStatus(): 'online' | 'offline' {
   const [status, setStatus] = useState<'online' | 'offline'>('offline')
@@ -35,17 +34,6 @@ export function useUserStatus(): 'online' | 'offline' {
 }
 
 export function useUserinfo(): UserInfo | undefined {
-  const [userInfo, setUserInfo] = useState<UserInfo | undefined>(undefined)
-  useEffect(() => {
-    api
-      .proxyHttpLocalServer<UserInfo>('/user/now')
-      .then((user) => {
-        console.log('获取到的用户信息: ', user)
-        setUserInfo(user)
-      })
-      .catch((e) => {
-        MessagePlugin.error('获取用户信息失败: ' + ((e as any).message || e))
-      })
-  }, [])
+  const [userInfo] = useState<UserInfo | undefined>(current.userInfo)
   return userInfo
 }
