@@ -8,17 +8,17 @@ import { packageInfo } from '../consts/packageInfo'
 
 export async function verifyExternalProgramHash(): Promise<boolean> {
   try {
+    if (is.dev) {
+      logs.debug('当前环境为开发环境, 跳过本地服务文件的HASH验证')
+      return true
+    }
+
     if ((await fileToSha512(mkcertFilePath)) !== packageInfo.signature.mkcert[process.platform]) {
       logs.error('mkcert程序HASH验证失败')
       return false
     }
 
     logs.debug('mkcert程序HASH验证成功!')
-
-    if (is.dev) {
-      logs.debug('当前环境为开发环境, 跳过本地服务文件的HASH验证')
-      return true
-    }
 
     try {
       const stat = fs.statSync(updaterLocalServerFilePath)
