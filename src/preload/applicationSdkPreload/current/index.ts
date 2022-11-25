@@ -1,3 +1,4 @@
+import { UserInfo } from '@byzk/teamwork-sdk'
 import { sendSyncIpcEventWrapperEventNameAndDataCallBack } from '../tools'
 
 //#region APP相关接口
@@ -32,6 +33,15 @@ const sendSyncIpcEvent = sendSyncIpcEventWrapperEventNameAndDataCallBack('curren
  */
 const appInfo: AppInfo = sendSyncIpcEvent('appInfo')
 
+let userInfo: UserInfo | undefined
+
+try {
+  userInfo = sendSyncIpcEvent('userInfo')
+} catch (e) {
+  userInfo = undefined
+}
+
 export const current = {
-  appInfo: appInfo
+  appInfo,
+  userInfo
 }

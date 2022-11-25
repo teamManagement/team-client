@@ -63,7 +63,9 @@ export const ContentApplicationCenter: FC = () => {
   const forceRefreshAppList = useCallback(async () => {
     setLoadingDesc('正在刷新应用列表...')
     try {
-      await api.proxyHttpLocalServer('/app/force/refresh')
+      await api.proxyHttpLocalServer('/app/force/refresh', {
+        timeout: -1
+      })
       queryAppList()
     } catch (e) {
       MessagePlugin.error('刷新应用列表失败: ' + (e as any).message)
@@ -75,7 +77,10 @@ export const ContentApplicationCenter: FC = () => {
   const queryAppList = useCallback(async () => {
     setLoadingDesc('正在加载应用列表...')
     try {
-      const appList: AppInfo[] = (await api.proxyHttpLocalServer('/app/info/desktop/list')) || []
+      const appList: AppInfo[] =
+        (await api.proxyHttpLocalServer('/app/info/desktop/list', {
+          timeout: -1
+        })) || []
       appList.push(appStoreInfo)
       filterDebugApp(appList)
       setAppList(appList)

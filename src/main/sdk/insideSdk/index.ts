@@ -2,6 +2,7 @@ import { IpcMainInvokeEvent } from 'electron'
 import { RegisterFn, SdkHandlerParam, SdkRegistryInfo } from '..'
 import { _apiHandler } from './api'
 import { _applicationsHandler, _applicationsSyncHandler } from './applications'
+import { _remoteCacheHandler } from './cache'
 import { _currentWindowHandler } from './currentWindow'
 import { _electronSyncHandler } from './electron'
 import { _modalWindowHandler } from './modalWindow'
@@ -40,7 +41,11 @@ const promiseEventHandlerInfo: SdkRegistryInfo<void> = {
     /**
      * 应用相关
      */
-    applications: _childEventHandlerWrapper(_applicationsHandler)
+    applications: _childEventHandlerWrapper(_applicationsHandler),
+    /**
+     * 远程服务缓存
+     */
+    remoteCache: _childEventHandlerWrapper(_remoteCacheHandler)
   }
 }
 

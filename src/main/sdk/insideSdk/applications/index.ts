@@ -194,7 +194,8 @@ async function loadView(bw: BrowserWindow, bv: BrowserView, appInfo: AppInfo): P
 
     await new Promise<void>((resolve, reject) => {
       bv.webContents.addListener('dom-ready', () => {
-        console.log('dom加载完成')
+        // console.log('dom加载完成')
+        logs.debug(`应用: ${appInfo.name} dom加载完成`)
       })
       const timeoutId = setTimeout(() => {
         reject({ message: 'loading timeout' })
@@ -202,7 +203,8 @@ async function loadView(bw: BrowserWindow, bv: BrowserView, appInfo: AppInfo): P
       bv.webContents
         .loadURL(url)
         .then(() => {
-          console.log('加载ok。。。')
+          logs.debug(`应用: ${appInfo.name} 加载完成`)
+          // console.log('加载ok。。。')
           clearTimeout(timeoutId)
           resolve()
         })
@@ -304,7 +306,8 @@ async function openApp(event: IpcMainInvokeEvent, appInfo: AppInfo): Promise<voi
     webPreferences: {
       preload,
       sandbox: false,
-      session: appSession
+      session: appSession,
+      webSecurity: false
     }
   })
 

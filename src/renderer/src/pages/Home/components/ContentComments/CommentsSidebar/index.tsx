@@ -1,41 +1,29 @@
+import { AppInfo } from '@byzk/teamwork-sdk'
+import { api } from '@byzk/teamwork-inside-sdk'
 import MessageCard from '@renderer/components/MessageCard'
-import SearchInput from '@renderer/components/SearchInput'
-import { FC } from 'react'
-import { AddIcon } from 'tdesign-icons-react'
-import { Button, Select } from 'tdesign-react'
+import { FC, useCallback, useEffect, useState } from 'react'
+import { Actions } from './Actions'
+import { Search } from './Search'
 
 export const CommentsSidebar: FC = () => {
+  const [appList, setAppList] = useState<AppInfo[]>([])
+
+  const queryAppList = useCallback(async () => {
+    try {
+      setAppList(await api.proxyHttpLocalServer<AppInfo[]>('/resources/app/list', { timeout: -1 }))
+    } catch (e) {
+      setTimeout(queryAppList, 5000)
+    }
+  }, [])
+
+  useEffect(() => {
+    queryAppList()
+  }, [queryAppList])
+
   return (
     <div className="comments-sidebar">
-      <div className="search">
-        <SearchInput style={{ height: 48 }} />
-      </div>
-      <div className="actions">
-        <div className="label">列表排序：</div>
-        <div className="action-select">
-          <Select
-            size="small"
-            value={'1'}
-            bordered={false}
-            options={[
-              {
-                label: '最新消息优先',
-                value: '1'
-              },
-              {
-                label: '在线好友优先',
-                value: '2'
-              }
-            ]}
-          ></Select>
-        </div>
-        <div className="label" style={{ paddingLeft: 28 }}>
-          创建会话
-        </div>
-        <div>
-          <Button size="medium" shape="circle" icon={<AddIcon size="18px" />} theme="primary" />
-        </div>
-      </div>
+      <Search apps={appList} />
+      <Actions />
       <div className="contact-list">
         <div style={{ width: 272, height: 38, marginBottom: 18 }}>
           <MessageCard />

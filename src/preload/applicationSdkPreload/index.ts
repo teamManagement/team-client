@@ -2,6 +2,7 @@ import { contextBridge } from 'electron'
 import { contextmenu } from '../_commons/contextmenu'
 import { cache } from './cache'
 import { current } from './current'
+import { db } from './db'
 import { exec } from './exec'
 import { hosts } from './hosts'
 import { proxy } from './proxy'
@@ -14,7 +15,8 @@ const teamworkSDK = {
   cache,
   hosts,
   current,
-  contextmenu
+  contextmenu,
+  db
 }
 
 if (process.contextIsolated) {

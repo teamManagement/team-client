@@ -1,10 +1,15 @@
+import { UserInfo } from '@byzk/teamwork-sdk'
 import { IpcMainEvent } from 'electron'
 import { SdkHandlerParam } from '../..'
+import { sendHttpRequestToLocalServer } from '../../../tools'
 import { AppInfo } from '../../insideSdk/applications'
 
 const currentSyncHandler = {
   appInfo(event: IpcMainEvent): AppInfo | undefined {
     return { ...((event.sender as any)._appInfo || {}), db: undefined }
+  },
+  userInfo(): Promise<UserInfo | undefined> {
+    return sendHttpRequestToLocalServer('/user/now')
   }
 }
 

@@ -1,7 +1,94 @@
+@use '../../styles/mixin';
+
 .search-input {
   width: 100%;
   height: 100%;
-  overflow: hidden;
+  // overflow: hidden;
+  position: relative;
+
+  > .search-result {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 30px;
+    // min-height: 188px;
+    height: 288px;
+    background-color: #fff;
+    z-index: 9;
+    overflow-x: hidden;
+    overflow-y: auto;
+    border-radius: 5px;
+    box-shadow: 0 0 8px #888;
+    padding: 6px;
+
+    .empty-result {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      font-weight: bolder;
+    }
+
+    .next-tabs-content {
+      height: 238px;
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
+
+    .search-result-item {
+      width: 262px;
+      height: 48px;
+      // background-color: orange;
+      display: flex;
+      margin-top: 6px;
+      cursor: pointer;
+
+      &.active,
+      &:hover {
+        background-color: #292f4cbb;
+        border-radius: 5px;
+
+        > .desc {
+          color: #fff;
+        }
+      }
+
+      > .icon {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      > .desc {
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+
+        > .name {
+          align-items: flex-end;
+          font-size: 13px;
+          font-weight: bolder;
+          // height: 28px;
+        }
+
+        > .comments {
+          // padding-top: 2px;
+          // font-size: 12px;
+          align-items: center;
+        }
+
+        > .name,
+        > .comments {
+          flex: 1;
+          @include mixin.flex-text-overflow;
+        }
+      }
+    }
+  }
 
   .content {
     width: 100%;
@@ -10,12 +97,9 @@
     > .t-input {
       height: 100%;
       width: 100%;
-      border-radius: 26px;
-      -webkit-border-radius: 26px;
-      -moz-border-radius: 26px;
-      -ms-border-radius: 26px;
-      -o-border-radius: 26px;
+      border-radius: 5px;
       box-shadow: none !important;
+      font-size: 14px;
     }
   }
 }

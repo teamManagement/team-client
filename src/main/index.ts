@@ -133,6 +133,7 @@ async function createWindow(): Promise<void> {
 app.on('certificate-error', (_event, _webContents, url, _error, _certifcate, _callback) => {
   console.log('+++++++++++++++++++++++++++++++++++++++++++++++')
   log.info('cert error, url: ', url)
+  _callback(true)
 })
 
 app.on('activate', () => {

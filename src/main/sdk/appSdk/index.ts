@@ -3,6 +3,7 @@ import { RegisterFn, SdkHandlerParam, SdkRegistryInfo } from '..'
 import { AppInfo } from '../insideSdk/applications'
 import { _cacheHandler } from './cache'
 import { _currentSyncHandler } from './current'
+import { _dbHandler } from './db'
 import { _execHandler } from './exec'
 import { _hostsHandler } from './hosts'
 import { _proxyHandler } from './proxy'
@@ -54,7 +55,11 @@ const promiseEventHandlerInfo: SdkRegistryInfo<AppInfo> = {
     /**
      * hosts相关
      */
-    hosts: _childEventHandlerWrapper(_hostsHandler)
+    hosts: _childEventHandlerWrapper(_hostsHandler),
+    /**
+     * db相关
+     */
+    db: _childEventHandlerWrapper(_dbHandler)
   }
 }
 

@@ -8,6 +8,7 @@ import { applications } from './applications'
 import { contextmenu } from '../_commons/contextmenu'
 import { modalWindow } from './modalWindow'
 import '../applicationSdkPreload'
+import { remoteCache } from './remoteCache'
 
 // Custom APIs for renderer
 // const api = {
@@ -79,7 +80,8 @@ const apiMap = {
     currentWindow,
     applications,
     contextmenu,
-    modalWindow
+    modalWindow,
+    remoteCache
   },
   TcpTransferCmdCode,
   AppType,

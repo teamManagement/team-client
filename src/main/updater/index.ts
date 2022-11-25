@@ -11,10 +11,10 @@ import { is } from '@electron-toolkit/utils'
  * 开启更新监听
  */
 export function startUpdaterListener(): void {
-  // if (is.dev) {
-  //   logs.debug('开发模式, 跳过更新检查')
-  //   return
-  // }
+  if (is.dev) {
+    logs.debug('开发模式, 跳过更新检查')
+    return
+  }
   setTimeout(async () => {
     for (;;) {
       try {

@@ -2,12 +2,12 @@ import fs from 'fs'
 import path from 'path'
 import logs from 'electron-log'
 import { UserInfo } from '@byzk/teamwork-sdk'
-import { WsHandler } from '../../../socket'
 import { sendHttpRequestToLocalServer } from '../../../tools'
 import { AppInfo } from '../../insideSdk/applications'
 import { CORE_COUCHDB_URL, USER_LOCAL_CONFIG_DIR } from '../../../consts'
 import PouchdbStatic from 'pouchdb-node'
 const Pouchdb = require('pouchdb') as typeof PouchdbStatic
+Pouchdb.plugin(require('pouchdb-find'))
 
 export class Database {
   private _db: PouchDB.Database | undefined
@@ -18,11 +18,9 @@ export class Database {
   private _isDestroy = false
 
   public constructor(private _appInfo: AppInfo) {
-    // this._loginStatusChangeListener = this._loginStatusChangeListener.bind(this)
     this.init = this.init.bind(this)
     this._closeSync = this._closeSync.bind(this)
     this.destroy = this.destroy.bind(this)
-    // WsHandler.instance.registerLoginStatusListener(this._loginStatusChangeListener)
   }
 
   public async init(): Promise<Database> {
@@ -42,12 +40,22 @@ export class Database {
         })
         this._db = new Pouchdb(this._cachePath)
       }
+      if (this._appInfo.id === '0') {
+        logs.debug('当前要创建同步库的应用为应用商店, 跳过远程数据库的同步')
+        return this
+      }
+
       this._dbSync = this._db.sync(`${CORE_COUCHDB_URL}/u${this._nowUser.id}_${this._appInfo.id}`, {
+        live: true,
+        retry: true,
+        // filter(doc, params) {
+        //   console.log('sync doc: ', doc, ', params: ', params)
+        // },
         auth: {
           username: this._nowUser.id,
           password: this._cachePasswd
         }
-      } as any)
+      } as PouchDB.Replication.SyncOptions)
       this._dbSync.addListener('error', (e: any) => {
         this._closeSync()
         logs.info('连接远程同步库失败: ', JSON.stringify(e))
@@ -69,7 +77,6 @@ export class Database {
   public destroy(): void {
     this._closeSync()
     this._db && this._db.close()
-    // WsHandler.instance.unRegisterLoginStatusListener(this._loginStatusChangeListener)
     this._isDestroy = true
     logs.debug('应用数据库被销毁...')
   }
@@ -92,14 +99,6 @@ export class Database {
       throw new Error('数据库连接已被销毁')
     }
   }
-
-  // private _loginStatusChangeListener(status: 'login' | 'logout'): void {
-  //   if (status === 'login') {
-  //     this.init()
-  //   } else {
-  //     this._closeSync()
-  //   }
-  // }
 }
 
 export function createDatabase(appInfo: AppInfo): Promise<Database> {

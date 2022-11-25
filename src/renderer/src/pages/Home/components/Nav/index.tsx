@@ -75,12 +75,12 @@ export const Nav: FC = () => {
         )}
       </div>
       {/* TODO 内部上线暂时屏蔽 */}
-      {/* <NavItem to="comments" style={{ marginTop: 28 }} title="消息列表">
+      <NavItem to="comments" style={{ marginTop: 28 }} title="消息列表">
         <IconFont name="comment-dots" />
       </NavItem>
       <NavItem to="contact" title="通讯录">
         <IconFont name="contact" />
-      </NavItem> */}
+      </NavItem>
       {/* TODO 本版本暂缓开发 */}
       {/* <NavItem to="cloudDisk" title="云盘">
         <IconFont name="yunyingpan" />
