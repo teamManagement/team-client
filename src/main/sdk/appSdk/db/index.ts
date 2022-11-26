@@ -1,5 +1,8 @@
+import { IpcMainEvent, IpcMainInvokeEvent } from 'electron'
 import fs from 'fs'
+import { SdkHandlerParam } from '../..'
 import { AppInfo } from '../../insideSdk/applications'
+import { loadInsideDatabase } from './sources'
 const { fromBuffer } = require('file-type-cjs')
 
 // const { fileTypeFromFile } = require('file-type') as { fileTypeFromFile: typeof _fileTypeFromFile }
@@ -39,13 +42,11 @@ function getAttachmentId(id: string): string {
 const eventHandlerMap = {
   /**
    * 向数据库内添加一个值
-   * @param _appInfo 应用信息
    * @param db 数据库
    * @param data 数据
    * @returns 添加结果
    */
   put(
-    _appInfo: AppInfo,
     db: PouchDB.Database,
     data: Required<{ _id: string; _rev?: string }>
   ): Promise<PouchDB.Core.Response> {
@@ -54,23 +55,19 @@ const eventHandlerMap = {
     }
     return dbErrorWrapper(db.put(data))
   },
-  post(_appInfo: AppInfo, db: PouchDB.Database, data: object): Promise<PouchDB.Core.Response> {
+  post(db: PouchDB.Database, data: object): Promise<PouchDB.Core.Response> {
     if (typeof data !== 'object') {
       return Promise.reject('db存储支持存储JSON Object对象')
     }
     return dbErrorWrapper(db.post(data))
   },
-  get(_appInfo: AppInfo, db: PouchDB.Database, id: string): Promise<any> {
+  get(db: PouchDB.Database, id: string): Promise<any> {
     if (typeof id !== 'string') {
       return Promise.resolve(undefined)
     }
     return dbErrorWrapper(db.get(id))
   },
-  async remove(
-    _appInfo: AppInfo,
-    db: PouchDB.Database,
-    id: string
-  ): Promise<PouchDB.Core.Response> {
+  async remove(db: PouchDB.Database, id: string): Promise<PouchDB.Core.Response> {
     if (typeof id !== 'string') {
       throw new Error('未被支持的key类型')
     }
@@ -78,13 +75,13 @@ const eventHandlerMap = {
     return await dbErrorWrapper(db.remove(await dbErrorWrapper(db.get(id))))
   },
   bulkDocs(
-    _appInfo: AppInfo,
     db: PouchDB.Database,
     data: any[]
   ): Promise<(PouchDB.Core.Response | PouchDB.Core.Error)[]> {
     return db.bulkDocs(data)
   },
-  async allDocs(_appInfo: AppInfo, db: PouchDB.Database, keys: string | string[]): Promise<any[]> {
+
+  async allDocs(db: PouchDB.Database, keys: string | string[]): Promise<any[]> {
     let queryResult: PouchDB.Core.AllDocsResponse<any>
     const keyType = typeof keys
     if (keyType === 'string') {
@@ -120,7 +117,6 @@ const eventHandlerMap = {
     return res
   },
   async putAttachment(
-    _appInfo: AppInfo,
     db: PouchDB.Database,
     docId: string,
     data: PouchDB.Core.AttachmentData,
@@ -135,7 +131,6 @@ const eventHandlerMap = {
     return await dbErrorWrapper(db.putAttachment(docId, getAttachmentId(docId), data, type))
   },
   async putAttachmentByLocalFilepath(
-    _appInfo: AppInfo,
     db: PouchDB.Database,
     id: string,
     localPath: string,
@@ -171,10 +166,10 @@ const eventHandlerMap = {
     return await dbErrorWrapper(db.putAttachment(id, getAttachmentId(id), fileData, fileType))
   },
 
-  getAttachment(_appInfo: AppInfo, db: PouchDB.Database, docId: string): Promise<any> {
+  getAttachment(db: PouchDB.Database, docId: string): Promise<any> {
     return dbErrorWrapper(db.getAttachment(docId, getAttachmentId(docId)))
   },
-  async getAttachmentType(_appInfo: AppInfo, db: PouchDB.Database, docId: string): Promise<any> {
+  async getAttachmentType(db: PouchDB.Database, docId: string): Promise<any> {
     const data = await dbErrorWrapper(db.get(docId))
     if (!data._attachments) {
       throw new Error('不存在附件信息')
@@ -186,16 +181,76 @@ const eventHandlerMap = {
     }
     return attachmentInfo.content_type
   },
-  async removeAttachment(_appInfo: AppInfo, db: PouchDB.Database, docId: string): Promise<any> {
+  async removeAttachment(db: PouchDB.Database, docId: string): Promise<any> {
     const dataRes = await dbErrorWrapper(db.get(docId))
     return dbErrorWrapper(db.removeAttachment(docId, getAttachmentId(docId), dataRes._rev))
+  },
+  indexCreate(
+    db: PouchDB.Database,
+    index: {
+      /** List of fields to index */
+      fields: string[]
+
+      /** Name of the index, auto-generated if you don't include it */
+      name?: string | undefined
+
+      /** Design document name (i.e. the part after '_design/', auto-generated if you don't include it */
+      ddoc?: string | undefined
+
+      /** Only supports 'json', and it's also the default */
+      type?: string | undefined
+
+      /** The same syntax as the selector you’d pass to find(), and only documents matching the selector will be included in the index. */
+      partial_filter_selector?: PouchDB.Find.Selector | undefined
+    }
+  ): Promise<any> {
+    return db.createIndex({ index })
+  },
+  async indexList(db: PouchDB.Database): Promise<any> {
+    return (await db.getIndexes()).indexes
+  },
+  async indexDelete(
+    db: PouchDB.Database,
+    indexOptions: PouchDB.Find.DeleteIndexOptions
+  ): Promise<any> {
+    return db.deleteIndex(indexOptions)
+  },
+  async indexFind(db: PouchDB.Database, options: PouchDB.Find.FindRequest<any>): Promise<any> {
+    return db.find(options)
   }
 }
 
-export async function _dbHandler(appInfo: AppInfo, eventName: string, ...data: any): Promise<any> {
+function _handler(db: PouchDB.Database, eventName: string, ...data: any): Promise<any> {
   const handler = eventHandlerMap[eventName]
   if (!handler) {
     throw new Error('未知的db操作指令')
   }
-  return handler(appInfo, appInfo.db.db, ...data)
+  return handler(db, ...data)
+}
+
+export async function _dbHandler(appInfo: AppInfo, eventName: string, ...data: any): Promise<any> {
+  return _handler(appInfo.db.db, eventName, ...data)
+}
+
+export async function _insideDbHandler(
+  _event: IpcMainInvokeEvent,
+  eventName: string,
+  ...data: any
+): Promise<any> {
+  const insideDb = await loadInsideDatabase()
+  return _handler(insideDb.db, eventName, ...data)
+}
+
+export function _dbSyncHandler(param: SdkHandlerParam<IpcMainEvent, void>): any {
+  const appInfo = (param.event.sender as any)._appInfo as AppInfo
+  if (!appInfo) {
+    throw new Error('未知的应用信息')
+  }
+
+  return _handler(appInfo.db.db, param.eventName, ...param.otherData)
+}
+
+export async function _insideSyncHandler(param: SdkHandlerParam<IpcMainEvent, void>): Promise<any> {
+  const insideDb = await loadInsideDatabase()
+  return _handler(insideDb.db, param.eventName, ...param.otherData)
 }

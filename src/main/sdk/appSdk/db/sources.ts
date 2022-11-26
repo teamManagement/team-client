@@ -23,8 +23,14 @@ export class Database {
     this.destroy = this.destroy.bind(this)
   }
 
-  public async init(): Promise<Database> {
+  public async init(localCache?: boolean): Promise<Database> {
     try {
+      if (localCache) {
+        this._cachePath = path.join(USER_LOCAL_CONFIG_DIR, 'cache')
+        fs.mkdirSync(this._cachePath, { recursive: true })
+        this._db = new Pouchdb(this._cachePath)
+        return this
+      }
       if (!this._nowUser || !this._db || !this._cachePasswd) {
         this._nowUser = await sendHttpRequestToLocalServer<UserInfo>('/user/now')
         this._cachePasswd = await sendHttpRequestToLocalServer<string>('/user/cache/p')
@@ -42,6 +48,11 @@ export class Database {
       }
       if (this._appInfo.id === '0') {
         logs.debug('当前要创建同步库的应用为应用商店, 跳过远程数据库的同步')
+        return this
+      }
+
+      if (this._appInfo.debugging) {
+        logs.debug('应用为开发模式, 跳过远程数据库的同步')
         return this
       }
 
@@ -103,4 +114,48 @@ export class Database {
 
 export function createDatabase(appInfo: AppInfo): Promise<Database> {
   return new Database(appInfo).init()
+}
+
+let insideDatabase: Database | undefined = undefined
+export async function loadInsideDatabase(): Promise<Database> {
+  if (!insideDatabase) {
+    logs.debug('初始化teamwork数据库')
+    insideDatabase = new Database({ id: 'inside' } as AppInfo)
+    await insideDatabase.init()
+    await insideDatabase.db.createIndex({
+      index: {
+        fields: ['indexInfo.dataType']
+      }
+    })
+    await insideDatabase.db.createIndex({
+      index: {
+        fields: ['indexInfo.updateAt']
+      }
+    })
+  }
+
+  return insideDatabase
+}
+
+export function destroyInsideDatabase(): void {
+  insideDatabase && insideDatabase.destroy()
+  insideDatabase = undefined
+  return
+}
+
+let localCacheDatabase: Database | undefined
+export function loadLocalCacheDatabase(): Promise<Database> {
+  if (!localCacheDatabase) {
+    logs.debug('初始化teamwork本地缓存数据库')
+    localCacheDatabase = new Database({ id: 'cache' } as AppInfo)
+    return localCacheDatabase.init()
+  }
+
+  return Promise.resolve(localCacheDatabase)
+}
+
+export function destroyLocalCacheDatabase(): void {
+  localCacheDatabase && localCacheDatabase.destroy()
+  localCacheDatabase = undefined
+  return
 }

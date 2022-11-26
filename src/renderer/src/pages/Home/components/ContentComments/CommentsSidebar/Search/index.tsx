@@ -12,19 +12,28 @@ const searchResultTab: SearchResultTabs[] = [
   { id: 'apps', name: '应用' }
 ]
 
+export interface DataSourceMeta {
+  pinyin: string
+  type: 'users' | 'groups' | 'apps'
+  sourceName?: string
+  sourceData: UserInfo | AppInfo | ChatGroupInfo
+}
+
 export interface SearchProps {
   users?: UserInfo[]
   groups?: ChatGroupInfo[]
   apps?: AppInfo[]
+  onSearchResultItemClick?: (result: SearchResult<DataSourceMeta>) => void
 }
 
-export const Search: FC<SearchProps> = ({ users, apps, groups }) => {
-  const [dataSource, setDataSource] = useState<SearchResult<{ pinyin: string }>[]>([])
-  const [searchResult, setSearchResult] = useState<SearchResult<{ pinyin: string }>[]>([])
+export const Search: FC<SearchProps> = ({ users, apps, groups, onSearchResultItemClick }) => {
+  const [searchVal, setSearchVal] = useState<InputValue>('')
+  const [dataSource, setDataSource] = useState<SearchResult<DataSourceMeta>[]>([])
+  const [searchResult, setSearchResult] = useState<SearchResult<DataSourceMeta>[]>([])
   const [showResult, setShowResult] = useState<boolean>(false)
 
   useEffect(() => {
-    const dataSource: SearchResult<{ pinyin: string }>[] = []
+    const dataSource: SearchResult<DataSourceMeta>[] = []
     if (users && users.length > 0) {
       users.forEach((u) => {
         let desc = ''
@@ -47,7 +56,10 @@ export const Search: FC<SearchProps> = ({ users, apps, groups }) => {
           iconName: u.name,
           desc,
           metaData: {
-            pinyin: pinyin(u.name, { toneType: 'none', type: 'string' }).replaceAll(' ', '')
+            pinyin: pinyin(u.name, { toneType: 'none', type: 'string' }).replaceAll(' ', ''),
+            type: 'users',
+            sourceName: u.name,
+            sourceData: u
           }
         })
       })
@@ -62,7 +74,9 @@ export const Search: FC<SearchProps> = ({ users, apps, groups }) => {
           name: app.name,
           desc: app.desc,
           metaData: {
-            pinyin: pinyin(app.name, { toneType: 'none', type: 'string' }).replaceAll(' ', '')
+            pinyin: pinyin(app.name, { toneType: 'none', type: 'string' }).replaceAll(' ', ''),
+            type: 'apps',
+            sourceData: app
           }
         })
       })
@@ -77,7 +91,9 @@ export const Search: FC<SearchProps> = ({ users, apps, groups }) => {
           name: group.name,
           desc: group.desc,
           metaData: {
-            pinyin: pinyin(group.name, { toneType: 'none', type: 'string' }).replaceAll(' ', '')
+            pinyin: pinyin(group.name, { toneType: 'none', type: 'string' }).replaceAll(' ', ''),
+            type: 'groups',
+            sourceData: group
           }
         })
       })
@@ -88,6 +104,7 @@ export const Search: FC<SearchProps> = ({ users, apps, groups }) => {
 
   const searchInputOnChange = useCallback(
     (val: InputValue) => {
+      setSearchVal(val)
       const valStr = val.toString()
       if (!valStr) {
         setShowResult(false)
@@ -102,15 +119,29 @@ export const Search: FC<SearchProps> = ({ users, apps, groups }) => {
     },
     [dataSource]
   )
+
+  const searInputOnEscKeyUp = useCallback(() => {
+    setShowResult(false)
+  }, [])
+
+  const searchResultOnClick = useCallback((r: SearchResult<any>) => {
+    setSearchVal('')
+    setShowResult(false)
+    onSearchResultItemClick && onSearchResultItemClick(r)
+  }, [])
+
   return (
     <div className="search">
       <SearchInput
         clearable
+        value={searchVal}
         showResult={showResult}
         onChange={searchInputOnChange}
         resultTabs={searchResultTab}
         result={searchResult}
         style={{ height: 28 }}
+        onEscKeyUp={searInputOnEscKeyUp}
+        onSearchResultItemClick={searchResultOnClick}
       />
     </div>
   )

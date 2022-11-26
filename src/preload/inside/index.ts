@@ -9,6 +9,11 @@ import { contextmenu } from '../_commons/contextmenu'
 import { modalWindow } from './modalWindow'
 import '../applicationSdkPreload'
 import { remoteCache } from './remoteCache'
+import { loadDbApi } from '../applicationSdkPreload/db'
+import {
+  sendInvokeIpcEventWrapperEventNameAndDataCallBack,
+  sendSyncIpcEventWrapperEventNameAndDataCallBack
+} from './tools'
 
 // Custom APIs for renderer
 // const api = {
@@ -81,7 +86,11 @@ const apiMap = {
     applications,
     contextmenu,
     modalWindow,
-    remoteCache
+    remoteCache,
+    insideDb: loadDbApi(
+      sendInvokeIpcEventWrapperEventNameAndDataCallBack,
+      sendSyncIpcEventWrapperEventNameAndDataCallBack
+    )
   },
   TcpTransferCmdCode,
   AppType,

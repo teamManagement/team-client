@@ -105,6 +105,8 @@ async function createWindow(): Promise<void> {
     log.debug('启动更新监听')
     startUpdaterListener()
 
+    // LocalCache.INSTANCE.init()
+
     if (connResult) {
       if ((await wsHandler.loginOk()) || (await wsHandler.autoLogin())) {
         await SettingHomeWin(async (win) => {

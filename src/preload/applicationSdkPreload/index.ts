@@ -2,11 +2,15 @@ import { contextBridge } from 'electron'
 import { contextmenu } from '../_commons/contextmenu'
 import { cache } from './cache'
 import { current } from './current'
-import { db } from './db'
+import { loadDbApi } from './db'
 import { exec } from './exec'
 import { hosts } from './hosts'
 import { proxy } from './proxy'
 import { store } from './store'
+import {
+  sendInvokeIpcEventWrapperEventNameAndDataCallBack,
+  sendSyncIpcEventWrapperEventNameAndDataCallBack
+} from './tools'
 
 const teamworkSDK = {
   store,
@@ -16,7 +20,10 @@ const teamworkSDK = {
   hosts,
   current,
   contextmenu,
-  db
+  db: loadDbApi(
+    sendInvokeIpcEventWrapperEventNameAndDataCallBack,
+    sendSyncIpcEventWrapperEventNameAndDataCallBack
+  )
 }
 
 if (process.contextIsolated) {

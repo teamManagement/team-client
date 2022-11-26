@@ -1,5 +1,6 @@
 import { IpcMainInvokeEvent } from 'electron'
 import { RegisterFn, SdkHandlerParam, SdkRegistryInfo } from '..'
+import { _insideDbHandler, _insideSyncHandler as _insideDbSyncHandler } from '../appSdk/db'
 import { _apiHandler } from './api'
 import { _applicationsHandler, _applicationsSyncHandler } from './applications'
 import { _remoteCacheHandler } from './cache'
@@ -45,7 +46,11 @@ const promiseEventHandlerInfo: SdkRegistryInfo<void> = {
     /**
      * 远程服务缓存
      */
-    remoteCache: _childEventHandlerWrapper(_remoteCacheHandler)
+    remoteCache: _childEventHandlerWrapper(_remoteCacheHandler),
+    /**
+     * 内部数据库
+     */
+    db: _childEventHandlerWrapper(_insideDbHandler)
   }
 }
 
@@ -63,7 +68,10 @@ const syncEventHandlerInfo: SdkRegistryInfo<void> = {
   eventSyncHandleMap: {
     applications: _applicationsSyncHandler,
     modalWindow: _modalWindowHandler,
-    electron: _electronSyncHandler
+    electron: _electronSyncHandler,
+    db: {
+      sync: _insideDbSyncHandler
+    }
   }
 }
 

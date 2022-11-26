@@ -1,11 +1,21 @@
-import React, { FC, CSSProperties, useMemo, useState } from 'react'
+import React, {
+  FC,
+  CSSProperties,
+  useMemo,
+  useState,
+  useEffect,
+  useCallback,
+  KeyboardEvent,
+  useRef
+} from 'react'
 import classnames from 'classnames'
-import { Input, InputProps } from 'tdesign-react'
+import { Input, InputProps, InputValue } from 'tdesign-react'
 import { SearchIcon } from 'tdesign-icons-react'
 import Tabs from '@alifd/next/lib/tab'
 import '@alifd/next/lib/tab/index.scss'
 import './index.scss'
 import Avatar from '../Avatar'
+import classNames from 'classnames'
 
 export interface SearchResultTabs {
   id: string
@@ -28,6 +38,8 @@ export interface SearchInputProps {
   resultTabs?: SearchResultTabs[]
   result?: SearchResult<any>[]
   showResult?: boolean
+  onEscKeyUp?: () => void
+  onSearchResultItemClick?: (result: SearchResult<any>) => void
 }
 
 export const SearchInput: FC<SearchInputProps & InputProps> = ({
@@ -37,9 +49,26 @@ export const SearchInput: FC<SearchInputProps & InputProps> = ({
   resultTabs,
   result,
   showResult,
+  onEscKeyUp,
+  onSearchResultItemClick,
   ...otherProps
 }) => {
+  const activeSearchResultRef = useRef<SearchResult<any> | undefined>(undefined)
+  const [currentTabKey, setCurrentTabKey] = useState<string>()
+  const [currentIndex, setCurrentIndex] = useState<number>(-1)
   const [showResultTabContent, setShowResultTabContent] = useState<boolean>(false)
+
+  const searchResultItemClick = useCallback(
+    (activeResult?: SearchResult<any>) => {
+      activeResult = activeResult || activeSearchResultRef.current
+      if (!onSearchResultItemClick || !activeResult) {
+        return
+      }
+      onSearchResultItemClick(activeResult)
+    },
+    [onSearchResultItemClick]
+  )
+
   const resultTabElements: { [key: string]: React.ReactNode[] } | undefined = useMemo(() => {
     if (!resultTabs || !result) {
       return undefined
@@ -51,8 +80,21 @@ export const SearchInput: FC<SearchInputProps & InputProps> = ({
     }
 
     result.forEach((r) => {
+      const active = resultMap[r.typeId].length === currentIndex
+      if (active && r.typeId === currentTabKey) {
+        activeSearchResultRef.current = r
+      }
       resultMap[r.typeId]?.push(
-        <div className="search-result-item" key={r.id}>
+        <div
+          // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+          onClick={() => {
+            searchResultItemClick(r)
+          }}
+          className={classNames('search-result-item', {
+            active
+          })}
+          key={r.id}
+        >
           <div className="icon">
             <Avatar size="39px" name={r.iconName || r.name} iconUrl={r.icon} />
           </div>
@@ -74,13 +116,37 @@ export const SearchInput: FC<SearchInputProps & InputProps> = ({
       }
     }
     setShowResultTabContent(showResultTab)
+    setCurrentTabKey((key) => {
+      if (key && resultMap[key] && resultMap[key].length > 0) {
+        return key
+      }
+
+      for (const r of resultTabs) {
+        if (resultMap[r.id] && resultMap[r.id].length > 0) {
+          return r.id
+        }
+      }
+
+      return key
+    })
     return resultMap
-  }, [resultTabs, result])
+  }, [resultTabs, result, currentIndex, currentTabKey])
 
   const searchResultElements = useMemo(() => {
     if (showResultTabContent) {
       return (
-        <Tabs>
+        <Tabs
+          disableKeyboard
+          // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+          onKeyUp={(event) => {
+            searchInputKeyDown('', { e: event as any })
+          }}
+          // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+          onChange={(key) => {
+            setCurrentTabKey(key)
+          }}
+          activeKey={currentTabKey}
+        >
           {(resultTabs || []).map((r) => {
             const result = (resultTabElements || {})[r.id]
             if (!result || result.length === 0) {
@@ -98,7 +164,101 @@ export const SearchInput: FC<SearchInputProps & InputProps> = ({
     }
 
     return <div className="empty-result">暂无结果</div>
-  }, [showResultTabContent, resultTabs, resultTabElements])
+  }, [showResultTabContent, resultTabs, resultTabElements, currentTabKey])
+
+  useEffect(() => {
+    setCurrentIndex(-1)
+  }, [currentTabKey])
+
+  const searchInputKeyDown = useCallback(
+    (
+      _value: InputValue,
+      context: {
+        e: KeyboardEvent<HTMLInputElement>
+      }
+    ) => {
+      const key = context.e.key.toLowerCase()
+      if (key !== 'arrowdown' && key !== 'arrowup' && key !== 'escape' && key !== 'enter') {
+        return
+      }
+
+      const event = context.e
+      event.preventDefault()
+      event.stopPropagation()
+
+      if (key === 'escape') {
+        onEscKeyUp && onEscKeyUp()
+        return
+      }
+
+      if (key === 'enter') {
+        searchResultItemClick()
+        return
+      }
+
+      if (key !== 'arrowdown' && key !== 'arrowup') {
+        return
+      }
+      setCurrentIndex((i) => {
+        if (key === 'arrowdown') {
+          i += 1
+        } else if (key === 'arrowup') {
+          i -= 1
+        }
+        if (i < -1) {
+          i = -1
+        } else if (resultTabElements && currentTabKey) {
+          const tabItems = resultTabElements[currentTabKey]
+          if (tabItems && tabItems.length <= i) {
+            i = tabItems.length - 1
+          }
+        }
+
+        if (i === -1) {
+          activeSearchResultRef.current = undefined
+        }
+
+        return i
+      })
+    },
+    [resultTabs, resultTabElements]
+  )
+
+  // const searchInputKeyUp = useCallback(
+  //   (
+  //     _value: InputValue,
+  //     context: {
+  //       e: KeyboardEvent<HTMLInputElement>
+  //     }
+  //   ) => {
+  //     const key = context.e.key.toLowerCase()
+  //     if (key === 'escape') {
+  //       onEscKeyUp && onEscKeyUp()
+  //       return
+  //     }
+
+  //     if (key !== 'arrowdown' && key !== 'arrowup') {
+  //       return
+  //     }
+  //     setCurrentIndex((i) => {
+  //       if (key === 'arrowdown') {
+  //         i += 1
+  //       } else if (key === 'arrowup') {
+  //         i -= 1
+  //       }
+  //       if (i < -1) {
+  //         i = -1
+  //       } else if (resultTabElements && currentTabKey) {
+  //         const tabItems = resultTabElements[currentTabKey]
+  //         if (tabItems && tabItems.length <= i) {
+  //           i = tabItems.length - 1
+  //         }
+  //       }
+  //       return i
+  //     })
+  //   },
+  //   [resultTabs, resultTabElements]
+  // )
 
   return (
     <div className={classnames(className, 'search-input')} style={style}>
@@ -107,6 +267,8 @@ export const SearchInput: FC<SearchInputProps & InputProps> = ({
         className="content"
         prefixIcon={<SearchIcon size="20px" />}
         placeholder={placeholder || '请输入要搜索的联系人'}
+        onKeydown={searchInputKeyDown}
+        // onKeyup={searchInputKeyUp}
         {...otherProps}
       />
 

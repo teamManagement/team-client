@@ -25,6 +25,12 @@ export interface SdkHandlerParam<T, E> {
   otherData: any[]
 }
 
+export interface EventSyncHandleMap<T> {
+  [key: string]:
+    | ((param: SdkHandlerParam<IpcMainEvent, T>) => Promise<any> | any)
+    | EventSyncHandleMap<T>
+}
+
 /**
  * 注册信息
  */
@@ -42,9 +48,7 @@ export interface SdkRegistryInfo<P> {
   /**
    * 同步事件处理
    */
-  eventSyncHandleMap?: {
-    [key: string]: (param: SdkHandlerParam<IpcMainEvent, P>) => Promise<any> | any
-  }
+  eventSyncHandleMap?: EventSyncHandleMap<P>
   /**
    * 前置处理器
    */
@@ -122,8 +126,17 @@ async function _eventHandler(
   if (!isPromise) {
     handlerMap = info.eventSyncHandleMap
   }
-  const handler = handlerMap[childEventName]
-  if (!handler) {
+
+  const childEventNameArray = childEventName.split('.')
+  let handler: any = handlerMap
+  for (const eventName of childEventNameArray) {
+    handler = handler[eventName]
+    if (!handler) {
+      throw new Error('未知的处理方式')
+    }
+  }
+
+  if (typeof handler !== 'function') {
     throw new Error('未知的处理方式')
   }
 
