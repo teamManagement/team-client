@@ -49,8 +49,21 @@ export function loadDbApi(
     return Buffer.from(buffer)
   }
 
+  function getAttachmentBySync(id: string): Buffer | Uint8Array | string {
+    if (typeof id !== 'string' || !id) {
+      throw new Error('id不能为空')
+    }
+    const buffer = sendSyncIpcEvent('getAttachment', id)
+    return Buffer.from(buffer)
+  }
+
   async function getAttachmentToBlob(id: string): Promise<Blob> {
     const buffer = await getAttachment(id)
+    return new Blob([buffer])
+  }
+
+  function getAttachmentToBlobBySync(id: string): Blob {
+    const buffer = getAttachmentBySync(id)
     return new Blob([buffer])
   }
 
@@ -141,6 +154,9 @@ export function loadDbApi(
       const blob = await getAttachmentToBlob(id)
       return window.URL.createObjectURL(blob)
     },
+    async removeAttachment(id: string): Promise<any> {
+      return sendInvokeIpcEvent('removeAttachment', id)
+    },
     index: {
       create(indexOptions: any): Promise<any> {
         return sendInvokeIpcEvent('indexCreate', indexOptions)
@@ -199,6 +215,55 @@ export function loadDbApi(
           throw new Error('不支持的key类型')
         }
         return sendSyncIpcEvent('allDocs', keys)
+      },
+      putAttachmentByLocalFilepath(id: string, localPath: string): any {
+        if (typeof id !== 'string' || !id) {
+          throw new Error('id不能为空')
+        }
+
+        if (typeof id !== 'string' || !localPath) {
+          throw new Error('本地文件路径不能为空')
+        }
+
+        return sendSyncIpcEvent('putAttachmentByLocalFilepath', id, localPath)
+      },
+      putAttachment(docId: string, data: Buffer | Uint8Array | string, type: string): Promise<any> {
+        if (typeof docId !== 'string') {
+          throw new Error('Id不能为空')
+        }
+
+        if (
+          !(data instanceof Buffer) &&
+          !(data instanceof Uint8Array) &&
+          typeof data !== 'string'
+        ) {
+          throw new Error('不支持的附件类型')
+        }
+
+        if (typeof data === 'string' && !isBase64(data)) {
+          throw new Error('数据类型为字符串时只能存放base64')
+        }
+
+        if (typeof type !== 'string') {
+          throw new Error('附件类型只能存放字符串')
+        }
+
+        return sendSyncIpcEvent('putAttachment', docId, data, type)
+      },
+      getAttachment: getAttachmentBySync,
+      getAttachmentToBlob: getAttachmentToBlobBySync,
+      getAttachmentToBlobUrl(id: string): string {
+        const blob = getAttachmentToBlobBySync(id)
+        return window.URL.createObjectURL(blob)
+      },
+      getAttachmentType(id: string): any {
+        if (typeof id !== 'string' || !id) {
+          throw new Error('不支持的id类型')
+        }
+        return sendSyncIpcEvent('getAttachmentType', id)
+      },
+      removeAttachment(id: string): any {
+        return sendSyncIpcEvent('removeAttachment', id)
       },
       index: {
         create(indexOptions: any): any {

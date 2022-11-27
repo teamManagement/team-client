@@ -1,13 +1,16 @@
 import { IpcMainEvent, IpcMainInvokeEvent } from 'electron'
 import fs from 'fs'
+import logs from 'electron-log'
 import { SdkHandlerParam } from '../..'
 import { AppInfo } from '../../insideSdk/applications'
 import { loadInsideDatabase } from './sources'
+export * from './sources'
+
 const { fromBuffer } = require('file-type-cjs')
 
-// const { fileTypeFromFile } = require('file-type') as { fileTypeFromFile: typeof _fileTypeFromFile }
+const MAX_ATTACHMENT_SIZE = 1024 * 1024 * 50
 
-export * from './sources'
+// const { fileTypeFromFile } = require('file-type') as { fileTypeFromFile: typeof _fileTypeFromFile }
 
 async function dbErrorWrapper<T>(res: Promise<T>): Promise<T> {
   try {
@@ -15,6 +18,7 @@ async function dbErrorWrapper<T>(res: Promise<T>): Promise<T> {
   } catch (e) {
     const _err = e as PouchDB.Core.Error
     if (!_err.error || typeof _err.status !== 'number') {
+      logs.debug('db异常: ', e)
       throw new Error('未知的db异常')
     }
 
@@ -39,6 +43,45 @@ function getAttachmentId(id: string): string {
   return id + '_attachment'
 }
 
+function getAttachmentDocId(id: string): string {
+  return 'teamwork_local_db_attachment_file_' + id + ';attachment_file;;'
+}
+
+async function _putAttachment(
+  db: PouchDB.Database,
+  id: string,
+  data: PouchDB.Core.AttachmentData,
+  type: string
+): Promise<void> {
+  if (typeof id !== 'string' || id.length === 0) {
+    throw new Error('ID不能为空')
+  }
+
+  if (typeof type !== 'string' || type.length === 0) {
+    throw new Error('附件类型不能为空')
+  }
+
+  if ((data as Buffer).length >= MAX_ATTACHMENT_SIZE) {
+    throw new Error('超过最大支持的附件大小')
+  }
+
+  id = getAttachmentDocId(id)
+
+  let rev: string | undefined = undefined
+  try {
+    rev = (await db.get(id))._rev
+  } catch (e) {
+    //nothing
+  }
+
+  if (rev) {
+    await dbErrorWrapper(db.putAttachment(id, getAttachmentId(id), rev, data, type))
+  } else {
+    await dbErrorWrapper(db.putAttachment(id, getAttachmentId(id), data, type))
+  }
+  return
+}
+
 const eventHandlerMap = {
   /**
    * 向数据库内添加一个值
@@ -61,11 +104,15 @@ const eventHandlerMap = {
     }
     return dbErrorWrapper(db.post(data))
   },
-  get(db: PouchDB.Database, id: string): Promise<any> {
+  async get(db: PouchDB.Database, id: string): Promise<any> {
     if (typeof id !== 'string') {
       return Promise.resolve(undefined)
     }
-    return dbErrorWrapper(db.get(id))
+    const resData = await dbErrorWrapper(db.get(id))
+    if (resData._attachments) {
+      return undefined
+    }
+    return resData
   },
   async remove(db: PouchDB.Database, id: string): Promise<PouchDB.Core.Response> {
     if (typeof id !== 'string') {
@@ -111,6 +158,15 @@ const eventHandlerMap = {
 
     const res: any[] = []
     for (const row of queryResult.rows) {
+      if (row.doc) {
+        const id = row.doc._id as string
+        if (
+          id.startsWith('teamwork_local_db_attachment_file_') &&
+          id.endsWith('attachment_file;;')
+        ) {
+          continue
+        }
+      }
       res.push(row.doc || row.value)
     }
 
@@ -122,13 +178,7 @@ const eventHandlerMap = {
     data: PouchDB.Core.AttachmentData,
     type: string
   ): Promise<any> {
-    try {
-      await db.get(docId)
-      throw new Error('数据ID已存在')
-    } catch (e) {
-      //nothing
-    }
-    return await dbErrorWrapper(db.putAttachment(docId, getAttachmentId(docId), data, type))
+    return _putAttachment(db, docId, data, type)
   },
   async putAttachmentByLocalFilepath(
     db: PouchDB.Database,
@@ -136,15 +186,12 @@ const eventHandlerMap = {
     localPath: string,
     type?: string
   ): Promise<any> {
-    try {
-      await db.get(id)
-      throw new Error('数据ID已存在')
-    } catch (e) {
-      //nothing
-    }
-
     let fileData: Buffer
     try {
+      const fileStat = fs.statSync(localPath)
+      if (fileStat.size >= MAX_ATTACHMENT_SIZE) {
+        throw new Error('超过最大支持的附件大小')
+      }
       fileData = fs.readFileSync(localPath)
     } catch (e) {
       throw new Error(`获取文件: ${localPath} 内容失败, 错误信息: ${(e as any).message || e}`)
@@ -163,13 +210,15 @@ const eventHandlerMap = {
       throw new Error('获取文件类型失败, 错误信息: ' + ((e as any).message || e))
     }
 
-    return await dbErrorWrapper(db.putAttachment(id, getAttachmentId(id), fileData, fileType))
+    return _putAttachment(db, id, fileData, fileType)
   },
 
   getAttachment(db: PouchDB.Database, docId: string): Promise<any> {
+    docId = getAttachmentDocId(docId)
     return dbErrorWrapper(db.getAttachment(docId, getAttachmentId(docId)))
   },
   async getAttachmentType(db: PouchDB.Database, docId: string): Promise<any> {
+    docId = getAttachmentDocId(docId)
     const data = await dbErrorWrapper(db.get(docId))
     if (!data._attachments) {
       throw new Error('不存在附件信息')
@@ -181,9 +230,10 @@ const eventHandlerMap = {
     }
     return attachmentInfo.content_type
   },
-  async removeAttachment(db: PouchDB.Database, docId: string): Promise<any> {
+  async removeAttachment(db: PouchDB.Database, docId: string): Promise<void> {
+    docId = getAttachmentDocId(docId)
     const dataRes = await dbErrorWrapper(db.get(docId))
-    return dbErrorWrapper(db.removeAttachment(docId, getAttachmentId(docId), dataRes._rev))
+    await dbErrorWrapper(db.removeAttachment(docId, getAttachmentId(docId), dataRes._rev))
   },
   indexCreate(
     db: PouchDB.Database,
@@ -204,19 +254,19 @@ const eventHandlerMap = {
       partial_filter_selector?: PouchDB.Find.Selector | undefined
     }
   ): Promise<any> {
-    return db.createIndex({ index })
+    return dbErrorWrapper(db.createIndex({ index }))
   },
   async indexList(db: PouchDB.Database): Promise<any> {
-    return (await db.getIndexes()).indexes
+    return (await dbErrorWrapper(db.getIndexes())).indexes
   },
   async indexDelete(
     db: PouchDB.Database,
     indexOptions: PouchDB.Find.DeleteIndexOptions
   ): Promise<any> {
-    return db.deleteIndex(indexOptions)
+    return dbErrorWrapper(db.deleteIndex(indexOptions))
   },
   async indexFind(db: PouchDB.Database, options: PouchDB.Find.FindRequest<any>): Promise<any> {
-    return db.find(options)
+    return dbErrorWrapper(db.find(options))
   }
 }
 

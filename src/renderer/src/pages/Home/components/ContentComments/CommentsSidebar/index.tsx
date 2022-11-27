@@ -22,24 +22,37 @@ export interface MessageInfo {
   }
 }
 
-export const CommentsSidebar: FC = () => {
-  const [currentMessage, setCurrentMessage] = useState<MessageInfo | undefined>(undefined)
+export interface CommentsSidebarProps {
+  activeMessageCardChange?(msgInfo?: MessageInfo): void
+}
+
+export const CommentsSidebar: FC<CommentsSidebarProps> = ({ activeMessageCardChange }) => {
+  const queryMessageDataList = useCallback(() => {
+    try {
+      return insideDb.sync.index.find<MessageInfo>({
+        selector: { 'indexInfo.dataType': 'userMessage', 'indexInfo.updateAt': { $gte: null } },
+        sort: [{ 'indexInfo.updateAt': 'desc' }]
+      }).docs
+    } catch (e) {
+      return []
+    }
+  }, [])
+
+  const queryCurrentMessage = useCallback(() => {
+    try {
+      return insideDb.sync.get<MessageInfo>(currentMessageCardDbKey)
+    } catch (e) {
+      return undefined
+    }
+  }, [])
+
+  const [currentMessage, setCurrentMessage] = useState<MessageInfo | undefined>(
+    queryCurrentMessage()
+  )
   const [appList, setAppList] = useState<AppInfo[]>([])
   const [userList, setUserList] = useState<UserInfo[]>([])
 
-  const [messageDataList, setMessageDataList] = useState<MessageInfo[]>([])
-
-  const queryMessageDataList = useCallback(() => {
-    try {
-      const queryData = insideDb.sync.index.find<MessageInfo>({
-        selector: { 'indexInfo.dataType': 'userMessage', 'indexInfo.updateAt': { $gte: null } },
-        sort: [{ 'indexInfo.updateAt': 'desc' }]
-      })
-      setMessageDataList(queryData.docs)
-    } catch (e) {
-      //nothing
-    }
-  }, [])
+  const [messageDataList, setMessageDataList] = useState<MessageInfo[]>(queryMessageDataList())
 
   const queryAppList = useCallback(async () => {
     try {
@@ -62,7 +75,7 @@ export const CommentsSidebar: FC = () => {
   }, [])
 
   useEffect(() => {
-    queryMessageDataList()
+    // queryMessageDataList()
     // queryCurrentMessage()
     queryAppList()
     queryUserList()
@@ -101,8 +114,8 @@ export const CommentsSidebar: FC = () => {
           console.error('更新缓存数据失败: ', JSON.stringify(e))
         }
 
-        setCurrentMessage(msg)
         messageDataList.unshift(msg)
+        setCurrentMessage(msg)
         return [...messageDataList]
       })
     },
@@ -149,12 +162,14 @@ export const CommentsSidebar: FC = () => {
       //nothing
     }
 
+    activeMessageCardChange && activeMessageCardChange(currentMessage)
     if (!currentMessage) {
       return
     }
 
     insideDb.sync.put({
       ...currentMessage,
+      indexInfo: undefined,
       _id: currentMessageCardDbKey,
       _rev: undefined
     })

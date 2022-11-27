@@ -9,7 +9,7 @@ import { alertMsgAndRelaunch as alertMsgAndBreakToLogin } from '../windows/alert
 import { CurrentInfo, WinNameEnum } from '../current'
 import { SettingLoginWin } from '../windows/login'
 import { clearAllApplicationViews } from '../sdk/insideSdk/applications'
-import { destroyInsideDatabase } from '../sdk/appSdk/db'
+import { closeAllDb } from '../sdk/appSdk/db'
 const WebSocket = require('ws')
 
 const lock = new AsyncLock()
@@ -418,6 +418,6 @@ export class WsHandler {
     }
 
     clearAllApplicationViews()
-    destroyInsideDatabase()
+    closeAllDb()
   }
 }

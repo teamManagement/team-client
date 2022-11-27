@@ -9,6 +9,8 @@ import PouchdbStatic from 'pouchdb-node'
 const Pouchdb = require('pouchdb') as typeof PouchdbStatic
 Pouchdb.plugin(require('pouchdb-find'))
 
+const dbMap: { [key: string]: Database } = {}
+
 export class Database {
   private _db: PouchDB.Database | undefined
   private _dbSync: PouchDB.Replication.Sync<any> | undefined
@@ -25,10 +27,21 @@ export class Database {
 
   public async init(localCache?: boolean): Promise<Database> {
     try {
+      if (this._isDestroy) {
+        if (!this._db) {
+          throw new Error('数据库已被销毁，无法复用')
+        }
+        this._isDestroy = false
+      }
+
+      if (this._db) {
+        return this
+      }
+
       if (localCache) {
         this._cachePath = path.join(USER_LOCAL_CONFIG_DIR, 'cache')
         fs.mkdirSync(this._cachePath, { recursive: true })
-        this._db = new Pouchdb(this._cachePath)
+        this._db = new Pouchdb(this._cachePath, { auto_compaction: true })
         return this
       }
       if (!this._nowUser || !this._db || !this._cachePasswd) {
@@ -44,8 +57,9 @@ export class Database {
         fs.mkdirSync(this._cachePath, {
           recursive: true
         })
-        this._db = new Pouchdb(this._cachePath)
+        this._db = new Pouchdb(this._cachePath, { auto_compaction: true })
       }
+      dbMap[this._appInfo.id] = this
       if (this._appInfo.id === '0') {
         logs.debug('当前要创建同步库的应用为应用商店, 跳过远程数据库的同步')
         return this
@@ -59,9 +73,11 @@ export class Database {
       this._dbSync = this._db.sync(`${CORE_COUCHDB_URL}/u${this._nowUser.id}_${this._appInfo.id}`, {
         live: true,
         retry: true,
-        // filter(doc, params) {
-        //   console.log('sync doc: ', doc, ', params: ', params)
-        // },
+        auto_compaction: true,
+        filter(doc, param) {
+          console.log('doc: ', doc, ', param: ', param)
+          return !doc._deleted
+        },
         auth: {
           username: this._nowUser.id,
           password: this._cachePasswd
@@ -87,9 +103,16 @@ export class Database {
 
   public destroy(): void {
     this._closeSync()
+    // this._db && this._db.destroy()
+    // this._db = undefined
+    this._isDestroy = true
+    logs.debug(`${this._appInfo.name}-数据存储被标识为关闭`)
+  }
+
+  public close(): void {
     this._db && this._db.close()
     this._isDestroy = true
-    logs.debug('应用数据库被销毁...')
+    logs.debug(`${this._appInfo.name}-数据存储被真实关闭`)
   }
 
   public get db(): PouchDB.Database {
@@ -97,6 +120,11 @@ export class Database {
     if (!this._db) {
       throw new Error('数据库未初始化成功')
     }
+
+    if (this._isDestroy) {
+      throw new Error('数据库被销毁')
+    }
+
     return this._db
   }
 
@@ -113,6 +141,11 @@ export class Database {
 }
 
 export function createDatabase(appInfo: AppInfo): Promise<Database> {
+  const cacheDb = dbMap[appInfo.id]
+  if (cacheDb) {
+    logs.debug(`${appInfo.name}-从缓存中恢复数据库连接`)
+    return cacheDb.init()
+  }
   return new Database(appInfo).init()
 }
 
@@ -120,13 +153,14 @@ let insideDatabase: Database | undefined = undefined
 export async function loadInsideDatabase(): Promise<Database> {
   if (!insideDatabase) {
     logs.debug('初始化teamwork数据库')
-    insideDatabase = new Database({ id: 'inside' } as AppInfo)
+    insideDatabase = new Database({ id: 'inside', name: 'teamwork客户端' } as AppInfo)
     await insideDatabase.init()
     await insideDatabase.db.createIndex({
       index: {
         fields: ['indexInfo.dataType']
       }
     })
+
     await insideDatabase.db.createIndex({
       index: {
         fields: ['indexInfo.updateAt']
@@ -158,4 +192,13 @@ export function destroyLocalCacheDatabase(): void {
   localCacheDatabase && localCacheDatabase.destroy()
   localCacheDatabase = undefined
   return
+}
+
+export function closeAllDb(): void {
+  for (const key in dbMap) {
+    dbMap[key].close()
+  }
+
+  destroyLocalCacheDatabase()
+  destroyInsideDatabase()
 }

@@ -5,8 +5,13 @@ import ChatTitle from '@renderer/components/ChatTitle'
 import Conversation from '@renderer/components/Conversation'
 import MessageEdit from '@renderer/components/MessageEdit'
 import { FC, useMemo } from 'react'
+import { MessageInfo } from '../CommentsSidebar'
 
-export const CommentsContent: FC = () => {
+export interface CommentsContentProps {
+  currentMessageCard?: MessageInfo
+}
+
+export const CommentsContent: FC<CommentsContentProps> = ({ currentMessageCard }) => {
   const actionEleList = useMemo(() => {
     return [
       <ImgEmoji title="表情" key={'emoji'} />,
@@ -15,31 +20,37 @@ export const CommentsContent: FC = () => {
     ]
   }, [])
   return (
-    <div className="comments-content">
-      <ChatTitle>
-        {/* <UserIcon size="22px" />
+    <>
+      {currentMessageCard ? (
+        <div className="comments-content">
+          <ChatTitle messageInfo={currentMessageCard}>
+            {/* <UserIcon size="22px" />
         <SettingIcon size="22px" /> */}
-      </ChatTitle>
-      <div className="message-list">
-        <div className="wrapper">
-          <Conversation />
-          <Conversation align="right" />
-          <Conversation />
-          <Conversation />
-          <Conversation />
-          <Conversation />
-          <Conversation />
-          <Conversation />
-          <Conversation />
-          <Conversation />
-          <Conversation />
-          <Conversation />
-        </div>
-      </div>
+          </ChatTitle>
+          <div className="message-list">
+            <div className="wrapper">
+              <Conversation />
+              <Conversation align="right" />
+              <Conversation />
+              <Conversation />
+              <Conversation />
+              <Conversation />
+              <Conversation />
+              <Conversation />
+              <Conversation />
+              <Conversation />
+              <Conversation />
+              <Conversation />
+            </div>
+          </div>
 
-      <div className="message-edit">
-        <MessageEdit actionEleList={actionEleList} minHeight={'100%'} />
-      </div>
-    </div>
+          <div className="message-edit">
+            <MessageEdit actionEleList={actionEleList} minHeight={'100%'} />
+          </div>
+        </div>
+      ) : (
+        <div></div>
+      )}
+    </>
   )
 }

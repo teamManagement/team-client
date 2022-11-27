@@ -3,7 +3,7 @@ import { RegisterFn, SdkHandlerParam, SdkRegistryInfo } from '..'
 import { AppInfo } from '../insideSdk/applications'
 import { _cacheHandler } from './cache'
 import { _currentSyncHandler } from './current'
-import { _dbHandler } from './db'
+import { _dbHandler, _dbSyncHandler } from './db'
 import { _execHandler } from './exec'
 import { _hostsHandler } from './hosts'
 import { _proxyHandler } from './proxy'
@@ -72,7 +72,10 @@ const syncEventHandlerInfo: SdkRegistryInfo<void> = {
     param.eventName = param.otherData.splice(0, 1)[0]
   },
   eventSyncHandleMap: {
-    current: _currentSyncHandler
+    current: _currentSyncHandler,
+    db: {
+      sync: _dbSyncHandler
+    }
   }
 }
 
