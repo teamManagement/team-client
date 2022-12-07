@@ -1,0 +1,17 @@
+.emoji {
+  width: 100%;
+  height: 100%;
+  > .emoji_content_item {
+    width: 26px;
+    height: 26px;
+    float: left;
+    margin-left: 8px;
+    margin-top: 6px;
+    cursor: pointer;
+
+    > img {
+      width: 100%;
+      height: 100%;
+    }
+  }
+}

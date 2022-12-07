@@ -5,6 +5,7 @@ import { CurrentInfo, WinNameEnum } from '../current'
 import { AppIcon } from '../icons'
 import { WsHandler } from '../socket'
 import { PRELOAD_JS_INSIDE } from '../consts'
+import { registerDownloadEvent } from '../sdk/appSdk/donwload'
 
 export async function SettingWindow(
   winNameEnum: WinNameEnum,
@@ -119,6 +120,10 @@ export async function SettingWindow(
       CurrentInfo.SettingCurrentWindow(winNameEnum)
     }
   }
+
+  const session = win.webContents.session
+  session.removeAllListeners('will-download')
+  session.addListener('will-download', registerDownloadEvent)
 
   return Promise.resolve(win)
 }

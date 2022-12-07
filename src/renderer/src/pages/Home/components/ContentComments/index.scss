@@ -63,6 +63,15 @@
       padding: 16px 0 8px 0;
       overflow-x: hidden;
       overflow-y: auto;
+      position: relative;
+
+      > .message-loading {
+        position: absolute;
+        top: 12px;
+        left: 0;
+        right: 0;
+        text-align: center;
+      }
 
       > .wrapper {
         width: calc(100% - 8px);
@@ -73,7 +82,61 @@
       width: 100%;
       height: 200px;
       // flex-grow: 1;
-      padding-bottom: 12px;
+      // padding-bottom: 12px;
+
+      .emoji-popup {
+        width: 272px;
+        height: 168px;
+        position: absolute;
+        box-shadow: 0 0 6px #c7c7c7;
+        z-index: 99;
+        top: -168px;
+        border-radius: 8px;
+        background-color: #fff;
+
+        > .wrapper {
+          overflow-x: hidden;
+          overflow-y: auto;
+          // width: 100%;
+          // height: 100%;
+          // margin: 12px;
+          // padding-bottom: unset;
+          position: absolute;
+          top: 12px;
+          bottom: 12px;
+          left: 12px;
+          right: 12px;
+          border-radius: 8px;
+          // background-color: #fff;
+          // position: relative;
+          z-index: 99;
+        }
+
+        > .bottom-shadow {
+          // width: 100%;
+          height: 12px;
+          background-color: #fff;
+          z-index: 99;
+          position: absolute;
+          bottom: 1px;
+          left: 3px;
+          right: 6px;
+        }
+
+        &::after {
+          content: '';
+          display: block;
+          width: 12px;
+          height: 12px;
+          background-color: #fff;
+          transform: rotate(45deg);
+          position: absolute;
+          bottom: -6px;
+          left: 18px;
+          box-shadow: 0 0 6px #c7c7c7;
+          z-index: 9;
+        }
+      }
     }
   }
 }

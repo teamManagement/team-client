@@ -64,7 +64,7 @@ export const ChatTitle: FC<ChatTitleProps> = ({ style, children, messageInfo }) 
         return ''
       }
 
-      return `所在部门: ${orgName.join(',')}`
+      return `部门: ${orgName.join(',')}`
     }
 
     if (messageInfo.type === 'apps') {
@@ -81,9 +81,11 @@ export const ChatTitle: FC<ChatTitleProps> = ({ style, children, messageInfo }) 
         <div className="name">
           <span>{name}</span>
         </div>
-        <div className="name-desc">
-          <span>{desc}</span>
-        </div>
+        {desc && (
+          <div className="name-desc">
+            <span>{desc}</span>
+          </div>
+        )}
       </div>
       <div className="operation-groups">{operationGroupEle}</div>
     </div>

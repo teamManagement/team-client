@@ -41,6 +41,15 @@ $avatarSize: 68px;
       height: 28px;
       align-items: flex-end;
       @include mixin.flex-text-overflow;
+
+      > span {
+        > .message-title-flag-left {
+          margin-left: 8px;
+        }
+        > .message-title-flag-right {
+          margin-right: 8px;
+        }
+      }
     }
     > .bubble {
       position: relative;
@@ -58,6 +67,14 @@ $avatarSize: 68px;
         -ms-border-radius: 8px;
         -o-border-radius: 8px;
         background-color: #bcd7f1;
+
+        word-break: break-all;
+        overflow-x: auto;
+        overflow-y: hidden;
+        user-select: text;
+        white-space: pre-wrap;
+        transition: all 0.5s;
+        // @include mixin.flex-text-overflow;
         // position: relative;
         // z-index: 1;
       }

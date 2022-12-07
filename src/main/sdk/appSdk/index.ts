@@ -4,6 +4,8 @@ import { AppInfo } from '../insideSdk/applications'
 import { _cacheHandler } from './cache'
 import { _currentSyncHandler } from './current'
 import { _dbHandler, _dbSyncHandler } from './db'
+import { _dialogSyncHandler } from './dialog'
+import { _downloadHandler } from './donwload'
 import { _execHandler } from './exec'
 import { _hostsHandler } from './hosts'
 import { _proxyHandler } from './proxy'
@@ -23,15 +25,15 @@ function _childEventHandlerWrapper(
 const promiseEventHandlerInfo: SdkRegistryInfo<AppInfo> = {
   name: applicationPreloadIpcEventName,
   prevHandle(param) {
-    const appInfo = (param.event.sender as any)._appInfo as AppInfo
-    if (!appInfo) {
-      throw new Error('未知的应用信息')
-    }
-
     if (!param.otherData || param.otherData.length <= 0) {
       throw new Error('未知的操作指令')
     }
     param.eventName = param.otherData.splice(0, 1)[0]
+
+    const appInfo = (param.event.sender as any)._appInfo as AppInfo
+    if (!appInfo && param.eventName !== 'httpFile') {
+      throw new Error('未知的应用信息')
+    }
 
     return appInfo
   },
@@ -59,7 +61,11 @@ const promiseEventHandlerInfo: SdkRegistryInfo<AppInfo> = {
     /**
      * db相关
      */
-    db: _childEventHandlerWrapper(_dbHandler)
+    db: _childEventHandlerWrapper(_dbHandler),
+    /**
+     * download相关api
+     */
+    download: _downloadHandler
   }
 }
 
@@ -75,7 +81,8 @@ const syncEventHandlerInfo: SdkRegistryInfo<void> = {
     current: _currentSyncHandler,
     db: {
       sync: _dbSyncHandler
-    }
+    },
+    dialog: _dialogSyncHandler
   }
 }
 

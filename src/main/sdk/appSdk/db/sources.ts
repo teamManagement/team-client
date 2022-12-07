@@ -22,7 +22,55 @@ export class Database {
   public constructor(private _appInfo: AppInfo) {
     this.init = this.init.bind(this)
     this._closeSync = this._closeSync.bind(this)
+    this._connectionRemote = this._connectionRemote.bind(this)
     this.destroy = this.destroy.bind(this)
+  }
+
+  private async _connectionRemote(): Promise<void> {
+    logs.debug(`应用: ${this._appInfo.name}, 开始连接远程仓库`)
+    if (!this._db || !this._nowUser?.id) {
+      logs.debug('未初始化完成本地库或当前登录用户信息失败, 5秒之后将重新尝试创建远程同步库')
+      setTimeout(() => {
+        this._connectionRemote()
+      }, 5000)
+      return
+    }
+
+    if (this._dbSync) {
+      this._dbSync.cancel()
+    }
+
+    this._dbSync = this._db.sync(`${CORE_COUCHDB_URL}/u${this._nowUser.id}_${this._appInfo.id}`, {
+      live: true,
+      retry: true,
+      auto_compaction: true,
+      // filter(doc, param) {
+      //   console.log('doc: ', doc, ', param: ', param)
+      //   return !doc._deleted
+      // },
+      auth: {
+        username: this._nowUser.id,
+        password: this._cachePasswd
+      }
+    } as PouchDB.Replication.SyncOptions)
+    this._dbSync.addListener('error', (e: any) => {
+      this._closeSync()
+      logs.info('连接远程同步库失败: ', JSON.stringify(e))
+      setTimeout(async () => {
+        if (this._isDestroy) {
+          return
+        }
+        try {
+          await sendHttpRequestToLocalServer('/app/try/create/db/again/' + this._appInfo.id, {
+            timeout: -1
+          })
+        } catch (e) {
+          //nothing
+        }
+        logs.debug('应用远程同步库尝试重连...')
+        this._connectionRemote()
+      }, 5000)
+    })
   }
 
   public async init(localCache?: boolean): Promise<Database> {
@@ -70,30 +118,7 @@ export class Database {
         return this
       }
 
-      this._dbSync = this._db.sync(`${CORE_COUCHDB_URL}/u${this._nowUser.id}_${this._appInfo.id}`, {
-        live: true,
-        retry: true,
-        auto_compaction: true,
-        filter(doc, param) {
-          console.log('doc: ', doc, ', param: ', param)
-          return !doc._deleted
-        },
-        auth: {
-          username: this._nowUser.id,
-          password: this._cachePasswd
-        }
-      } as PouchDB.Replication.SyncOptions)
-      this._dbSync.addListener('error', (e: any) => {
-        this._closeSync()
-        logs.info('连接远程同步库失败: ', JSON.stringify(e))
-        setTimeout(() => {
-          if (this._isDestroy) {
-            return
-          }
-          logs.debug('应用远程同步库尝试重连...')
-          this.init()
-        }, 5000)
-      })
+      this._connectionRemote()
       return this
     } catch (e) {
       this.destroy()

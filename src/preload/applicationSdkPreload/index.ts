@@ -3,6 +3,8 @@ import { contextmenu } from '../_commons/contextmenu'
 import { cache } from './cache'
 import { current } from './current'
 import { loadDbApi } from './db'
+import { dialog } from './dialog'
+import { download } from './download'
 import { exec } from './exec'
 import { hosts } from './hosts'
 import { proxy } from './proxy'
@@ -23,7 +25,9 @@ const teamworkSDK = {
   db: loadDbApi(
     sendInvokeIpcEventWrapperEventNameAndDataCallBack,
     sendSyncIpcEventWrapperEventNameAndDataCallBack
-  )
+  ),
+  dialog,
+  download
 }
 
 if (process.contextIsolated) {

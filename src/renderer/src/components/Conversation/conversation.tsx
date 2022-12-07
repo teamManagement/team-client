@@ -1,36 +1,170 @@
+import { ChatGroupInfo } from '@byzk/teamwork-inside-sdk'
+import { AppInfo, UserInfo } from '@byzk/teamwork-sdk'
+import { ChatMsgType } from '@renderer/pages/Home/components/ContentComments/commentsContent/vos'
 import classNames from 'classnames'
-import { FC, useMemo } from 'react'
+import dayjs from 'dayjs'
+import { FC, useMemo, HtmlHTMLAttributes, ReactNode, CSSProperties } from 'react'
+import { ErrorCircleFilledIcon, LoadingIcon } from 'tdesign-icons-react'
 import Avatar from '../Avatar'
+import { emojiMap, emojiReplaceReg } from '../Emoji'
 import { BubbleTipIcon } from './bubbleTipIcon'
 import './index.scss'
 
-export interface ConversationProps {
-  align?: 'left' | 'right'
+function replaceEmojiStr(subStr: string): string {
+  const emojiImg = emojiMap[subStr]
+  if (emojiImg) {
+    return `<img class="emoji" src="${emojiImg}" alt="${subStr}" style="vertical-align:-6px; display: inline-block; width: 25px; height: 25px;" />`
+  } else {
+    return subStr
+  }
 }
 
-export const Conversation: FC<ConversationProps> = ({ align = 'left' }) => {
-  const avatarEle = useMemo(() => {
-    return (
-      <Avatar
-        size="48px"
-        iconUrl="data:image/jpeg;base64,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"
-      />
-    )
+export interface ConversationProps extends HtmlHTMLAttributes<HTMLDivElement> {
+  status?: 'loading' | 'error' | 'ok'
+  width?: number
+  targetInfo?: { type: 'users' | 'groups' | 'apps'; meta: UserInfo | ChatGroupInfo | AppInfo }
+  meInfo?: UserInfo
+  content: string
+  contentType?: ChatMsgType
+  sendTime?: string
+}
+
+export const Conversation: FC<ConversationProps> = ({
+  meInfo,
+  targetInfo,
+  status = 'ok',
+  width,
+  content,
+  contentType,
+  sendTime,
+  ...otherDatas
+}) => {
+  const align = useMemo(() => {
+    return meInfo ? 'right' : 'left'
   }, [])
+  const avatarEle = useMemo(() => {
+    let icon: string | undefined = undefined
+    let name: string | undefined = undefined
+    if (meInfo) {
+      icon = meInfo.icon
+      name = meInfo.name
+    } else if (targetInfo) {
+      icon = targetInfo.meta.icon
+      name = targetInfo.meta.name
+    }
+    return <Avatar size="48px" iconUrl={icon} name={name} />
+  }, [targetInfo, meInfo])
+
+  const messageTitleDesc = useMemo(() => {
+    const msgTitleFlagClassName = 'message-title-flag-' + align
+    let ele: ReactNode = undefined
+    switch (status) {
+      case 'loading':
+        ele = <LoadingIcon size="18px" className={msgTitleFlagClassName} />
+        break
+      case 'error':
+        ele = (
+          <ErrorCircleFilledIcon
+            style={{ cursor: 'pointer' }}
+            color="red"
+            size="22px"
+            className={msgTitleFlagClassName}
+          />
+        )
+    }
+
+    // let desc: string | undefined = undefined
+    // if (meInfo) {
+    //   desc = `${meInfo.name}( ${meInfo.username} )`
+    //   const orgList = meInfo.orgList
+    //   if (orgList && orgList.length > 0) {
+    //     const orgNameList = orgList.map((org) => org.org.name)
+    //     desc += `( 部门: ${orgNameList.join(',')} )`
+    //   }
+    // } else if (targetInfo) {
+    //   desc = targetInfo.meta.name
+    //   if (targetInfo.type === 'users') {
+    //     const targetUserInfo = targetInfo.meta as UserInfo
+    //     if (targetUserInfo.orgList && targetUserInfo.orgList.length > 0) {
+    //       desc += `( 部门: ${targetUserInfo.orgList.map((org) => org.org.name).join(',')} )`
+    //     } else {
+    //       desc += `( ${targetUserInfo.username} )`
+    //     }
+    //   } else if (targetInfo.type === 'apps') {
+    //     desc += '( 应用 )'
+    //   } else if (targetInfo.type === 'groups') {
+    //     desc += '( 群组 )'
+    //   }
+    // }
+
+    let desc = ''
+    if (sendTime) {
+      desc = dayjs(sendTime).format('YYYY-MM-DD HH:mm:ss')
+    }
+
+    return (
+      <>
+        {align === 'right' && ele}
+        {desc}
+        {align === 'left' && ele}
+      </>
+    )
+  }, [align, status, meInfo, targetInfo, sendTime])
+
+  const contentWidth = useMemo(() => {
+    if (!width) {
+      return
+    }
+    return width - 128
+  }, [width])
+
+  const msgContent: [
+    string | undefined,
+    (
+      | {
+          __html: string
+        }
+      | undefined
+    )
+  ] = useMemo(() => {
+    if (contentType === ChatMsgType.ChatMsgTypeText) {
+      return [undefined, { __html: content.replace(emojiReplaceReg, replaceEmojiStr) }]
+    }
+    return ['', undefined]
+  }, [])
+
+  const contentStyle = useMemo<CSSProperties>(() => {
+    if (contentType !== ChatMsgType.ChatMsgTypeText) {
+      return {}
+    }
+
+    return {
+      textAlign: 'left',
+      fontSize: 14
+    }
+  }, [])
+
   return (
-    <div className="conversation">
+    <div {...otherDatas} style={{ width, ...otherDatas.style }} className="conversation">
       {align == 'left' && <div className="avatar-wrapper">{avatarEle}</div>}
       <div className={classNames('message', align)}>
         <div className="message-title">
-          <span>vgfghfh</span>
+          <span>{messageTitleDesc}</span>
         </div>
 
         <div className="bubble">
           <div className="bubble-tip">
             <BubbleTipIcon width={40} height={28} color="#bcd7f1" />
           </div>
-          <div className="bubble-content">
-            <span>sdf</span>
+          <div
+            className="bubble-content"
+            style={{
+              maxWidth: contentWidth,
+              ...contentStyle
+            }}
+            dangerouslySetInnerHTML={msgContent[1]}
+          >
+            {msgContent[0]}
           </div>
         </div>
       </div>

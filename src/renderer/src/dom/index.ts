@@ -7,3 +7,9 @@ export function getContactSidebarEle(): HTMLDivElement | null {
     '.home > .content > .content-wrapper > .content-contact > .content-contact-sidebar'
   )
 }
+
+export function getCommentsSidebarEle(): HTMLDivElement | null {
+  return document.querySelector<HTMLDivElement>(
+    '.home > .content > .content-wrapper > .comments > .comments-sidebar'
+  )
+}

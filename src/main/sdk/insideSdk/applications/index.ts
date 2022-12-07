@@ -19,6 +19,7 @@ import { CurrentInfo, WinNameEnum } from '../../../current'
 import { sendHttpRequestToLocalServer } from '../../../tools'
 import { SettingWindow } from '../../../windows/common'
 import { createDatabase, Database } from '../../appSdk/db'
+import { registerDownloadEvent } from '../../appSdk/donwload'
 
 //#region APP相关接口
 enum AppType {
@@ -343,6 +344,9 @@ async function openApp(event: IpcMainInvokeEvent, appInfo: AppInfo): Promise<voi
     { ...viewInfo.appInfo, db: undefined },
     'open'
   )
+
+  appSession.removeAllListeners('will-download')
+  appSession.addListener('will-download', registerDownloadEvent)
 }
 
 /**

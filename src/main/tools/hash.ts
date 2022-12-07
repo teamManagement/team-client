@@ -21,3 +21,8 @@ export function fileToSha512(filePath: string): Promise<string> {
     })
   })
 }
+
+export function strToSha256(str: string): string {
+  const h = createHash('sha256')
+  return h.update(str).digest('hex')
+}
