@@ -135,7 +135,7 @@ export class Database {
   }
 
   public close(): void {
-    this._db && this._db.close()
+    // this._db && this._db.close()
     this._isDestroy = true
     logs.debug(`${this._appInfo.name}-数据存储被真实关闭`)
   }

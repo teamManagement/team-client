@@ -7,10 +7,11 @@ import './index.scss'
 export interface ChatTitleProps {
   style?: CSSProperties
   messageInfo?: MessageInfo
+  status: 'online' | 'offline' | undefined
   children?: ReactNode | ReactNode[]
 }
 
-export const ChatTitle: FC<ChatTitleProps> = ({ style, children, messageInfo }) => {
+export const ChatTitle: FC<ChatTitleProps> = ({ style, children, messageInfo, status }) => {
   const operationGroupEle = useMemo(() => {
     return Children.map(children, (item) => {
       return <div className="action">{item}</div>
@@ -22,13 +23,13 @@ export const ChatTitle: FC<ChatTitleProps> = ({ style, children, messageInfo }) 
       return <div></div>
     }
 
-    let status: 'online' | 'offline' | undefined = undefined
-    if (messageInfo.type === 'users') {
-      status = 'offline'
-    }
+    // let status: 'online' | 'offline' | undefined = undefined
+    // if (messageInfo.type === 'users') {
+    //   status = 'offline'
+    // }
 
     return <Avatar status={status} size="43px" name={messageInfo.name} />
-  }, [messageInfo])
+  }, [messageInfo, status])
 
   const name = useMemo(() => {
     if (!messageInfo) {

@@ -17,6 +17,8 @@ import { startUpdaterListener } from './updater'
 import { initSdk } from './sdk'
 import { SettingUserinfoAlert } from './windows/userinfo'
 
+process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true'
+
 app.commandLine.appendSwitch('--disable-http-cache')
 
 log.debug('程序参数: ', JSON.stringify(process.argv))

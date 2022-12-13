@@ -11,14 +11,22 @@ export interface ContactContentItemProps {
 }
 
 export const ContactContentItem: FC<ContactContentItemProps> = ({ item, style }) => {
-  const { iconUrl, title, desc, onClick } = item
+  const { iconUrl, title, desc, onClick, onDoubleClick } = item
 
   const itemClick = useCallback(() => {
     if (!onClick) {
       return
     }
     onClick(item)
-  }, [])
+  }, [item])
+
+  const itemOnDoubleClick = useCallback(() => {
+    if (!onDoubleClick) {
+      return
+    }
+    onDoubleClick(item)
+  }, [item])
+
   const noDesc = useMemo<boolean>(() => {
     return typeof desc !== 'string' || desc.length <= 0
   }, [desc])
@@ -31,7 +39,12 @@ export const ContactContentItem: FC<ContactContentItemProps> = ({ item, style })
       )
     default:
       return (
-        <div onClick={itemClick} className="content-item" style={style}>
+        <div
+          onClick={itemClick}
+          onDoubleClick={itemOnDoubleClick}
+          className="content-item"
+          style={style}
+        >
           <div className="blank"></div>
           <div className="icon flex-align-center">
             <Avatar iconUrl={iconUrl} size="48px" name={title || '未知'} />
@@ -50,7 +63,7 @@ export const ContactContentItem: FC<ContactContentItemProps> = ({ item, style })
               </div>
             )}
           </div>
-          <div className="item-navigate ">
+          <div className="item-navigate" onClick={itemOnDoubleClick}>
             <ChevronRightIcon size="28px" />
           </div>
         </div>

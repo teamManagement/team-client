@@ -1,10 +1,11 @@
-import { FC, useCallback, useMemo } from 'react'
+import { FC, useCallback, useContext, useMemo } from 'react'
 import Avatar from '../Avatar'
 import './index.scss'
 import { MessageInfo } from '@renderer/pages/Home/components/ContentComments/CommentsSidebar'
 import { UserInfo } from '@byzk/teamwork-sdk'
 import dayjs from 'dayjs'
 import classNames from 'classnames'
+import { HomeContext, HomeContextType } from '@renderer/pages/Home'
 
 export interface MessageCardProps {
   info: MessageInfo
@@ -13,6 +14,8 @@ export interface MessageCardProps {
 }
 
 export const MessageCard: FC<MessageCardProps> = ({ info, active, onClick }) => {
+  const homeContext = useContext<HomeContextType>(HomeContext)
+
   const name = useMemo(() => {
     if (info.type === 'users') {
       const orgNameList: string[] = []
@@ -66,7 +69,13 @@ export const MessageCard: FC<MessageCardProps> = ({ info, active, onClick }) => 
       <div className="avatar">
         <Avatar
           iconUrl={info.icon}
-          status={info.type === 'users' ? 'online' : undefined}
+          status={
+            info.type === 'users'
+              ? homeContext.onlineUserIdList.includes(info.id)
+                ? 'online'
+                : 'offline'
+              : undefined
+          }
           size="48px"
           name={info.name}
         />

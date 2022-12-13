@@ -20,6 +20,7 @@ import { sendHttpRequestToLocalServer } from '../../../tools'
 import { SettingWindow } from '../../../windows/common'
 import { createDatabase, Database } from '../../appSdk/db'
 import { registerDownloadEvent } from '../../appSdk/donwload'
+import { unRegisterBySender } from '../../../socket/notices'
 
 //#region APP相关接口
 enum AppType {
@@ -409,6 +410,7 @@ async function showInAlertById(_event: IpcMainInvokeEvent, id: string): Promise<
           win.show()
         },
         closeFn() {
+          unRegisterBySender(viewInfo.view.webContents)
           destroyAlertById(null as any, viewInfo.appInfo.id)
         }
       },

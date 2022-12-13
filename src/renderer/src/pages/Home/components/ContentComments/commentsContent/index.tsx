@@ -8,12 +8,13 @@ import MessageEdit, { MessageEditInterface } from '@renderer/components/MessageE
 import { Emoji } from '@renderer/components/Emoji'
 import { useUserinfo } from '@renderer/hooks'
 import { EMsgItem, IEmojiItem } from '@shen9401/react-im-input/type/interface'
-import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { FC, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import AsyncLock from 'async-lock'
 import localforage from 'localforage'
 import { MessageInfo } from '../CommentsSidebar'
 import { MessageListWrapper } from './MessageListWrapper'
 import { ChatMsgType, ChatType, UserChatMsg } from './vos'
+import { HomeContext, HomeContextType } from '@renderer/pages/Home'
 
 const lock = new AsyncLock()
 
@@ -26,6 +27,8 @@ export interface CommentsContentProps {
 }
 
 export const CommentsContent: FC<CommentsContentProps> = ({ currentMessageCard }) => {
+  const [currentStatus, setCurrentStatus] = useState<'online' | 'offline' | undefined>(undefined)
+  const homeContext = useContext<HomeContextType>(HomeContext)
   const currentChatTypeRef = useRef<ChatType | undefined>(undefined)
   const currentTargetInfo = useRef<UserInfo | ChatGroupInfo | AppInfo | undefined>(undefined)
   const messageEditRef = useRef<MessageEditInterface>(null)
@@ -36,6 +39,18 @@ export const CommentsContent: FC<CommentsContentProps> = ({ currentMessageCard }
     [key: string]: UserChatMsg[]
   }>({})
   const [currentChatMsgListLoading, setCurrentChatMsgListLoading] = useState<boolean>(true)
+
+  useEffect(() => {
+    if (!currentMessageCard || currentMessageCard.type !== 'users') {
+      setCurrentStatus(undefined)
+      return
+    }
+
+    const status = homeContext.onlineUserIdList.includes(currentMessageCard.id)
+      ? 'online'
+      : 'offline'
+    setCurrentStatus(status)
+  }, [currentMessageCard, homeContext.onlineUserIdList])
 
   useEffect(() => {
     setCurrentChatMsgListLoading(true)
@@ -264,7 +279,7 @@ export const CommentsContent: FC<CommentsContentProps> = ({ currentMessageCard }
     <>
       {currentMessageCard && currentUser ? (
         <div className="comments-content">
-          <ChatTitle messageInfo={currentMessageCard}>
+          <ChatTitle status={currentStatus} messageInfo={currentMessageCard}>
             {/* <UserIcon size="22px" />
         <SettingIcon size="22px" /> */}
           </ChatTitle>

@@ -1,3 +1,4 @@
+import { ipcRenderer } from 'electron'
 import { UserInfo } from '@byzk/teamwork-sdk'
 import { sendSyncIpcEventWrapperEventNameAndDataCallBack } from '../tools'
 
@@ -41,7 +42,38 @@ try {
   userInfo = undefined
 }
 
+type OnlineUserChangeHandler = (
+  status: 'online' | 'offline',
+  userId: string,
+  onlineUserIdList: string[]
+) => void
+
+const _onlineUserChangeHandlerId: string[] = []
+
 export const current = {
   appInfo,
-  userInfo
+  userInfo,
+  onlineUserIdList(): string[] {
+    return sendSyncIpcEvent('onlineUserIdList')
+  },
+  registerOnlineUserChange(id: string, handler: OnlineUserChangeHandler): void {
+    sendSyncIpcEvent('registerOnlineUserChange', id)
+    if (_onlineUserChangeHandlerId.includes(id)) {
+      ipcRenderer.removeAllListeners(id)
+    }
+    ipcRenderer.addListener(
+      id,
+      (_event: any, status: 'online' | 'offline', userId: string, onlineUserIdList: string[]) => {
+        handler(status, userId, onlineUserIdList)
+      }
+    )
+  },
+  unRegisterOnlineUserChange(id: string): void {
+    sendSyncIpcEvent('unRegisterOnlineUserChange', id)
+    ipcRenderer.removeAllListeners(id)
+    const index = _onlineUserChangeHandlerId.indexOf(id)
+    if (index > -1) {
+      _onlineUserChangeHandlerId.splice(index, 1)
+    }
+  }
 }

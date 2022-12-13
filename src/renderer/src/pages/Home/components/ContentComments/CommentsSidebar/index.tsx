@@ -5,6 +5,7 @@ import { FC, useCallback, useEffect, useMemo, useState } from 'react'
 import { Actions } from './Actions'
 import { DataSourceMeta, Search } from './Search'
 import { SearchResult } from '@renderer/components/SearchInput/searchInput'
+import { useSearchParams } from 'react-router-dom'
 
 const currentMessageCardDbKey = 'current_message_card'
 export interface MessageInfo {
@@ -20,6 +21,8 @@ export interface MessageInfo {
     dataType: 'userMessage'
     updateAt: Date
   }
+  _id: string
+  _rev?: string
 }
 
 export interface CommentsSidebarProps {
@@ -27,40 +30,76 @@ export interface CommentsSidebarProps {
 }
 
 export const CommentsSidebar: FC<CommentsSidebarProps> = ({ activeMessageCardChange }) => {
-  const queryMessageDataList = useCallback(() => {
-    try {
-      return insideDb.sync.index.find<MessageInfo>({
-        selector: { 'indexInfo.dataType': 'userMessage', 'indexInfo.updateAt': { $gte: null } },
-        sort: [{ 'indexInfo.updateAt': 'desc' }]
-      }).docs
-    } catch (e) {
-      return []
-    }
-  }, [])
+  const [searchParams] = useSearchParams()
 
-  const queryCurrentMessage = useCallback(() => {
+  const queryCurrentMessage = useCallback((messageList: MessageInfo[]) => {
     try {
-      return insideDb.sync.get<MessageInfo>(currentMessageCardDbKey)
+      if (!messageList || messageList.length <= 0) {
+        return undefined
+      }
+      const currentMsg = insideDb.sync.get<MessageInfo>(currentMessageCardDbKey)
+      if (!currentMsg) {
+        return undefined
+      }
+      if (messageList.findIndex((v) => v.id === currentMsg.id) < 0) {
+        return undefined
+      }
+      return currentMsg
     } catch (e) {
       return undefined
     }
   }, [])
 
+  const queryMessageDataList = useCallback(() => {
+    try {
+      const messageList = insideDb.sync.index.find<MessageInfo>({
+        selector: { 'indexInfo.dataType': 'userMessage', 'indexInfo.updateAt': { $gte: null } },
+        sort: [{ 'indexInfo.updateAt': 'desc' }]
+      }).docs
+      return messageList
+    } catch (e) {
+      console.log(e)
+      return []
+    }
+  }, [])
+
+  const [messageDataList, setMessageDataList] = useState<MessageInfo[]>(queryMessageDataList())
   const [currentMessage, setCurrentMessage] = useState<MessageInfo | undefined>(
-    queryCurrentMessage()
+    queryCurrentMessage(messageDataList)
   )
+
   const [appList, setAppList] = useState<AppInfo[]>([])
   const [userList, setUserList] = useState<UserInfo[]>([])
 
-  const [messageDataList, setMessageDataList] = useState<MessageInfo[]>(queryMessageDataList())
+  const filterMessageDataList = useCallback((messageIdList: { id: string; _id?: string }[]) => {
+    const msgIdList = messageIdList.map((m) => m.id)
+    setMessageDataList((l) => {
+      let isUpdate = false
+      for (let i = l.length - 1; i >= 0; i--) {
+        const _msg = l[i]
+        if (msgIdList.includes(_msg.id)) {
+          continue
+        }
+
+        isUpdate = true
+        msgIdList.splice(i, 1)
+        // insideDb.sync.remove(_msg._id || _msg.id)
+      }
+      if (isUpdate) {
+        return [...l]
+      }
+      return l
+    })
+  }, [])
 
   const queryAppList = useCallback(async () => {
     try {
-      setAppList(
+      const appList =
         (await api.proxyHttpLocalServer<AppInfo[]>('services/resources/app/list', {
           timeout: -1
         })) || []
-      )
+      setAppList(appList)
+      filterMessageDataList(appList)
     } catch (e) {
       setTimeout(queryAppList, 5000)
     }
@@ -68,7 +107,9 @@ export const CommentsSidebar: FC<CommentsSidebarProps> = ({ activeMessageCardCha
 
   const queryUserList = useCallback(async () => {
     try {
-      setUserList(await remoteCache.userList())
+      const userList = await remoteCache.userList()
+      setUserList(userList)
+      // filterMessageDataList(userList)
     } catch (e) {
       setTimeout(queryUserList, 5000)
     }
@@ -94,7 +135,6 @@ export const CommentsSidebar: FC<CommentsSidebarProps> = ({ activeMessageCardCha
         if (!r.metaData) {
           return messageDataList
         }
-
         const msg: MessageInfo = {
           id: r.id,
           name: r.metaData.sourceName || r.name,
@@ -105,11 +145,16 @@ export const CommentsSidebar: FC<CommentsSidebarProps> = ({ activeMessageCardCha
           indexInfo: {
             dataType: 'userMessage',
             updateAt: new Date()
-          }
-        }
+          },
+          _id: (r as any)._id,
+          _rev: (r as any)._rev
+        } as any
 
         try {
-          insideDb.sync.post(msg)
+          msg._id = msg._id || msg.id
+          const res = insideDb.sync.put(msg)
+          msg._id = res.id
+          msg._rev = res.rev
         } catch (e) {
           console.error('更新缓存数据失败: ', JSON.stringify(e))
         }
@@ -121,6 +166,45 @@ export const CommentsSidebar: FC<CommentsSidebarProps> = ({ activeMessageCardCha
     },
     [messageDataList]
   )
+
+  useEffect(() => {
+    const userId = searchParams.get('_u')
+    if (!userId || !userList || userList.length === 0) {
+      return
+    }
+    const index = userList.findIndex((v) => v.id === userId)
+    if (index === -1) {
+      return
+    }
+
+    let desc = ''
+    const userInfo = userList[index]
+    if (userInfo.orgList) {
+      for (const o of userInfo.orgList) {
+        desc += o.org.name + ','
+      }
+    }
+
+    if (desc.length > 0) {
+      desc = desc.substring(0, desc.length - 1)
+      desc = '部门: ' + desc
+    }
+    onSearchResultItemClick({
+      id: userInfo.id,
+      name: `${userInfo.name}( ${userInfo.username} )`,
+      typeId: 'users',
+      icon: userInfo.icon,
+      iconName: userInfo.name,
+      desc,
+      metaData: {
+        type: 'users',
+        sourceName: userInfo.name,
+        sourceData: userInfo
+      } as any
+    })
+
+    searchParams.set('_u', '')
+  }, [userList, searchParams])
 
   const messageClick = useCallback((info: MessageInfo) => {
     setCurrentMessage(info)

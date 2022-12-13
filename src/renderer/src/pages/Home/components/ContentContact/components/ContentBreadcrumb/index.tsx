@@ -1,4 +1,4 @@
-import { FC, useMemo, ReactNode } from 'react'
+import { FC, useMemo, ReactNode, MouseEvent, useCallback } from 'react'
 import Breadcrumb from '@alifd/next/lib/breadcrumb'
 import '@alifd/next/lib/breadcrumb/index.scss'
 import './index.scss'
@@ -20,6 +20,12 @@ export interface ContentBreadcrumbProps {
 
 export const ContentBreadcrumb: FC<ContentBreadcrumbProps> = ({ items, showRoot, rootClick }) => {
   const breadcrumbWidth = useContactContentWidthSize()
+
+  const rootClickWrapper = useCallback((event: MouseEvent) => {
+    event.preventDefault()
+    rootClick && rootClick()
+  }, [])
+
   const itemEle = useMemo(() => {
     const eleList: ReactNode[] = []
     if (!items || items.length <= 0) {
@@ -30,7 +36,8 @@ export const ContentBreadcrumb: FC<ContentBreadcrumbProps> = ({ items, showRoot,
     for (let i = items.length - 1; i >= 0; i--) {
       const item = items[i]
       const id = item.id
-      const onClick: () => void = () => {
+      const onClick: (event: MouseEvent) => void = (event) => {
+        event.preventDefault()
         item.onClick && item.onClick(item)
       }
       if (start) {
@@ -42,7 +49,7 @@ export const ContentBreadcrumb: FC<ContentBreadcrumbProps> = ({ items, showRoot,
         start = false
       } else {
         eleList.unshift(
-          <Breadcrumb.Item onClick={onClick} link="javascript:void(0);" key={id}>
+          <Breadcrumb.Item onClick={onClick} link="#" key={id}>
             {item.title}
           </Breadcrumb.Item>
         )
@@ -51,7 +58,7 @@ export const ContentBreadcrumb: FC<ContentBreadcrumbProps> = ({ items, showRoot,
 
     if (showRoot) {
       eleList.unshift(
-        <Breadcrumb.Item onClick={rootClick} link="javascript:void(0);" key="root">
+        <Breadcrumb.Item onClick={rootClickWrapper} link="#" key="root">
           <RootListIcon size="18px" />
         </Breadcrumb.Item>
       )
@@ -59,7 +66,6 @@ export const ContentBreadcrumb: FC<ContentBreadcrumbProps> = ({ items, showRoot,
 
     return eleList
   }, [items])
-
   return (
     <div className="content-breadcrumb">
       <div className="container" style={{ width: breadcrumbWidth }}>

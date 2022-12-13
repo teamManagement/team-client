@@ -50,6 +50,7 @@ export const MessageListWrapper: FC<MessageListWrapperProps> = ({
     return messageList
       .filter((m) => m.chatType >= ChatType.ChatTypeUser && m.chatType <= ChatType.ChatTypeApp)
       .map((m, index) => {
+        console.log(m)
         const key = m.id || m.clientUniqueId || index
         if (m.chatType === ChatType.ChatTypeUser || m.chatType === ChatType.ChatTypeApp) {
           if (m.targetId === currentUser.id) {

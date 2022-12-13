@@ -10,6 +10,7 @@ import { CurrentInfo, WinNameEnum } from '../current'
 import { SettingLoginWin } from '../windows/login'
 import { clearAllApplicationViews } from '../sdk/insideSdk/applications'
 import { closeAllDb } from '../sdk/appSdk/db'
+import { clearAllWsNotification, sendNotification } from './notices'
 const WebSocket = require('ws')
 
 const lock = new AsyncLock()
@@ -31,17 +32,22 @@ interface MessageCallbackMap {
 
 interface TcpTransferInfo {
   cmdCode: number
+  data?: string
   errMsg: string
 }
 
 type LoginStatusListenerHandle = (status: 'login' | 'logout') => void
 
 export class WsHandler {
+  private _onlineUserList: string[] = []
   private _retryNum = 0
   private _loginStatusListener: LoginStatusListenerHandle[] = []
   private _messageCallbackMap: MessageCallbackMap = {}
 
-  private _serverPushMsgTransferWebContentList: WebContents[] = []
+  private _serverPushMsgTransferHandlerList: {
+    sender?: WebContents
+    handler?(): void
+  }[] = []
 
   private _ws: WebSocketInterface | undefined = undefined
   private _connectionOk = false
@@ -60,18 +66,24 @@ export class WsHandler {
     return WsHandler._instance
   }
 
+  public static get onlineUserIdList(): string[] {
+    return [...WsHandler.instance._onlineUserList]
+  }
+
   public static initServerMsgTransferEvents(): void {
     ipcMain.handle('ipc-serverMsgTransferEvent', (event: IpcMainInvokeEvent) => {
       return lock.acquire('ipc-serverMsgTransferEvent', (done) => {
         try {
           const sender = event.sender
-          const list = WsHandler.instance._serverPushMsgTransferWebContentList
+          const list = WsHandler.instance._serverPushMsgTransferHandlerList
           for (const w of list) {
-            if (w === sender) {
+            if (w.sender && w === sender) {
               return
             }
           }
-          list.push(sender)
+          list.push({
+            sender
+          })
         } finally {
           done(undefined)
         }
@@ -143,9 +155,9 @@ export class WsHandler {
       }
       log.debug('用户状态回复成功')
       const mockData = JSON.stringify({ cmdCode: 2, dataType: 0 })
-      const list = WsHandler.instance._serverPushMsgTransferWebContentList
+      const list = WsHandler.instance._serverPushMsgTransferHandlerList
       for (const w of list) {
-        w.send('ipc-serverMsgTransferEvent', mockData)
+        w.sender && w.sender.send('ipc-serverMsgTransferEvent', mockData)
       }
       this._invokeLoginStatusChange('login')
       log.debug('用户回复之后的状态已向渲染进程进行推送')
@@ -192,9 +204,13 @@ export class WsHandler {
               const buf = Buffer.from(msg.data, 'base64')
               const serverData = buf.toString('utf8')
               try {
-                const list = WsHandler.instance._serverPushMsgTransferWebContentList
+                const list = WsHandler.instance._serverPushMsgTransferHandlerList
 
                 const data = JSON.parse(serverData) as TcpTransferInfo
+                let msgData: string | undefined = data.data
+                if (msgData) {
+                  msgData = Buffer.from(msgData, 'base64').toString('utf8')
+                }
                 log.debug('接收到TCP Transfer数据: ', serverData)
                 if (data.cmdCode === 1) {
                   this._loginOk = false
@@ -204,8 +220,38 @@ export class WsHandler {
                   return
                 }
 
+                if (data.cmdCode === 3) {
+                  if (!msgData) {
+                    return
+                  }
+
+                  const statusMsgSplit = msgData.split('__')
+                  if (statusMsgSplit.length !== 2) {
+                    return
+                  }
+
+                  const userId = statusMsgSplit[0]
+                  const status = statusMsgSplit[1]
+                  if (status === 'online') {
+                    if (this._onlineUserList.includes(userId)) {
+                      return
+                    }
+                    this._onlineUserList.push(userId)
+                  } else {
+                    const index = this._onlineUserList.indexOf(userId)
+                    if (index < 0) {
+                      return
+                    }
+                    this._onlineUserList.splice(index, 1)
+                  }
+
+                  sendNotification('userOnlineStatus', status, userId, this._onlineUserList)
+
+                  return
+                }
+
                 for (const w of list) {
-                  w.send('ipc-serverMsgTransferEvent', serverData)
+                  w.sender && w.sender.send('ipc-serverMsgTransferEvent', serverData)
                 }
               } catch (e) {
                 log.error(
@@ -234,9 +280,9 @@ export class WsHandler {
         this._connectionOk = false
         log.warn('socket连接被断开')
         const mockData = JSON.stringify({ cmdCode: 0, dataType: 0 })
-        const list = WsHandler.instance._serverPushMsgTransferWebContentList
+        const list = WsHandler.instance._serverPushMsgTransferHandlerList
         for (const w of list) {
-          w.send('ipc-serverMsgTransferEvent', mockData)
+          w.sender && w.sender.send('ipc-serverMsgTransferEvent', mockData)
         }
         this._invokeLoginStatusChange('logout')
         log.debug('连接断开消息已推送至渲染进程中')
@@ -409,7 +455,7 @@ export class WsHandler {
 
   public clearWebContentResource(webContent: WebContents): void {
     log.debug('开始清除WsHandler中的WebContent资源, 要被清除的WebContentId => ', webContent.id)
-    const webContentList = WsHandler.instance._serverPushMsgTransferWebContentList
+    const webContentList = WsHandler.instance._serverPushMsgTransferHandlerList
     for (let i = webContentList.length - 1; i >= 0; i--) {
       if (webContentList[i] === webContent) {
         log.debug('WebContentId => ', webContent.id, ', 从TCP Transfer通道中被移除')
@@ -419,5 +465,6 @@ export class WsHandler {
 
     clearAllApplicationViews()
     closeAllDb()
+    clearAllWsNotification()
   }
 }

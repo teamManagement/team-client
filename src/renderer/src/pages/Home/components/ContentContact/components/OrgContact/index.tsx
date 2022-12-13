@@ -5,8 +5,10 @@ import { ContentTitle } from '../ContentTitle'
 import { api } from '@byzk/teamwork-inside-sdk'
 import { OrgInfo, UserInfo } from '@byzk/teamwork-sdk'
 import { MessagePlugin } from 'tdesign-react'
+import { useNavigate } from 'react-router-dom'
 
 export const OrgContact: FC = () => {
+  const navigate = useNavigate()
   // const [loadingDesc, setLoadingDesc] = useState<string>('')
   const [contentItems, setContentItems] = useState<ContactContentItemInfo<any>[]>([])
   const [contentBreadcrumbItems, setContentBreadcrumbItems] = useState<
@@ -43,8 +45,8 @@ export const OrgContact: FC = () => {
           title: user.name,
           iconUrl: user.icon,
           meta: user,
-          onClick(item) {
-            console.log(item)
+          onDoubleClick(item) {
+            navigate(`/home/comments?_u=${item.id}`)
           }
         })
       }

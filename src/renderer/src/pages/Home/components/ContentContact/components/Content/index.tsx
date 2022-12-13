@@ -11,6 +11,7 @@ export interface ContactContentItemInfo<T> {
   desc?: string
   meta?: T
   onClick?(item: ContactContentItemInfo<T>): void
+  onDoubleClick?(item: ContactContentItemInfo<T>): void
 }
 
 export interface ContactContentProps {
