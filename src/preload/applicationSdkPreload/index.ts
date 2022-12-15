@@ -1,5 +1,6 @@
 import { contextBridge } from 'electron'
 import { contextmenu } from '../_commons/contextmenu'
+import { id } from '../_commons/id'
 import { cache } from './cache'
 import { current } from './current'
 import { loadDbApi } from './db'
@@ -7,6 +8,7 @@ import { dialog } from './dialog'
 import { download } from './download'
 import { exec } from './exec'
 import { hosts } from './hosts'
+import { notification } from './notification'
 import { proxy } from './proxy'
 import { store } from './store'
 import {
@@ -15,6 +17,7 @@ import {
 } from './tools'
 
 const teamworkSDK = {
+  id,
   store,
   exec,
   proxy,
@@ -27,7 +30,8 @@ const teamworkSDK = {
     sendSyncIpcEventWrapperEventNameAndDataCallBack
   ),
   dialog,
-  download
+  download,
+  notification
 }
 
 if (process.contextIsolated) {

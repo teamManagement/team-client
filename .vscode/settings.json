@@ -8,5 +8,5 @@
   "[json]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
-  "cSpell.words": ["Datas", "localforage", "Splansh"]
+  "cSpell.words": ["Datas", "localforage", "sess", "Splansh"]
 }

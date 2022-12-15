@@ -17,6 +17,10 @@ enum NotificationEventName {
    */
   GET_NOTIFICATION = 'ipc_NOTIFICATION_INFO_GET',
   /**
+   * 事件调用
+   */
+  EVENT_NOTIFICATION = 'ipc_NOTIFICATION_EVENT_CALL',
+  /**
    * 通知消息类型获取
    */
   GET_NOTIFICATION_TYPE = 'ipc_NOTIFICATION_TYPE_GET'
@@ -96,6 +100,18 @@ const apiMap: { [key: string]: any } = {
     },
     show(height?: number): void {
       ipcRenderer.invoke(NotificationEventName.SHOW_CONTENT, height)
+    },
+    callEvent(
+      eventType: 'title' | 'body' | 'btn',
+      eventFnName: string,
+      btnIndex?: number
+    ): Promise<void> {
+      return ipcRenderer.invoke(
+        NotificationEventName.EVENT_NOTIFICATION,
+        eventType,
+        eventFnName,
+        btnIndex
+      )
     }
   }
 }

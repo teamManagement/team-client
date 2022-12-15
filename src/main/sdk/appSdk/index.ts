@@ -8,6 +8,7 @@ import { _dialogSyncHandler } from './dialog'
 import { _downloadHandler } from './donwload'
 import { _execHandler } from './exec'
 import { _hostsHandler } from './hosts'
+import { _notificationHandler } from './notification'
 import { _proxyHandler } from './proxy'
 import { _storeHandler } from './store'
 
@@ -22,6 +23,8 @@ function _childEventHandlerWrapper(
   }
 }
 
+const noCheckAppInfoMethodName = ['httpFile', 'showWithTemplate']
+
 const promiseEventHandlerInfo: SdkRegistryInfo<AppInfo> = {
   name: applicationPreloadIpcEventName,
   prevHandle(param) {
@@ -31,7 +34,7 @@ const promiseEventHandlerInfo: SdkRegistryInfo<AppInfo> = {
     param.eventName = param.otherData.splice(0, 1)[0]
 
     const appInfo = (param.event.sender as any)._appInfo as AppInfo
-    if (!appInfo && param.eventName !== 'httpFile') {
+    if (!appInfo && !noCheckAppInfoMethodName.includes(param.eventName)) {
       throw new Error('未知的应用信息')
     }
 
@@ -65,7 +68,11 @@ const promiseEventHandlerInfo: SdkRegistryInfo<AppInfo> = {
     /**
      * download相关api
      */
-    download: _downloadHandler
+    download: _downloadHandler,
+    /**
+     * 消息通知
+     */
+    notification: _notificationHandler
   }
 }
 

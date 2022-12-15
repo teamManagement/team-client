@@ -85,11 +85,65 @@ function initTray(): void {
       label: '消息通知测试',
       click(): void {
         showNotification('template', {
-          title: '测试',
-          body: '测试内容',
-          duration: 0,
-          closable: true
+          title: '他处登录',
+          body: `您当前的帐号正在: 127.0.0.1 上尝试登录, 是否允许进行登录?（允许之后本机将退出登录）`,
+          // duration: 1000 * 15,
+          duration: -1,
+          theme: 'warning',
+          closable: true,
+          position: 'center',
+          bodyClick() {
+            console.log('body click...')
+          },
+          onClose() {
+            console.log('消息弹窗被关闭')
+          },
+          btns: [
+            {
+              title: {
+                tml: '允许( {{=it.data.val-=1}}s{{it.data.val<=0 && it.click();}} )',
+                data: {
+                  val: 9
+                },
+                repeat: 8,
+                repeatInterval: 1000
+              },
+              theme: 'danger',
+              // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+              click() {
+                console.log('单击被触发')
+              }
+            },
+            {
+              title: '拒绝',
+              theme: 'success',
+              // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+              click() {
+                console.log('拒绝被点击')
+              }
+            }
+          ]
         })
+        // showNotification('template', {
+        //   title: '测试',
+        //   body: '测试内容',
+        //   theme: 'warning',
+        //   duration: 0,
+        //   closable: true,
+        //   position: 'center',
+        //   btns: [
+        //     {
+        //       title: {
+        //         tml: '确定({{=it.data.value-=1}}){{it.data.value === 0 && it.close();}}',
+        //         data: {
+        //           value: 9
+        //         },
+        //         repeat: 8,
+        //         repeatInterval: 1000
+        //       }
+        //     }
+        //   ]
+        // })
       }
     }
   ])

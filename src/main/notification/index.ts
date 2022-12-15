@@ -19,10 +19,28 @@ import { is, optimizer } from '@electron-toolkit/utils'
 
 const _lock = new AsyncLock()
 
-interface NotificationBtnInfo {
-  name: string
-  eventName?: string
-  eventHandlerId?: string
+export interface NotificationBtnInfo {
+  /**
+   * 显示文字
+   */
+  title: string | TemplateObj
+  /**
+   * 组件风格，依次为默认色、品牌色、危险色、警告色、成功色
+   */
+  theme?: 'default' | 'primary' | 'danger' | 'warning' | 'success'
+  /**
+   * 按钮形式，基础、线框、虚线、文字
+   * @default base
+   */
+  variant?: 'base' | 'outline' | 'dashed' | 'text'
+  /**
+   * 单击
+   */
+  click?(): void
+  /**
+   * 双击
+   */
+  doubleClick?(): void
 }
 
 type PositionFlag =
@@ -54,7 +72,7 @@ const _positionHeight: {
   forceFull: 0
 }
 
-interface NotificationBaseInfo {
+export interface NotificationBaseInfo {
   /**
    * 内部类型
    */
@@ -66,11 +84,16 @@ interface NotificationBaseInfo {
   /**
    * 监听显示
    */
-  onShow?: boolean
+  onShow?(): void
   /**
    * 监听关闭
    */
-  onClose?: boolean
+  onClose?(): void
+  /**
+   * 发生错误
+   * @param errMsg 错误信息
+   */
+  onError?(errMsg: string): void
   /**
    * 位置
    */
@@ -83,18 +106,53 @@ interface NotificationBaseInfo {
   size?: { width?: number; height?: number }
 }
 
+export interface TemplateRenderDataBase {
+  updateData(data: any): void
+  updateTml(tmlObj: TemplateObj): void
+  click(): void
+  doubleClick(): void
+  data: any
+}
+
+export interface TemplateObj {
+  /**
+   * 模板字符串
+   */
+  tml: string
+  /**
+   * 数据
+   */
+  data?: any
+  /**
+   * 是否重复
+   */
+  repeat?: false | number
+  /**
+   * 重复间隔单位ms
+   */
+  repeatInterval?: number
+}
+
 /**
  * 通知信息
  */
-interface NotificationTemplateInfo extends NotificationBaseInfo {
+export interface NotificationTemplateInfo extends NotificationBaseInfo {
   /**
    * 标题
    */
-  title?: string
+  title?: string | TemplateObj
+  /**
+   * title单机
+   */
+  titleClick?(): void
   /**
    * 内容
    */
   body?: string
+  /**
+   * body被点击
+   */
+  bodyClick?(): void
   /**
    * 图标路径
    */
@@ -117,7 +175,7 @@ interface NotificationTemplateInfo extends NotificationBaseInfo {
   btns?: NotificationBtnInfo[]
 }
 
-interface NotificationCustomInfo extends NotificationBaseInfo {
+export interface NotificationCustomInfo extends NotificationBaseInfo {
   /**
    * 自定义内容URL
    */
@@ -141,6 +199,10 @@ enum NotificationEventName {
    */
   GET_NOTIFICATION = 'ipc_NOTIFICATION_INFO_GET',
   /**
+   * 事件调用
+   */
+  EVENT_NOTIFICATION = 'ipc_NOTIFICATION_EVENT_CALL',
+  /**
    * 通知消息类型获取
    */
   GET_NOTIFICATION_TYPE = 'ipc_NOTIFICATION_TYPE_GET'
@@ -160,7 +222,8 @@ const _nowOpenedNotificationWin: { [key: string]: BrowserWindow[] } = {
   bottomCenter: [],
   bottomRight: [],
   full: [],
-  forceFull: []
+  forceFull: [],
+  noRest: []
 }
 
 export function initNotificationEvent(): void {
@@ -170,8 +233,22 @@ export function initNotificationEvent(): void {
     ipcEventPromiseWrapper(_showNotificationContent)
   )
   ipcMain.addListener(NotificationEventName.GET_NOTIFICATION, (event: IpcMainEvent) => {
-    event.returnValue = (event.sender as any)._info
+    const noticeInfo = (event.sender as any)._info as NotificationTemplateInfo
+    const returnValue = JSON.parse(JSON.stringify(noticeInfo) || '{}') as any
+    if (typeof noticeInfo.bodyClick === 'function') {
+      returnValue.bodyClick = true
+    }
+
+    if (typeof noticeInfo.titleClick === 'function') {
+      returnValue.titleClick = true
+    }
+
+    event.returnValue = returnValue
   })
+  ipcMain.handle(
+    NotificationEventName.EVENT_NOTIFICATION,
+    ipcEventPromiseWrapper(_eventCallNotification)
+  )
 }
 
 function _settingNotificationBounds(
@@ -232,12 +309,12 @@ function _settingNotificationBounds(
   }
 
   const leftX = 0
-  const centerX = (workArea.width - size.width) / 2
-  const rightX = workArea.width - size.width
+  const centerX = parseInt((workArea.width - size.width) / 2 + '')
+  const rightX = parseInt(workArea.width - size.width + '')
 
   const topY = 0
-  const centerY = (workArea.height - size.height) / 2
-  const bottomY = workArea.height - size.height
+  const centerY = parseInt((workArea.height - size.height) / 2 + '')
+  const bottomY = parseInt(workArea.height - size.height + '')
 
   const positionCase = position.toLocaleLowerCase()
 
@@ -267,6 +344,64 @@ function _settingNotificationBounds(
   win.setBounds(bounds)
 }
 
+async function _eventCallNotification(
+  event: IpcMainInvokeEvent,
+  eventType: 'title' | 'body' | 'btn',
+  eventFnName: string,
+  btnIndex?: number
+): Promise<void> {
+  const templateInfo = (event.sender as any)._info as NotificationTemplateInfo
+  if (!templateInfo || !eventType || !eventFnName) {
+    return
+  }
+
+  let fnReturn: void | Promise<void> | undefined = undefined
+
+  switch (eventType) {
+    case 'title':
+      if (eventFnName !== 'click') {
+        return
+      }
+
+      if (!templateInfo.titleClick) {
+        return
+      }
+
+      fnReturn = templateInfo.titleClick()
+      break
+    case 'body':
+      if (eventFnName !== 'click') {
+        return
+      }
+
+      if (!templateInfo.bodyClick) {
+        return
+      }
+
+      fnReturn = templateInfo.bodyClick()
+      break
+    case 'btn':
+      if (!templateInfo.btns) {
+        return
+      }
+      if (eventFnName !== 'click' && eventFnName !== 'doubleClock') {
+        return
+      }
+
+      if (typeof btnIndex !== 'number' || btnIndex < 0 || btnIndex > templateInfo.btns.length - 1) {
+        return
+      }
+      fnReturn = templateInfo.btns[btnIndex][eventFnName]()
+      break
+    default:
+      return
+  }
+
+  if (fnReturn instanceof Promise) {
+    await fnReturn
+  }
+}
+
 async function _showNotificationContent(event: IpcMainInvokeEvent, height?: number): Promise<void> {
   _lock.acquire('bw', (done) => {
     try {
@@ -290,9 +425,9 @@ async function _showNotificationContent(event: IpcMainInvokeEvent, height?: numb
       }
 
       if (typeof size.height === 'undefined' || size.height <= 0) {
-        size.height = height || 200
+        size.height = height || 173
       }
-      size.height += 10
+      // size.height += 28
 
       const notificationInfo = sender._info as NotificationBaseInfo
       const position = notificationInfo.position
@@ -313,6 +448,8 @@ async function _showNotificationContent(event: IpcMainInvokeEvent, height?: numb
       bw.show()
       bw.focus()
       // bw.setAlwaysOnTop(true)
+    } catch (e) {
+      console.log(e)
     } finally {
       done()
     }
@@ -394,6 +531,7 @@ export function showNotification(
           transparent: true,
           show: false,
           skipTaskbar: true,
+          alwaysOnTop: true,
           webPreferences: {
             session: sess
           }
@@ -407,7 +545,7 @@ export function showNotification(
         },
         PRELOAD_JS_NOTIFICATION
       )
-      bw.addListener('close', (event) => {
+      bw.addListener('close', async (event) => {
         event.preventDefault()
         if (!bw) {
           return
@@ -432,7 +570,13 @@ export function showNotification(
         delete (bw.webContents as any)._showOk
         delete (bw.webContents as any)._position
 
-        _lock.acquire('bw', (done) => {
+        try {
+          notificationInfo.onClose && notificationInfo.onClose()
+        } catch (e: any) {
+          //nothing
+        }
+
+        await _lock.acquire('bw', (done) => {
           if (!bw) {
             return
           }
@@ -482,6 +626,11 @@ export function showNotification(
             done()
           }
         })
+        try {
+          await bw.webContents.loadURL('about:blank')
+        } catch (e) {
+          //nothing
+        }
       })
       if (type === 'custom') {
         const view = new BrowserView({
@@ -509,8 +658,10 @@ export function showNotification(
       }
     } else {
       ;(bw.webContents as any)._info = notificationInfo
-      bw.webContents.reload()
+      bw.webContents.goBack()
     }
+
+    // bw.webContents.openDevTools()
 
     if (is.dev) {
       optimizer.watchWindowShortcuts(bw)

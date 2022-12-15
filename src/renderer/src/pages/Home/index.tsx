@@ -34,6 +34,17 @@ const homeContextInitValue = {
 export const HomeContext = React.createContext<HomeContextType>(homeContextInitValue)
 
 export const Home: FC = () => {
+  useEffect(() => {
+    ;(window as any).teamworkSDK.notification.showWithTemplate({
+      title: '测试notificationApi',
+      body: '我是测试的内容',
+      bodyClick() {
+        console.log('----------')
+      },
+      closable: true,
+      duration: -1
+    })
+  }, [])
   //   const location = useLocation()
   //   const transitions = useTransition(location, {
   //     from: { opacity: 0, transform: 'translate3d(-100px, 0, 0)' },

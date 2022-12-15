@@ -11,6 +11,7 @@ import { SettingLoginWin } from '../windows/login'
 import { clearAllApplicationViews } from '../sdk/insideSdk/applications'
 import { closeAllDb } from '../sdk/appSdk/db'
 import { clearAllWsNotification, sendNotification } from './notices'
+import { showNotification } from '../notification'
 const WebSocket = require('ws')
 
 const lock = new AsyncLock()
@@ -248,6 +249,36 @@ export class WsHandler {
                   sendNotification('userOnlineStatus', status, userId, this._onlineUserList)
 
                   return
+                }
+
+                if (data.cmdCode === 4) {
+                  console.log('进入....')
+                  showNotification('template', {
+                    title: '他处登录',
+                    body: `您当前的帐号正在: ${msgData} 上尝试登录, 是否允许进行登录?`,
+                    // duration: 1000 * 15,
+                    duration: -1,
+                    theme: 'warning',
+                    closable: true,
+                    position: 'center',
+                    btns: [
+                      {
+                        title: {
+                          tml: '允许( {{=it.data.val-=1}}s{{it.data.val<=0 && it.click();}} )',
+                          data: {
+                            val: 9
+                          },
+                          repeat: 9,
+                          repeatInterval: 1000
+                        },
+                        theme: 'danger'
+                      }
+                      // {
+                      //   title: '拒绝',
+                      //   theme: 'success'
+                      // }
+                    ]
+                  })
                 }
 
                 for (const w of list) {
