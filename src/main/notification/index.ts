@@ -36,11 +36,11 @@ export interface NotificationBtnInfo {
   /**
    * 单击
    */
-  click?(): void
+  click?<T>(additionalInformation?: T): void
   /**
    * 双击
    */
-  doubleClick?(): void
+  doubleClick?<T>(additionalInformation?: T): void
 }
 
 type PositionFlag =
@@ -84,16 +84,16 @@ export interface NotificationBaseInfo {
   /**
    * 监听显示
    */
-  onShow?(): void
+  onShow?<T>(additionalInformation?: T): void
   /**
    * 监听关闭
    */
-  onClose?(): void
+  onClose?<T>(additionalInformation?: T): void
   /**
    * 发生错误
    * @param errMsg 错误信息
    */
-  onError?(errMsg: string): void
+  onError?<T>(errMsg: string, additionalInformation?: T): void
   /**
    * 位置
    */
@@ -106,13 +106,13 @@ export interface NotificationBaseInfo {
   size?: { width?: number; height?: number }
 }
 
-export interface TemplateRenderDataBase {
-  updateData(data: any): void
-  updateTml(tmlObj: TemplateObj): void
-  click(): void
-  doubleClick(): void
-  data: any
-}
+// export interface TemplateRenderDataBase {
+//   updateData(data: any): void
+//   updateTml(tmlObj: TemplateObj): void
+//   click(): void
+//   doubleClick(): void
+//   data: any
+// }
 
 export interface TemplateObj {
   /**
@@ -144,7 +144,7 @@ export interface NotificationTemplateInfo extends NotificationBaseInfo {
   /**
    * title单机
    */
-  titleClick?(): void
+  titleClick?<T>(additionalInformation?: T): void
   /**
    * 内容
    */
@@ -152,7 +152,7 @@ export interface NotificationTemplateInfo extends NotificationBaseInfo {
   /**
    * body被点击
    */
-  bodyClick?(): void
+  bodyClick?<T>(additionalInformation?: T): void
   /**
    * 图标路径
    */
@@ -354,6 +354,7 @@ async function _eventCallNotification(
   if (!templateInfo || !eventType || !eventFnName) {
     return
   }
+  const additionalInformation = (event.sender as any)._additionalInformation
 
   let fnReturn: void | Promise<void> | undefined = undefined
 
@@ -367,7 +368,7 @@ async function _eventCallNotification(
         return
       }
 
-      fnReturn = templateInfo.titleClick()
+      fnReturn = templateInfo.titleClick(additionalInformation)
       break
     case 'body':
       if (eventFnName !== 'click') {
@@ -378,7 +379,7 @@ async function _eventCallNotification(
         return
       }
 
-      fnReturn = templateInfo.bodyClick()
+      fnReturn = templateInfo.bodyClick(additionalInformation)
       break
     case 'btn':
       if (!templateInfo.btns) {
@@ -391,7 +392,7 @@ async function _eventCallNotification(
       if (typeof btnIndex !== 'number' || btnIndex < 0 || btnIndex > templateInfo.btns.length - 1) {
         return
       }
-      fnReturn = templateInfo.btns[btnIndex][eventFnName]()
+      fnReturn = templateInfo.btns[btnIndex][eventFnName](additionalInformation)
       break
     default:
       return
@@ -404,17 +405,18 @@ async function _eventCallNotification(
 
 async function _showNotificationContent(event: IpcMainInvokeEvent, height?: number): Promise<void> {
   _lock.acquire('bw', (done) => {
+    const bw = BrowserWindow.fromWebContents(event.sender)
+    if (!bw) {
+      return
+    }
+
+    const sender = event.sender as any
+    if (sender._showOk) {
+      return
+    }
+    const notificationInfo: NotificationBaseInfo = sender._info
+    const additionalInformation: any = sender._additionalInformation
     try {
-      const bw = BrowserWindow.fromWebContents(event.sender)
-      if (!bw) {
-        return
-      }
-
-      const sender = event.sender as any
-      if (sender._showOk) {
-        return
-      }
-
       let size: { width: number; height: number } = sender._info.size
       if (typeof size === 'undefined') {
         size = {} as any
@@ -429,7 +431,6 @@ async function _showNotificationContent(event: IpcMainInvokeEvent, height?: numb
       }
       // size.height += 28
 
-      const notificationInfo = sender._info as NotificationBaseInfo
       const position = notificationInfo.position
 
       _settingNotificationBounds(bw, size, position)
@@ -447,9 +448,13 @@ async function _showNotificationContent(event: IpcMainInvokeEvent, height?: numb
       }
       bw.show()
       bw.focus()
+
       // bw.setAlwaysOnTop(true)
-    } catch (e) {
-      console.log(e)
+    } catch (e: any) {
+      if (notificationInfo && notificationInfo.onError) {
+        notificationInfo.onError(e.message || e, additionalInformation)
+      }
+      throw e
     } finally {
       done()
     }
@@ -476,7 +481,8 @@ function _showNotificationIpcEvent(
  */
 export function showNotification(
   type: 'template' | 'custom',
-  notificationInfo: NotificationTemplateInfo & NotificationCustomInfo
+  notificationInfo: NotificationTemplateInfo & NotificationCustomInfo,
+  additionalInformation?: any
 ): Promise<string> {
   switch (type) {
     case 'custom':
@@ -541,7 +547,8 @@ export function showNotification(
         {},
         true,
         {
-          _info: notificationInfo
+          _info: notificationInfo,
+          _additionalInformation: additionalInformation
         },
         PRELOAD_JS_NOTIFICATION
       )
@@ -571,7 +578,7 @@ export function showNotification(
         delete (bw.webContents as any)._position
 
         try {
-          notificationInfo.onClose && notificationInfo.onClose()
+          notificationInfo.onClose && notificationInfo.onClose(additionalInformation)
         } catch (e: any) {
           //nothing
         }
