@@ -1,17 +1,30 @@
-import { FC, useEffect, useState } from 'react'
+import { FC, useCallback, useEffect, useState } from 'react'
 import { current } from '@byzk/teamwork-sdk'
-import { id } from '@byzk/teamwork-inside-sdk'
+import { id, api } from '@byzk/teamwork-inside-sdk'
 import Nav from './components/Nav'
 import Content from './components/Content'
 import WindowToolbar from './components/WindowToolbar'
 import './index.scss'
 import React from 'react'
+import { UserChatMsg } from './components/ContentComments/commentsContent/vos'
+import AsyncLock from 'async-lock'
+
+const lock = new AsyncLock()
 
 export interface HomeContextType {
   /**
    * 在线用户ID列表
    */
   onlineUserIdList: string[]
+  /**
+   * 获取最后的未读消息
+   * @returns 用户消息
+   */
+  getUnreadChatMsg(): Promise<UserChatMsg>
+  /**
+   * 清空未读消息获取方法
+   */
+  clearUnreadFn(): void
   // /**
   //  * 注册用户状态变更处理器
   //  * @param id 处理器id
@@ -25,32 +38,83 @@ export interface HomeContextType {
 }
 
 const homeContextInitValue = {
-  onlineUserIdList: []
+  onlineUserIdList: [],
+  getUnreadChatMsg() {
+    return {} as any
+  },
+  clearUnreadFn() {
+    //nothing
+  }
   // onlineUserIdList: current.onlineUserIdList
   // registerOnlineUserChange: current.registerOnlineUserChange,
   // unRegisterOnlineUserChange: current.unRegisterOnlineUserChange
 } as HomeContextType
 
+let unreadChatMsgFn: ((chatMsg: UserChatMsg) => void) | undefined = undefined
+
 export const HomeContext = React.createContext<HomeContextType>(homeContextInitValue)
 
 export const Home: FC = () => {
-  useEffect(() => {
-    ;(window as any).teamworkSDK.notification.showWithTemplate({
-      title: '测试notificationApi',
-      body: '我是测试的内容',
-      bodyClick() {
-        console.log('----------')
-      },
-      closable: true,
-      duration: -1
+  // const [, setUnreadFn] = useState<((chatMsg: UserChatMsg) => void) | undefined>(undefined)
+  const getUnreadChatMsg = useCallback(async () => {
+    return new Promise<UserChatMsg>((resolve) => {
+      lock.acquire('serverMsgHandler', (done) => {
+        try {
+          console.log('设置resolve')
+          unreadChatMsgFn = resolve
+        } finally {
+          done()
+        }
+      })
     })
   }, [])
-  //   const location = useLocation()
-  //   const transitions = useTransition(location, {
-  //     from: { opacity: 0, transform: 'translate3d(-100px, 0, 0)' },
-  //     enter: { opacity: 1, transform: 'translate3d(0, 0, 0)' },
-  //     leave: { opacity: 0, transform: 'translate3d(-100px, 0, 1)' }
-  //   })
+
+  const clearUnreadFn = useCallback(() => {
+    lock.acquire('serverMsgHandler', (done) => {
+      try {
+        unreadChatMsgFn && unreadChatMsgFn(undefined as any)
+        unreadChatMsgFn = undefined
+      } finally {
+        done()
+      }
+    })
+  }, [])
+
+  useEffect(() => {
+    const fnId = api.registerServerMsgHandler((data) => {
+      if (data.cmdCode !== 6) {
+        return
+      }
+
+      lock.acquire('serverMsgHandler', async (done) => {
+        try {
+          for (;;) {
+            if (
+              await new Promise<boolean>((resolve) => {
+                console.log(unreadChatMsgFn)
+                if (!unreadChatMsgFn) {
+                  setTimeout(() => {
+                    resolve(false)
+                  }, 500)
+                  return
+                }
+
+                unreadChatMsgFn(data.data as any)
+                resolve(true)
+              })
+            ) {
+              break
+            }
+          }
+        } finally {
+          done()
+        }
+      })
+    })
+    return () => {
+      api.removeServerMsgHandler(fnId)
+    }
+  }, [])
 
   const [onlineUserIdList, setOnlineUserIdList] = useState<string[]>(
     current.onlineUserIdList() || []
@@ -67,7 +131,7 @@ export const Home: FC = () => {
   }, [])
 
   return (
-    <HomeContext.Provider value={{ onlineUserIdList }}>
+    <HomeContext.Provider value={{ onlineUserIdList, getUnreadChatMsg, clearUnreadFn }}>
       <div className="home match-parent">
         <WindowToolbar />
         <div className="content">

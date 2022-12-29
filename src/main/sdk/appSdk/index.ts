@@ -2,6 +2,7 @@ import { IpcMainInvokeEvent } from 'electron'
 import { RegisterFn, SdkHandlerParam, SdkRegistryInfo } from '..'
 import { AppInfo } from '../insideSdk/applications'
 import { _cacheHandler } from './cache'
+import { _channelHandler } from './channel'
 import { _currentSyncHandler } from './current'
 import { _dbHandler, _dbSyncHandler } from './db'
 import { _dialogSyncHandler } from './dialog'
@@ -65,6 +66,10 @@ const promiseEventHandlerInfo: SdkRegistryInfo<AppInfo> = {
      * db相关
      */
     db: _childEventHandlerWrapper(_dbHandler),
+    /**
+     *
+     */
+    channel: _childEventHandlerWrapper(_channelHandler),
     /**
      * download相关api
      */

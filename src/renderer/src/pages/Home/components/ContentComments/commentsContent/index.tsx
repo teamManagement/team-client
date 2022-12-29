@@ -40,6 +40,52 @@ export const CommentsContent: FC<CommentsContentProps> = ({ currentMessageCard }
   }>({})
   const [currentChatMsgListLoading, setCurrentChatMsgListLoading] = useState<boolean>(true)
 
+  const handlerUnreadChatMsg = useCallback(async () => {
+    for (;;) {
+      // console.log(await homeContext.getUnreadChatMsg())
+      const unreadChatMsg = await homeContext.getUnreadChatMsg()
+      if (!unreadChatMsg) {
+        return
+      }
+
+      if (!unreadChatMsg.targetId || !unreadChatMsg.sourceId || !currentUser) {
+        continue
+      }
+
+      setCurrentChatMsgListMap((m) => {
+        let chatId: string | undefined | undefined
+        if (currentUser.id === unreadChatMsg.sourceId) {
+          chatId = unreadChatMsg.targetId
+        } else if (currentUser.id === unreadChatMsg.targetId) {
+          chatId = unreadChatMsg.sourceId
+        } else {
+          return m
+        }
+
+        if (!chatId) {
+          return m
+        }
+
+        const userChatMsgList = m[chatId]
+        if (!userChatMsgList) {
+          return m
+        }
+
+        m[chatId] = [...userChatMsgList, unreadChatMsg]
+
+        return { ...m }
+      })
+      console.log('读取到未读消息: ', unreadChatMsg)
+    }
+  }, [homeContext.getUnreadChatMsg, currentUser])
+
+  useEffect(() => {
+    handlerUnreadChatMsg()
+    return () => {
+      homeContext.clearUnreadFn()
+    }
+  }, [handlerUnreadChatMsg])
+
   useEffect(() => {
     if (!currentMessageCard || currentMessageCard.type !== 'users') {
       setCurrentStatus(undefined)

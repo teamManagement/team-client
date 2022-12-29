@@ -4,3 +4,4 @@ export const PRELOAD_JS_INSIDE = path.join(__dirname, '..', 'preload', 'inside.j
 export const PRELOAD_JS_NEW_WINDOW_OPEN = path.join(__dirname, '..', 'preload', 'newWindowOpen.js')
 export const PRELOAD_JS_APPLICATION_SDK = path.join(__dirname, '..', 'preload', 'applicationSdk.js')
 export const PRELOAD_JS_NOTIFICATION = path.join(__dirname, '..', 'preload', 'notification.js')
+export const PRELOAD_JS_BACKGROUND = path.join(__dirname, '..', 'preload', 'background.js')

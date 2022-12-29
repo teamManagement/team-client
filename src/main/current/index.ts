@@ -15,7 +15,8 @@ export enum WinNameEnum {
   NONE = 'none',
   LOGIN = 'login',
   HOME = 'home',
-  USERINFO = 'userinfo'
+  USERINFO = 'userinfo',
+  BACKGROUND = 'background-win'
 }
 
 /**

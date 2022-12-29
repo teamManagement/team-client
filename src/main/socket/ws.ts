@@ -279,6 +279,11 @@ export class WsHandler {
                       // }
                     ]
                   })
+                  return
+                }
+
+                if (data.cmdCode === 5) {
+                  console.log('应用来信')
                 }
 
                 for (const w of list) {

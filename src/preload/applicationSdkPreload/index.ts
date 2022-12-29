@@ -2,6 +2,7 @@ import { contextBridge } from 'electron'
 import { contextmenu } from '../_commons/contextmenu'
 import { id } from '../_commons/id'
 import { cache } from './cache'
+import { channel } from './channel'
 import { current } from './current'
 import { loadDbApi } from './db'
 import { dialog } from './dialog'
@@ -31,7 +32,8 @@ const teamworkSDK = {
   ),
   dialog,
   download,
-  notification
+  notification,
+  channel
 }
 
 if (process.contextIsolated) {
