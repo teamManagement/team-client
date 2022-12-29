@@ -1,8 +1,8 @@
 import { api, ChatGroupInfo } from '@byzk/teamwork-inside-sdk'
 import { AppInfo, UserInfo } from '@byzk/teamwork-sdk'
 import { ImgEmoji } from '@renderer/assets/actionImg/emoji'
-import { ImgUploadFile } from '@renderer/assets/actionImg/uploadFile'
-import { ImgUploadPicture } from '@renderer/assets/actionImg/uploadPicture'
+// import { ImgUploadFile } from '@renderer/assets/actionImg/uploadFile'
+// import { ImgUploadPicture } from '@renderer/assets/actionImg/uploadPicture'
 import ChatTitle from '@renderer/components/ChatTitle'
 import MessageEdit, { MessageEditInterface } from '@renderer/components/MessageEdit'
 import { Emoji } from '@renderer/components/Emoji'
@@ -210,9 +210,9 @@ export const CommentsContent: FC<CommentsContentProps> = ({ currentMessageCard }
         }}
         title="表情"
         key={'emoji'}
-      />,
-      <ImgUploadPicture title="图片" key={'uploadPicture'} />,
-      <ImgUploadFile title="文件" key={'uploadFile'} />
+      />
+      // <ImgUploadPicture title="图片" key={'uploadPicture'} />,
+      // <ImgUploadFile title="文件" key={'uploadFile'} />
     ]
   }, [])
 
