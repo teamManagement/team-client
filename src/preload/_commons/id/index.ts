@@ -1,11 +1,7 @@
 import crypto from 'crypto'
 import { sendInvokeIpcEventWrapperEventNameAndDataCallBack } from '../../inside/tools'
-import { tryJsonParseDataHandler } from '../tools'
 
-const sendInvokeIpcEvent = sendInvokeIpcEventWrapperEventNameAndDataCallBack(
-  'api',
-  tryJsonParseDataHandler
-)
+const sendInvokeIpcEvent = sendInvokeIpcEventWrapperEventNameAndDataCallBack('api', undefined)
 
 interface IdInterface {
   seq(): number
