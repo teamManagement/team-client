@@ -1,6 +1,6 @@
 import { FC, useCallback, useEffect, useState } from 'react'
 import { current } from '@byzk/teamwork-sdk'
-import { id, api } from '@byzk/teamwork-inside-sdk'
+import { id, api, insideDb } from '@byzk/teamwork-inside-sdk'
 import Nav from './components/Nav'
 import Content from './components/Content'
 import WindowToolbar from './components/WindowToolbar'
@@ -81,19 +81,17 @@ export const Home: FC = () => {
   }, [])
 
   useEffect(() => {
-    console.log('注册方法')
     const fnId = api.registerServerMsgHandler((data) => {
-      console.log('进入...')
       if (data.cmdCode !== 6) {
         return
       }
 
+      // insideDb.;
       lock.acquire('serverMsgHandler', async (done) => {
         try {
           for (;;) {
             if (
               await new Promise<boolean>((resolve) => {
-                console.log(unreadChatMsgFn)
                 if (!unreadChatMsgFn) {
                   setTimeout(() => {
                     resolve(false)

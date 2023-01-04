@@ -13,6 +13,9 @@ const currentSyncHandler = {
   userInfo(): Promise<UserInfo | undefined> {
     return sendHttpRequestToLocalServer('/user/now')
   },
+  token(): Promise<string> {
+    return sendHttpRequestToLocalServer('/user/now/token')
+  },
   /**
    * 获取用户在线列表
    * @returns 在线用户Id列表

@@ -53,6 +53,9 @@ const _onlineUserChangeHandlerId: string[] = []
 export const current = {
   appInfo,
   userInfo,
+  token(): void {
+    return sendSyncIpcEvent('token')
+  },
   onlineUserIdList(): string[] {
     return sendSyncIpcEvent('onlineUserIdList')
   },

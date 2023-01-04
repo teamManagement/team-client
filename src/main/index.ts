@@ -76,7 +76,7 @@ async function createWindow(): Promise<void> {
     log.debug('安装团队协作平台CA根证书...')
     if (!(await installCaCert())) {
       alertPanic(
-        '安装团队协作平台根证书失败, 请尝试重新打开本应用, 如多次均提示本错误, 请联系管理员使用外部修复工具进行修复!!!'
+        '安装Teamwork平台根证书失败, 请尝试重新打开本应用, 如多次均提示本错误, 请检查是否有360等安全软件将本软件内部文件删除, 如果没有请联系管理员使用外部修复工具进行修复!!!'
       )
       return
     }
