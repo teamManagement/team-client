@@ -9,7 +9,7 @@ export const ContentContact: FC = () => {
   return (
     <div className="content-contact">
       <div className="content-contact-sidebar">
-        <SidebarItem
+        {/* <SidebarItem
           targetUrl="/home/contact/myContacts"
           iconUrl={
             'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACoAAAAqCAYAAADFw8lbAAAAAXNSR0IArs4c6QAAA3JJREFUWEftmUloFGkUx3+vs3dcWkW0CTFRwRVXXAIKc/Iw6qEVjCA6zEkQPLgFPQwMiogielBB8eSghwFRB2RGxosOjLaKYgIuqBGmx0TjhrFj1KSTevJVYkSsVFeXH9qH1KEb+nvLr/7f8l51Cb2XXl9bRKb1Z4WfUGYgMvjj2Df+TqM0iOhximLHZM7RjMkv5kOTiWql5DQw6xtD+adTrRftSsiC0ynRC4mYlhZfApmSV5B9MHpXutoXSHeydqMg+/MTsodK0E3iJGuvgszLZ1DQawa0A6Q4z0E7xUmu1PyG7J3+AVDL0zQw9ZYF5SsVFRhRA6MWIeVjQQrRtylo+Rte/GtqnjXe8KAFUZhYhwyZ7AmjrfVwfz84nVZgw4NO2IgMn+8Loc//gYeHvyNo+Thk2q7sAOqg9Rug41l22ywW4RStXIlULAuUXFPH4cmfgWz9jMKBjl+HjPwhUHJtOQf//RbI1j5o1RokviRQcm06BU0nA9naBx02B5m4JVByvb0d2u4GsrUPah4Mpu9BomP8d/2bRrj1y1dDuj1p6KakrBKm/ooUDvIGef8EvbMTOl/2jvsd/u4Tke8VHtSEjVYhU3dAQcnnSTJtqFGy42nP76og2WDMjfRvEw40WgUVCWTYXIgUeivhZNCXV6D5FLxvAbP5opXetqYwpO9YBo0vRsascut6kEtNzW88BJO2IbGZX7poN5o6AeYYc3sDb1VzU7RiOVJZG4Tvk01XO9qwGTKvfPwMnK2pj81EJm3LDdKkf9cMDXVQOgqKY97+7Snoavddx8EUjZTCrANI0ZDcQZ9fhIdHkBn7oKzC01+b/4BHv1vY9fGlSNXqnCHdDd+n6Oh+FFV42wSZtAVFp+1GyqtDgZop7VmjrVn8LaxRmXei/2MoW/oXl6DxoP+uN03L0/MWdv349cjIhaEU1Vc34N5eiC/1OUcvQtq/Hwi2maQAhtdAWTwULI/PgtPRv69bucyw7coUCtdvDfqvT/cWQjcloWDDOw2AhtfO29P87WhqV9R2YMvx0mbqk0CN5cC2w10WTdZuVWS37cg244noFtHLK8pU5HrevmxQbstQZ7Z7wr5LJqpLtPgMIh6drU1tco51U7qdhCw8+X9fKdC/fixxhg6ui0RIqDLh+70Q0zbggTqcibxu2yuLz7kl7QPLqmW0ZGxBRwAAAABJRU5ErkJggg=='
@@ -24,7 +24,7 @@ export const ContentContact: FC = () => {
           }
           iconBackgroundColor="rgb(83, 211, 156)"
           desc="群组"
-        />
+        /> */}
         <SidebarItem
           targetUrl="/home/contact/orgContacts"
           iconUrl={
@@ -37,7 +37,8 @@ export const ContentContact: FC = () => {
         <Routes>
           <Route path="myContacts/*" element={<MyContacts />} />
           <Route path="orgContacts/*" element={<OrgContact />} />
-          <Route path="*" element={<Navigate to="/home/contact/myContacts" />} />
+          {/* <Route path="*" element={<Navigate to="/home/contact/myContacts" />} /> */}
+          <Route path="*" element={<Navigate to="/home/contact/orgContacts" />} />
         </Routes>
       </div>
     </div>

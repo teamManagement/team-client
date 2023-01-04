@@ -17,5 +17,8 @@ export interface UserListFilterOption {
 export const remoteCache = {
   userList(filterOption?: UserListFilterOption): Promise<UserInfo[]> {
     return sendInvokeIpcEvent('userList', filterOption)
+  },
+  orgList(): Promise<any> {
+    return sendInvokeIpcEvent('orgList')
   }
 }

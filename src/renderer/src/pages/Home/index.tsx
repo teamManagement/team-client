@@ -58,7 +58,7 @@ export const Home: FC = () => {
   // const [, setUnreadFn] = useState<((chatMsg: UserChatMsg) => void) | undefined>(undefined)
   const getUnreadChatMsg = useCallback(async () => {
     return new Promise<UserChatMsg>((resolve) => {
-      lock.acquire('serverMsgHandler', (done) => {
+      lock.acquire('serverMsgHandlerSetting', (done) => {
         try {
           console.log('设置resolve')
           unreadChatMsgFn = resolve
@@ -70,7 +70,7 @@ export const Home: FC = () => {
   }, [])
 
   const clearUnreadFn = useCallback(() => {
-    lock.acquire('serverMsgHandler', (done) => {
+    lock.acquire('serverMsgHandlerSetting', (done) => {
       try {
         unreadChatMsgFn && unreadChatMsgFn(undefined as any)
         unreadChatMsgFn = undefined
@@ -81,7 +81,9 @@ export const Home: FC = () => {
   }, [])
 
   useEffect(() => {
+    console.log('注册方法')
     const fnId = api.registerServerMsgHandler((data) => {
+      console.log('进入...')
       if (data.cmdCode !== 6) {
         return
       }
@@ -112,6 +114,7 @@ export const Home: FC = () => {
       })
     })
     return () => {
+      console.log('退出...')
       api.removeServerMsgHandler(fnId)
     }
   }, [])

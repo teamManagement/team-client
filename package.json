@@ -1,6 +1,6 @@
 {
   "name": "teamwork",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "An Electron application with React and TypeScript",
   "main": "./out/main/index.js",
   "signature": {
@@ -9,8 +9,8 @@
       "win32": "e7e17f3fd77daa704f88ff4dc6a22795ce0dc18b5db980bb2e5dbe823ca84f54ee8bd81e5e3d816668e4a841e53cb2bd487939e6ad805f5866926d6ddfdff086"
     },
     "localServer": {
-      "linux": "4f8fc2f3f4017ef18c2ac32a5966686a18c690b40c1f6c15d3b119a463c5cf7eb9bccd486704c5294c72aee0c41ba190700cbe3b393a1ebf9fe7cbfea68a8a66",
-      "win32": "ad49db485a325bc28d276d73aa72d17c37bd32ddb2260a220c21469893215bb1bf44e29d287bdf1e9388161f419f50d9adcdcc452d224b7799c281cd332321fc"
+      "linux": "6d3642f5a49f96b50aff6b084edc27fd80d1333a5911509d9f464375abfb85d10145afe83399344eb3deb74868bcbe405f564204e36ef9bb4cece98ee48b8edb",
+      "win32": "e992740b23f68f317c9ec1c7a54b4c8bf6df8e9b6f55c905505bc5e2d74fdd3094cb8284f9a35fa3b819bc9f2aadc0e945ebccd1c9641c8be228c6ae6cff4c54"
     }
   },
   "author": "苏林鑫",

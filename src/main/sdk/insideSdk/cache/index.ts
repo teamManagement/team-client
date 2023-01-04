@@ -7,6 +7,10 @@ export interface UserListFilterOption {
    * 跳过应用商店管理员
    */
   breakAppStoreManager?: boolean
+  /**
+   * 加载自身
+   */
+  loadOneself?: boolean
 }
 
 const remoteCacheHandlers = {
@@ -16,7 +20,7 @@ const remoteCacheHandlers = {
       await sendHttpRequestToLocalServer<string>('/cache/remote/user/list')
     )
     return userCacheList.filter((u) => {
-      if (currentUser.id === u.id) {
+      if (currentUser.id === u.id && !filterOption?.loadOneself) {
         return false
       }
 
@@ -26,6 +30,9 @@ const remoteCacheHandlers = {
 
       return true
     })
+  },
+  async orgList(): Promise<any> {
+    return JSON.parse(await sendHttpRequestToLocalServer<string>('/cache/remote/org/list'))
   }
 }
 
