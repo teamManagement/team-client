@@ -24,7 +24,7 @@ export interface SearchResultTabs {
 
 export interface SearchResult<T> {
   id: string
-  typeId: string
+  typeId: 'users' | 'apps' | 'groups'
   iconName?: string
   icon?: string
   name: string
@@ -40,6 +40,7 @@ export interface SearchInputProps {
   showResult?: boolean
   onEscKeyUp?: () => void
   onSearchResultItemClick?: (result: SearchResult<any>) => void
+  onFocus?: () => void
 }
 
 export const SearchInput: FC<SearchInputProps & InputProps> = ({
@@ -51,8 +52,10 @@ export const SearchInput: FC<SearchInputProps & InputProps> = ({
   showResult,
   onEscKeyUp,
   onSearchResultItemClick,
+  onFocus,
   ...otherProps
 }) => {
+  const currentTabKeyRestOk = useRef<boolean>(false)
   const activeSearchResultRef = useRef<SearchResult<any> | undefined>(undefined)
   const [currentTabKey, setCurrentTabKey] = useState<string>()
   const [currentIndex, setCurrentIndex] = useState<number>(-1)
@@ -224,50 +227,39 @@ export const SearchInput: FC<SearchInputProps & InputProps> = ({
     [resultTabs, resultTabElements]
   )
 
-  // const searchInputKeyUp = useCallback(
-  //   (
-  //     _value: InputValue,
-  //     context: {
-  //       e: KeyboardEvent<HTMLInputElement>
-  //     }
-  //   ) => {
-  //     const key = context.e.key.toLowerCase()
-  //     if (key === 'escape') {
-  //       onEscKeyUp && onEscKeyUp()
-  //       return
-  //     }
+  useEffect(() => {
+    if (!showResult || !resultTabElements) {
+      currentTabKeyRestOk.current = false
+      return
+    }
 
-  //     if (key !== 'arrowdown' && key !== 'arrowup') {
-  //       return
-  //     }
-  //     setCurrentIndex((i) => {
-  //       if (key === 'arrowdown') {
-  //         i += 1
-  //       } else if (key === 'arrowup') {
-  //         i -= 1
-  //       }
-  //       if (i < -1) {
-  //         i = -1
-  //       } else if (resultTabElements && currentTabKey) {
-  //         const tabItems = resultTabElements[currentTabKey]
-  //         if (tabItems && tabItems.length <= i) {
-  //           i = tabItems.length - 1
-  //         }
-  //       }
-  //       return i
-  //     })
-  //   },
-  //   [resultTabs, resultTabElements]
-  // )
+    if (currentTabKeyRestOk.current) {
+      return
+    }
+
+    currentTabKeyRestOk.current = true
+
+    if (resultTabElements['users']) {
+      setCurrentTabKey('users')
+    } else if (resultTabElements['groups']) {
+      setCurrentTabKey('groups')
+    }
+  }, [showResult, resultTabElements])
+
+  const preventEvent = useCallback((event: React.MouseEvent) => {
+    event.preventDefault()
+    event.stopPropagation()
+  }, [])
 
   return (
-    <div className={classnames(className, 'search-input')} style={style}>
+    <div onClick={preventEvent} className={classnames(className, 'search-input')} style={style}>
       <Input
         size="large"
         className="content"
         prefixIcon={<SearchIcon size="20px" />}
         placeholder={placeholder || '请输入要搜索的联系人'}
         onKeydown={searchInputKeyDown}
+        onFocus={onFocus}
         // onKeyup={searchInputKeyUp}
         {...otherProps}
       />

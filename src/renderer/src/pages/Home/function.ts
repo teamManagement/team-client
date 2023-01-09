@@ -12,6 +12,7 @@ export function addUnreadMsg(msg: UserChatMsg): void {
       if (msg.targetId !== currentUserInfo.id) {
         return
       }
+      // insideDb.syn
       //   insideDb.insideDb.sync.put()
       return
     case ChatType.ChatTypeGroup:

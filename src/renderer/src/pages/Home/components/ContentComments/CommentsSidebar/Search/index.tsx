@@ -2,9 +2,10 @@ import { AppInfo, UserInfo } from '@byzk/teamwork-sdk'
 import { ChatGroupInfo } from '@byzk/teamwork-inside-sdk'
 import SearchInput from '@renderer/components/SearchInput'
 import { SearchResult, SearchResultTabs } from '@renderer/components/SearchInput/searchInput'
-import { FC, useCallback, useEffect, useState } from 'react'
+import { FC, useCallback, useEffect, useRef, useState } from 'react'
 import { InputValue } from 'tdesign-react'
 import { pinyin } from 'pinyin-pro'
+import { useSearchResultList } from '@renderer/pages/Home/hooks'
 
 const searchResultTab: SearchResultTabs[] = [
   { id: 'users', name: '用户' },
@@ -27,9 +28,11 @@ export interface SearchProps {
 }
 
 export const Search: FC<SearchProps> = ({ users, apps, groups, onSearchResultItemClick }) => {
+  const searchResultHaveInputVal = useRef<boolean>(false)
+  const [searchResultDataSource, , searchQuery] = useSearchResultList()
+
   const [searchVal, setSearchVal] = useState<InputValue>('')
   const [dataSource, setDataSource] = useState<SearchResult<DataSourceMeta>[]>([])
-  const [searchResult, setSearchResult] = useState<SearchResult<DataSourceMeta>[]>([])
   const [showResult, setShowResult] = useState<boolean>(false)
 
   useEffect(() => {
@@ -107,15 +110,13 @@ export const Search: FC<SearchProps> = ({ users, apps, groups, onSearchResultIte
       setSearchVal(val)
       const valStr = val.toString()
       if (!valStr) {
+        searchResultHaveInputVal.current = false
         setShowResult(false)
         return
       }
-      setSearchResult(
-        dataSource.filter((v) => {
-          return v.name.includes(valStr) || (v.metaData && v.metaData.pinyin.includes(valStr))
-        })
-      )
+      searchQuery(valStr)
       setShowResult(true)
+      searchResultHaveInputVal.current = true
     },
     [dataSource]
   )
@@ -130,6 +131,23 @@ export const Search: FC<SearchProps> = ({ users, apps, groups, onSearchResultIte
     onSearchResultItemClick && onSearchResultItemClick(r)
   }, [])
 
+  useEffect(() => {
+    const eventFn: () => void = () => {
+      setShowResult(false)
+    }
+    document.addEventListener('click', eventFn)
+    return () => {
+      document.removeEventListener('click', eventFn)
+    }
+  }, [])
+
+  const searchInputOnFocus = useCallback(() => {
+    if (!searchResultHaveInputVal.current) {
+      return
+    }
+    setShowResult(true)
+  }, [])
+
   return (
     <div className="search">
       <SearchInput
@@ -138,10 +156,11 @@ export const Search: FC<SearchProps> = ({ users, apps, groups, onSearchResultIte
         showResult={showResult}
         onChange={searchInputOnChange}
         resultTabs={searchResultTab}
-        result={searchResult}
+        result={searchResultDataSource}
         style={{ height: 28 }}
         onEscKeyUp={searInputOnEscKeyUp}
         onSearchResultItemClick={searchResultOnClick}
+        onFocus={searchInputOnFocus}
       />
     </div>
   )

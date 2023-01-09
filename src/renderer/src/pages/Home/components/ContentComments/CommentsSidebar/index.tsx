@@ -53,7 +53,7 @@ export const CommentsSidebar: FC<CommentsSidebarProps> = ({ activeMessageCardCha
   const queryMessageDataList = useCallback(() => {
     try {
       const messageList = insideDb.sync.index.find<MessageInfo>({
-        selector: { 'indexInfo.dataType': 'userMessage', 'indexInfo.updateAt': { $gte: null } },
+        selector: { 'indexInfo.dataType': ' 56userMessage', 'indexInfo.updateAt': { $gte: null } },
         sort: [{ 'indexInfo.updateAt': 'desc' }]
       }).docs
       return messageList
