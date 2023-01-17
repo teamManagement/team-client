@@ -1,29 +1,27 @@
-import { UserInfo } from '@byzk/teamwork-sdk'
+import { FC, useCallback, useContext, useEffect, useMemo, useRef } from 'react'
+import { current } from '@byzk/teamwork-sdk'
 import Conversation from '@renderer/components/Conversation'
 import { getCommentsSidebarEle, getNavEle } from '@renderer/dom'
 import { useContentWidthSize } from '@renderer/hooks/size'
-import { FC, useEffect, useMemo, useRef } from 'react'
+import { HomeContext, HomeContextType } from '@renderer/pages/Home'
+import { ChatType } from '@renderer/pages/Home/hooks'
 import { LoadingIcon } from 'tdesign-icons-react'
-import { MessageInfo } from '../../CommentsSidebar'
-import { ChatType, UserChatMsg } from '../vos'
+import { useMutationObserver } from 'ahooks'
+import AsyncLock from 'async-lock'
 
-export interface MessageListWrapperProps {
-  currentMessageCard: MessageInfo
-  currentUser: UserInfo
-  messageList: UserChatMsg[]
-  loading?: boolean
-}
+const _lock = new AsyncLock()
 
-export const MessageListWrapper: FC<MessageListWrapperProps> = ({
-  currentMessageCard,
-  currentUser,
-  messageList,
-  loading
-}) => {
-  const prevEndMsgId = useRef<string>('')
+export const MessageListWrapper: FC = () => {
+  const homeContext = useContext<HomeContextType>(HomeContext)
+  const { messageOperation } = homeContext
+
+  const wrapperWheelLoading = useRef<boolean>(false)
+
+  const firstScrollToBottom = useRef<boolean>(false)
+
   const messageListWrapper = useRef<HTMLDivElement>(null)
 
-  const messageWrapperScrollToBottom: () => void = () => {
+  const messageWrapperScrollToBottom: () => void = useCallback(() => {
     if (!messageListWrapper.current) {
       return
     }
@@ -31,11 +29,32 @@ export const MessageListWrapper: FC<MessageListWrapperProps> = ({
       top: messageListWrapper.current.scrollHeight,
       behavior: 'smooth'
     })
-  }
+  }, [])
+
+  const messageListContentWrapper = useRef<HTMLDivElement>(null)
+
+  const mutationObserverHandler = useCallback(() => {
+    if (firstScrollToBottom.current) {
+      return
+    }
+    firstScrollToBottom.current = true
+    // TODO 因元素内容在第二次加载的时候会非空的元素加载两次，
+    // 导致无法区分消息列表是空的还是有东西, 导致滚动到底部失效,
+    // 当前所掌握的基本误解，加个定时器，后边如果解决了在换过去
+    setTimeout(() => {
+      messageWrapperScrollToBottom()
+    }, 50)
+  }, [])
+
+  useMutationObserver(mutationObserverHandler, messageListContentWrapper, { childList: true })
 
   useEffect(() => {
-    messageWrapperScrollToBottom()
-  }, [currentMessageCard])
+    // if (!messageOperation.currentMessageInfo) {
+    //   return
+    // }
+    // messageWrapperScrollToBottom()
+    firstScrollToBottom.current = false
+  }, [messageOperation.currentMessageInfo])
 
   const commentsContentSize = useContentWidthSize(() => {
     const navEle = getNavEle()
@@ -47,19 +66,27 @@ export const MessageListWrapper: FC<MessageListWrapperProps> = ({
   })
 
   const conversationList = useMemo(() => {
-    return messageList
+    // console.log('size => ', messageListWrapperSize)
+    // console.log('scrollTop =>', messageListWrapper.current?.scrollTop)
+    if (!messageOperation.currentMessageInfo) {
+      return
+    }
+    return messageOperation.currentChatMessageList
       .filter((m) => m.chatType >= ChatType.ChatTypeUser && m.chatType <= ChatType.ChatTypeApp)
       .map((m, index) => {
         // console.log(m)
         const key = m.id || m.clientUniqueId || index
         if (m.chatType === ChatType.ChatTypeUser || m.chatType === ChatType.ChatTypeApp) {
-          if (m.targetId === currentUser.id) {
+          if (m.targetId === current.userInfo.id) {
             return (
               <Conversation
                 key={key}
                 contentType={m.msgType}
                 content={m.content}
-                targetInfo={{ type: currentMessageCard.type, meta: currentMessageCard.sourceData }}
+                targetInfo={{
+                  type: messageOperation.currentMessageInfo!.type,
+                  meta: messageOperation.currentMessageInfo!.sourceData.metadata
+                }}
                 width={commentsContentSize}
                 status={m.status}
                 sendTime={m.createdAt}
@@ -71,7 +98,7 @@ export const MessageListWrapper: FC<MessageListWrapperProps> = ({
               key={key}
               contentType={m.msgType}
               content={m.content}
-              meInfo={currentUser}
+              meInfo={current.userInfo}
               width={commentsContentSize}
               status={m.status}
               sendTime={m.createdAt}
@@ -81,31 +108,75 @@ export const MessageListWrapper: FC<MessageListWrapperProps> = ({
 
         return undefined
       })
-  }, [messageList, currentUser, currentMessageCard, commentsContentSize])
+  }, [
+    messageOperation.currentChatMessageList,
+    messageOperation.currentMessageInfo,
+    commentsContentSize
+  ])
 
   useEffect(() => {
-    if (!conversationList || conversationList.length === 0) {
-      prevEndMsgId.current = ''
+    const ele = messageListWrapper.current
+    if (!ele) {
       return
     }
+    const onMouseWheel: (event: any) => void = async (event: any) => {
+      event.stopPropagation()
+      const { deltaY } = event
+      const scrollTop = ele.scrollTop + deltaY
 
-    const endMsg = messageList[messageList.length - 1]
-    const endId = endMsg.id || 'c_' + endMsg.clientUniqueId
+      if (messageOperation.currentChatMsgListLoading) {
+        event.preventDefault()
+        return
+      }
 
-    if (prevEndMsgId.current !== endId) {
-      prevEndMsgId.current = endId
-      messageWrapperScrollToBottom()
-      return
+      if (!messageOperation.currentMessageInfo || wrapperWheelLoading.current) {
+        return
+      }
+
+      const down = event.wheelDelta ? event.wheelDelta < 0 : event.detail > 0
+      if (down) {
+        return
+      }
+
+      _lock.acquire('load_chat_message', async (done) => {
+        try {
+          if (!messageOperation.currentMessageInfo || wrapperWheelLoading.current) {
+            return
+          }
+          if (scrollTop < 500) {
+            event.preventDefault()
+
+            wrapperWheelLoading.current = true
+            await messageOperation.retryQueryCurrentMessageList(
+              messageOperation.currentMessageInfo.id
+            )
+            setTimeout(() => {
+              wrapperWheelLoading.current = false
+            }, 1000)
+          }
+        } finally {
+          done()
+        }
+      })
     }
-  }, [conversationList, messageList])
+    ele.addEventListener('mousewheel', onMouseWheel)
+
+    return () => {
+      wrapperWheelLoading.current = false
+      ele.removeEventListener('mousewheel', onMouseWheel)
+    }
+  }, [messageOperation.currentMessageInfo, messageOperation.currentChatMsgListLoading])
+
   return (
     <div className="message-list" ref={messageListWrapper}>
-      {loading && (
+      {messageOperation.currentChatMsgListLoading && (
         <div className="message-loading">
           <LoadingIcon size={16} />
         </div>
       )}
-      <div className="wrapper">{conversationList}</div>
+      <div className="wrapper" ref={messageListContentWrapper}>
+        {conversationList}
+      </div>
     </div>
   )
 }

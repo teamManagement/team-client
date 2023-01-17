@@ -1,6 +1,6 @@
 import { FC, useCallback, useEffect, useState } from 'react'
 import { current } from '@byzk/teamwork-sdk'
-import { id, api, insideDb } from '@byzk/teamwork-inside-sdk'
+import { id, api } from '@byzk/teamwork-inside-sdk'
 import Nav from './components/Nav'
 import Content from './components/Content'
 import WindowToolbar from './components/WindowToolbar'
@@ -8,6 +8,7 @@ import './index.scss'
 import React from 'react'
 import { UserChatMsg } from './components/ContentComments/commentsContent/vos'
 import AsyncLock from 'async-lock'
+import { ChatMessageCardHookReturnType, useChatMessageOperation } from './hooks'
 
 const lock = new AsyncLock()
 
@@ -17,6 +18,10 @@ export interface HomeContextType {
    */
   onlineUserIdList: string[]
   /**
+   * messageOperation 消息操作
+   */
+  messageOperation: ChatMessageCardHookReturnType
+  /**
    * 获取最后的未读消息
    * @returns 用户消息
    */
@@ -25,6 +30,10 @@ export interface HomeContextType {
    * 清空未读消息获取方法
    */
   clearUnreadFn(): void
+  /**
+   * 打开消息卡片
+   */
+  // openMessageCard(): void
   // /**
   //  * 注册用户状态变更处理器
   //  * @param id 处理器id
@@ -44,7 +53,8 @@ const homeContextInitValue = {
   },
   clearUnreadFn() {
     //nothing
-  }
+  },
+  messageOperation: {} as any
   // onlineUserIdList: current.onlineUserIdList
   // registerOnlineUserChange: current.registerOnlineUserChange,
   // unRegisterOnlineUserChange: current.unRegisterOnlineUserChange
@@ -55,6 +65,8 @@ let unreadChatMsgFn: ((chatMsg: UserChatMsg) => void) | undefined = undefined
 export const HomeContext = React.createContext<HomeContextType>(homeContextInitValue)
 
 export const Home: FC = () => {
+  const messageOperation = useChatMessageOperation()
+
   // const [, setUnreadFn] = useState<((chatMsg: UserChatMsg) => void) | undefined>(undefined)
   const getUnreadChatMsg = useCallback(async () => {
     return new Promise<UserChatMsg>((resolve) => {
@@ -132,7 +144,14 @@ export const Home: FC = () => {
   }, [])
 
   return (
-    <HomeContext.Provider value={{ onlineUserIdList, getUnreadChatMsg, clearUnreadFn }}>
+    <HomeContext.Provider
+      value={{
+        messageOperation,
+        onlineUserIdList,
+        getUnreadChatMsg,
+        clearUnreadFn
+      }}
+    >
       <div className="home match-parent">
         <WindowToolbar />
         <div className="content">

@@ -129,7 +129,6 @@ export function useTemplate(
     repeatStart(_tml, data)
 
     return () => {
-      console.log('重新加载。。。')
       _tml._repeatStart = false
       _tml._timeoutId && clearTimeout(_tml._timeoutId)
     }

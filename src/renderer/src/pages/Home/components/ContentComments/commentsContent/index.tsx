@@ -11,9 +11,7 @@ import { EMsgItem, IEmojiItem } from '@shen9401/react-im-input/type/interface'
 import { FC, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import AsyncLock from 'async-lock'
 import localforage from 'localforage'
-import { MessageInfo } from '../CommentsSidebar'
 import { MessageListWrapper } from './MessageListWrapper'
-import { ChatMsgType, ChatType, UserChatMsg } from './vos'
 import { HomeContext, HomeContextType } from '@renderer/pages/Home'
 
 const lock = new AsyncLock()
@@ -22,320 +20,324 @@ function createId(): Promise<string> {
   return api.proxyHttpLocalServer('/services/id/create')
 }
 
-export interface CommentsContentProps {
-  currentMessageCard?: MessageInfo
-}
+// export interface CommentsContentProps {
+//   currentMessageCard?: MessageInfo
+// }
 
-export const CommentsContent: FC<CommentsContentProps> = ({ currentMessageCard }) => {
-  const [currentStatus, setCurrentStatus] = useState<'online' | 'offline' | undefined>(undefined)
+export const CommentsContent: FC = () => {
   const homeContext = useContext<HomeContextType>(HomeContext)
-  const currentChatTypeRef = useRef<ChatType | undefined>(undefined)
-  const currentTargetInfo = useRef<UserInfo | ChatGroupInfo | AppInfo | undefined>(undefined)
-  const messageEditRef = useRef<MessageEditInterface>(null)
-  const loadingPutChatMsg = useRef<UserChatMsg[]>([])
+  const { currentMessageInfo } = homeContext.messageOperation
+
   const currentUser = useUserinfo()
-  const [showEmoji, setShowEmoji] = useState<boolean>(false)
-  const [currentChatMsgListMap, setCurrentChatMsgListMap] = useState<{
-    [key: string]: UserChatMsg[]
-  }>({})
-  const [currentChatMsgListLoading, setCurrentChatMsgListLoading] = useState<boolean>(true)
 
-  const handlerUnreadChatMsg = useCallback(async () => {
-    for (;;) {
-      // console.log(await homeContext.getUnreadChatMsg())
-      const unreadChatMsg = await homeContext.getUnreadChatMsg()
-      if (!unreadChatMsg) {
-        return
-      }
+  const [currentTargetUserStatus, setCurrentTargetUserStatus] = useState<
+    'online' | 'offline' | undefined
+  >(undefined)
 
-      if (!unreadChatMsg.targetId || !unreadChatMsg.sourceId || !currentUser) {
-        continue
-      }
+  // const currentChatTypeRef = useRef<ChatType | undefined>(undefined)
+  // const currentTargetInfo = useRef<UserInfo | ChatGroupInfo | AppInfo | undefined>(undefined)
+  // const messageEditRef = useRef<MessageEditInterface>(null)
+  // const loadingPutChatMsg = useRef<UserChatMsg[]>([])
+  // const [showEmoji, setShowEmoji] = useState<boolean>(false)
+  // const [currentChatMsgListMap, setCurrentChatMsgListMap] = useState<{
+  //   [key: string]: UserChatMsg[]
+  // }>({})
+  // const [currentChatMsgListLoading, setCurrentChatMsgListLoading] = useState<boolean>(true)
 
-      setCurrentChatMsgListMap((m) => {
-        let chatId: string | undefined | undefined
-        if (currentUser.id === unreadChatMsg.sourceId) {
-          chatId = unreadChatMsg.targetId
-        } else if (currentUser.id === unreadChatMsg.targetId) {
-          chatId = unreadChatMsg.sourceId
-        } else {
-          return m
-        }
+  // const handlerUnreadChatMsg = useCallback(async () => {
+  //   for (;;) {
+  //     // console.log(await homeContext.getUnreadChatMsg())
+  //     const unreadChatMsg = await homeContext.getUnreadChatMsg()
+  //     if (!unreadChatMsg) {
+  //       return
+  //     }
 
-        if (!chatId) {
-          return m
-        }
+  //     if (!unreadChatMsg.targetId || !unreadChatMsg.sourceId || !currentUser) {
+  //       continue
+  //     }
 
-        const userChatMsgList = m[chatId]
-        if (!userChatMsgList) {
-          return m
-        }
+  //     setCurrentChatMsgListMap((m) => {
+  //       let chatId: string | undefined | undefined
+  //       if (currentUser.id === unreadChatMsg.sourceId) {
+  //         chatId = unreadChatMsg.targetId
+  //       } else if (currentUser.id === unreadChatMsg.targetId) {
+  //         chatId = unreadChatMsg.sourceId
+  //       } else {
+  //         return m
+  //       }
 
-        m[chatId] = [...userChatMsgList, unreadChatMsg]
+  //       if (!chatId) {
+  //         return m
+  //       }
 
-        return { ...m }
-      })
-      console.log('读取到未读消息: ', unreadChatMsg)
-    }
-  }, [homeContext.getUnreadChatMsg, currentUser])
+  //       const userChatMsgList = m[chatId]
+  //       if (!userChatMsgList) {
+  //         return m
+  //       }
 
-  useEffect(() => {
-    handlerUnreadChatMsg()
-    return () => {
-      homeContext.clearUnreadFn()
-    }
-  }, [handlerUnreadChatMsg])
+  //       m[chatId] = [...userChatMsgList, unreadChatMsg]
 
-  useEffect(() => {
-    if (!currentMessageCard || currentMessageCard.type !== 'users') {
-      setCurrentStatus(undefined)
-      return
-    }
-
-    const status = homeContext.onlineUserIdList.includes(currentMessageCard.id)
-      ? 'online'
-      : 'offline'
-    setCurrentStatus(status)
-  }, [currentMessageCard, homeContext.onlineUserIdList])
-
-  useEffect(() => {
-    setCurrentChatMsgListLoading(true)
-    if (!currentMessageCard || !currentUser) {
-      // setCurrentChatMsgList([])
-      currentTargetInfo.current = undefined
-      return
-    }
-    currentTargetInfo.current = currentMessageCard.sourceData
-    console.log(currentMessageCard)
-    const storageChatListKey =
-      currentUser?.id + '_' + currentMessageCard.sourceData.id + '_chat_list'
-    const storageChatFlagKey =
-      currentUser?.id + '_' + currentMessageCard.sourceData.id + '_chat_flag'
-    lock.acquire(storageChatListKey, (done) => {
-      localforage.getItem<UserChatMsg[]>(storageChatListKey, async (err, val) => {
-        try {
-          if (err) {
-            return
-          }
-          setCurrentChatMsgListMap((m) => {
-            m[currentMessageCard.id] = val || []
-            return { ...m }
-          })
-
-          const jsonData: any = {
-            targetId: currentMessageCard.id
-          }
-
-          if (val && val.length > 0) {
-            const endTimeId = await localforage.getItem(storageChatFlagKey)
-            if (endTimeId) {
-              jsonData.clientTimeId = val[val.length - 1].clientUniqueId
-            }
-          }
-          const chatList = await api.proxyHttpLocalServer<UserChatMsg[]>(
-            '/services/chat/msg/query',
-            {
-              timeout: -1,
-              jsonData
-            }
-          )
-
-          let endTimeId: string = jsonData.endTimeId
-          if (chatList && chatList.length > 0) {
-            endTimeId = chatList[0].clientUniqueId
-          }
-
-          await localforage.setItem(storageChatListKey, chatList)
-          if (endTimeId) {
-            await localforage.setItem(storageChatFlagKey, endTimeId)
-          }
-          if (currentTargetInfo.current && currentMessageCard.id === currentTargetInfo.current.id) {
-            setCurrentChatMsgListMap((m) => {
-              const list = m[currentMessageCard.id] || []
-              if (chatList && chatList.length > 0) {
-                list.push(...chatList)
-              }
-
-              m[currentMessageCard.id] = [...list]
-
-              localforage.setItem(storageChatListKey, list)
-              setTimeout(done, 100)
-              return { ...m }
-            })
-          }
-        } finally {
-          setCurrentChatMsgListLoading(false)
-        }
-      })
-    })
-  }, [currentMessageCard, currentUser])
+  //       return { ...m }
+  //     })
+  //     console.log('读取到未读消息: ', unreadChatMsg)
+  //   }
+  // }, [homeContext.getUnreadChatMsg, currentUser])
 
   // useEffect(() => {
-  //   if (!currentMessageCard || !currentUser) {
-  //     return
+  //   handlerUnreadChatMsg()
+  //   return () => {
+  //     homeContext.clearUnreadFn()
   //   }
-  //   const sessionKey = currentUser?.id + '_' + currentMessageCard.sourceData.id + '_chat_list'
-  //   lock.acquire('chatMsgPutLock', (done) => {
-  //     localforage.setItem(sessionKey, currentChatMsgList, () => {
-  //       done()
-  //     })
-  //   })
-  // }, [currentChatMsgList])
+  // }, [handlerUnreadChatMsg])
 
   useEffect(() => {
-    if (!currentMessageCard) {
-      currentChatTypeRef.current = undefined
+    if (!currentMessageInfo || currentMessageInfo.type !== 'users') {
+      setCurrentTargetUserStatus(undefined)
       return
     }
 
-    if (currentMessageCard.type === 'users') {
-      currentChatTypeRef.current = ChatType.ChatTypeUser
-    } else if (currentMessageCard.type === 'apps') {
-      currentChatTypeRef.current = ChatType.ChatTypeApp
-    } else if (currentMessageCard.type === 'groups') {
-      currentChatTypeRef.current = ChatType.ChatTypeGroup
-    } else {
-      currentChatTypeRef.current = undefined
-    }
-  }, [currentMessageCard])
+    const status = homeContext.onlineUserIdList.includes(currentMessageInfo.id)
+      ? 'online'
+      : 'offline'
+    setCurrentTargetUserStatus(status)
+  }, [currentMessageInfo, homeContext.onlineUserIdList])
 
-  const actionEleList = useMemo(() => {
-    return [
-      <ImgEmoji
-        // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-        onClick={(e) => {
-          e.stopPropagation()
-          e.preventDefault()
-          setShowEmoji((s) => !s)
-        }}
-        title="表情"
-        key={'emoji'}
-      />
-      // <ImgUploadPicture title="图片" key={'uploadPicture'} />,
-      // <ImgUploadFile title="文件" key={'uploadFile'} />
-    ]
-  }, [])
+  // useEffect(() => {
+  //   setCurrentChatMsgListLoading(true)
+  //   if (!currentMessageInfo || !currentUser) {
+  //     // setCurrentChatMsgList([])
+  //     currentTargetInfo.current = undefined
+  //     return
+  //   }
+  //   currentTargetInfo.current = currentMessageInfo.sourceData.metadata
+  //   console.log(currentMessageInfo)
+  //   const storageChatListKey =
+  //     currentUser?.id + '_' + currentMessageInfo.sourceData.metadata.id + '_chat_list'
+  //   const storageChatFlagKey =
+  //     currentUser?.id + '_' + currentMessageInfo.sourceData.metadata.id + '_chat_flag'
+  //   lock.acquire(storageChatListKey, (done) => {
+  //     localforage.getItem<UserChatMsg[]>(storageChatListKey, async (err, val) => {
+  //       try {
+  //         if (err) {
+  //           return
+  //         }
+  //         setCurrentChatMsgListMap((m) => {
+  //           m[currentMessageInfo.sourceData.metadata.id] = val || []
+  //           return { ...m }
+  //         })
 
-  useEffect(() => {
-    // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-    const _clickFn = () => {
-      setShowEmoji(false)
-    }
-    document.addEventListener('click', _clickFn)
-    return () => {
-      document.removeEventListener('click', _clickFn)
-    }
-  }, [])
+  //         const jsonData: any = {
+  //           targetId: currentMessageInfo.sourceData.metadata.id
+  //         }
 
-  const msgOnSend = useCallback(
-    async (
-      currentObj: {
-        type: 'users' | 'groups' | 'apps'
-        meta: UserInfo | ChatGroupInfo | AppInfo
-      },
-      msgList: EMsgItem[]
-    ) => {
-      const localChatMsgList: UserChatMsg[] = []
-      for (const msg of msgList) {
-        const localChatMsgInfo: UserChatMsg = {
-          targetId: currentObj.meta.id
-        } as UserChatMsg
+  //         if (val && val.length > 0) {
+  //           const endTimeId = await localforage.getItem(storageChatFlagKey)
+  //           if (endTimeId) {
+  //             jsonData.clientTimeId = val[val.length - 1].clientUniqueId
+  //           }
+  //         }
+  //         const chatList = await api.proxyHttpLocalServer<UserChatMsg[]>(
+  //           '/services/chat/msg/query',
+  //           {
+  //             timeout: -1,
+  //             jsonData
+  //           }
+  //         )
 
-        switch (msg.type) {
-          case 'TEXT':
-            localChatMsgInfo.msgType = ChatMsgType.ChatMsgTypeText
-            localChatMsgInfo.content = msg.data as string
-        }
+  //         let endTimeId: string = jsonData.endTimeId
+  //         if (chatList && chatList.length > 0) {
+  //           endTimeId = chatList[0].clientUniqueId
+  //         }
 
-        try {
-          localChatMsgInfo.clientUniqueId = await createId()
-          if (!currentChatTypeRef.current) {
-            localChatMsgInfo.errMsg = '缺失消息类型'
-            localChatMsgInfo.status = 'error'
-          }
-          localChatMsgInfo.status = 'loading'
-        } catch (e) {
-          localChatMsgInfo.errMsg = ''
-          localChatMsgInfo.status = 'error'
-        }
+  //         await localforage.setItem(storageChatListKey, chatList)
+  //         if (endTimeId) {
+  //           await localforage.setItem(storageChatFlagKey, endTimeId)
+  //         }
+  //         if (
+  //           currentTargetInfo.current &&
+  //           currentMessageInfo.sourceData.metadata.id === currentTargetInfo.current.id
+  //         ) {
+  //           setCurrentChatMsgListMap((m) => {
+  //             const list = m[currentMessageInfo.sourceData.metadata.id] || []
+  //             if (chatList && chatList.length > 0) {
+  //               list.push(...chatList)
+  //             }
 
-        localChatMsgInfo.chatType = currentChatTypeRef.current!
+  //             m[currentMessageInfo.sourceData.metadata.id] = [...list]
 
-        loadingPutChatMsg.current.push(localChatMsgInfo)
-        localChatMsgList.push(localChatMsgInfo)
-      }
+  //             localforage.setItem(storageChatListKey, list)
+  //             setTimeout(done, 100)
+  //             return { ...m }
+  //           })
+  //         }
+  //       } finally {
+  //         setCurrentChatMsgListLoading(false)
+  //       }
+  //     })
+  //   })
+  // }, [currentMessageInfo, currentUser])
 
-      setCurrentChatMsgListMap((m) => {
-        const l = m[currentObj.meta.id]
-        m[currentObj.meta.id] = [...l, ...localChatMsgList]
-        return { ...m }
-      })
-      // setCurrentChatMsgList((l) => [...l, ...localChatMsgList])
-    },
-    [currentUser]
-  )
+  // // useEffect(() => {
+  // //   if (!currentMessageCard || !currentUser) {
+  // //     return
+  // //   }
+  // //   const sessionKey = currentUser?.id + '_' + currentMessageCard.sourceData.id + '_chat_list'
+  // //   lock.acquire('chatMsgPutLock', (done) => {
+  // //     localforage.setItem(sessionKey, currentChatMsgList, () => {
+  // //       done()
+  // //     })
+  // //   })
+  // // }, [currentChatMsgList])
 
-  useEffect(() => {
-    lock.acquire('chatMsgPutLock', async (done) => {
-      try {
-        const len = loadingPutChatMsg.current.length
-        if (len === 0) {
-          return
-        }
+  // useEffect(() => {
+  //   if (!currentMessageCard) {
+  //     currentChatTypeRef.current = undefined
+  //     return
+  //   }
 
-        for (let i = len - 1; i >= 0; i--) {
-          let loadingChatMsg = loadingPutChatMsg.current[i]
-          loadingPutChatMsg.current.splice(i, 1)
-          if (loadingChatMsg.status !== 'loading') {
-            continue
-          }
+  //   if (currentMessageCard.type === 'users') {
+  //     currentChatTypeRef.current = ChatType.ChatTypeUser
+  //   } else if (currentMessageCard.type === 'apps') {
+  //     currentChatTypeRef.current = ChatType.ChatTypeApp
+  //   } else if (currentMessageCard.type === 'groups') {
+  //     currentChatTypeRef.current = ChatType.ChatTypeGroup
+  //   } else {
+  //     currentChatTypeRef.current = undefined
+  //   }
+  // }, [currentMessageCard])
 
-          try {
-            loadingChatMsg = await api.proxyHttpLocalServer<UserChatMsg>('/services/chat/msg/put', {
-              timeout: -1,
-              jsonData: { ...loadingChatMsg, status: undefined } as UserChatMsg
-            })
-          } catch (e) {
-            loadingChatMsg.status = 'error'
-            loadingChatMsg.errMsg = (e as any).message || e
-          }
-          setCurrentChatMsgListMap((m) => {
-            const l = m[loadingChatMsg.targetId] || []
-            for (let i = l.length - 1; i >= 0; i--) {
-              if (l[i].clientUniqueId === loadingChatMsg.clientUniqueId) {
-                l[i] = loadingChatMsg
-                break
-              }
-            }
-            m[loadingChatMsg.targetId] = [...l]
-            return { ...m }
-          })
-        }
-      } finally {
-        done()
-      }
-    })
-  }, [currentChatMsgListMap])
+  // const actionEleList = useMemo(() => {
+  //   return [
+  //     <ImgEmoji
+  //       // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+  //       onClick={(e) => {
+  //         e.stopPropagation()
+  //         e.preventDefault()
+  //         setShowEmoji((s) => !s)
+  //       }}
+  //       title="表情"
+  //       key={'emoji'}
+  //     />
+  //     // <ImgUploadPicture title="图片" key={'uploadPicture'} />,
+  //     // <ImgUploadFile title="文件" key={'uploadFile'} />
+  //   ]
+  // }, [])
 
-  const emojiItemClick = useCallback((item: IEmojiItem) => {
-    messageEditRef.current?.insertEmoji(item)
-  }, [])
+  // useEffect(() => {
+  //   // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+  //   const _clickFn = () => {
+  //     setShowEmoji(false)
+  //   }
+  //   document.addEventListener('click', _clickFn)
+  //   return () => {
+  //     document.removeEventListener('click', _clickFn)
+  //   }
+  // }, [])
+
+  // const msgOnSend = useCallback(
+  //   async (
+  //     currentObj: {
+  //       type: 'users' | 'groups' | 'apps'
+  //       meta: UserInfo | ChatGroupInfo | AppInfo
+  //     },
+  //     msgList: EMsgItem[]
+  //   ) => {
+  //     const localChatMsgList: UserChatMsg[] = []
+  //     for (const msg of msgList) {
+  //       const localChatMsgInfo: UserChatMsg = {
+  //         targetId: currentObj.meta.id
+  //       } as UserChatMsg
+
+  //       switch (msg.type) {
+  //         case 'TEXT':
+  //           localChatMsgInfo.msgType = ChatMsgType.ChatMsgTypeText
+  //           localChatMsgInfo.content = msg.data as string
+  //       }
+
+  //       try {
+  //         localChatMsgInfo.clientUniqueId = await createId()
+  //         if (!currentChatTypeRef.current) {
+  //           localChatMsgInfo.errMsg = '缺失消息类型'
+  //           localChatMsgInfo.status = 'error'
+  //         }
+  //         localChatMsgInfo.status = 'loading'
+  //       } catch (e) {
+  //         localChatMsgInfo.errMsg = ''
+  //         localChatMsgInfo.status = 'error'
+  //       }
+
+  //       localChatMsgInfo.chatType = currentChatTypeRef.current!
+
+  //       loadingPutChatMsg.current.push(localChatMsgInfo)
+  //       localChatMsgList.push(localChatMsgInfo)
+  //     }
+
+  //     setCurrentChatMsgListMap((m) => {
+  //       const l = m[currentObj.meta.id]
+  //       m[currentObj.meta.id] = [...l, ...localChatMsgList]
+  //       return { ...m }
+  //     })
+  //     // setCurrentChatMsgList((l) => [...l, ...localChatMsgList])
+  //   },
+  //   [currentUser]
+  // )
+
+  // useEffect(() => {
+  //   lock.acquire('chatMsgPutLock', async (done) => {
+  //     try {
+  //       const len = loadingPutChatMsg.current.length
+  //       if (len === 0) {
+  //         return
+  //       }
+
+  //       for (let i = len - 1; i >= 0; i--) {
+  //         let loadingChatMsg = loadingPutChatMsg.current[i]
+  //         loadingPutChatMsg.current.splice(i, 1)
+  //         if (loadingChatMsg.status !== 'loading') {
+  //           continue
+  //         }
+
+  //         try {
+  //           loadingChatMsg = await api.proxyHttpLocalServer<UserChatMsg>('/services/chat/msg/put', {
+  //             timeout: -1,
+  //             jsonData: { ...loadingChatMsg, status: undefined } as UserChatMsg
+  //           })
+  //         } catch (e) {
+  //           loadingChatMsg.status = 'error'
+  //           loadingChatMsg.errMsg = (e as any).message || e
+  //         }
+  //         setCurrentChatMsgListMap((m) => {
+  //           const l = m[loadingChatMsg.targetId] || []
+  //           for (let i = l.length - 1; i >= 0; i--) {
+  //             if (l[i].clientUniqueId === loadingChatMsg.clientUniqueId) {
+  //               l[i] = loadingChatMsg
+  //               break
+  //             }
+  //           }
+  //           m[loadingChatMsg.targetId] = [...l]
+  //           return { ...m }
+  //         })
+  //       }
+  //     } finally {
+  //       done()
+  //     }
+  //   })
+  // }, [currentChatMsgListMap])
+
+  // const emojiItemClick = useCallback((item: IEmojiItem) => {
+  //   messageEditRef.current?.insertEmoji(item)
+  // }, [])
 
   return (
     <>
-      {currentMessageCard && currentUser ? (
+      {currentMessageInfo && currentUser ? (
         <div className="comments-content">
-          <ChatTitle status={currentStatus} messageInfo={currentMessageCard}>
+          <ChatTitle status={currentTargetUserStatus} messageInfo={currentMessageInfo}>
             {/* <UserIcon size="22px" />
         <SettingIcon size="22px" /> */}
           </ChatTitle>
-          <MessageListWrapper
-            messageList={currentChatMsgListMap[currentMessageCard.id] || []}
-            currentMessageCard={currentMessageCard}
-            currentUser={currentUser}
-            loading={currentChatMsgListLoading}
-          />
-          <div className="message-edit">
+          <MessageListWrapper />
+          {/* <div className="message-edit">
             <MessageEdit
               ref={messageEditRef}
               onSend={msgOnSend}
@@ -355,7 +357,7 @@ export const CommentsContent: FC<CommentsContentProps> = ({ currentMessageCard }
                 </div>
               )}
             </MessageEdit>
-          </div>
+          </div> */}
         </div>
       ) : (
         <div></div>

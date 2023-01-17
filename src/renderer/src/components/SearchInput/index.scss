@@ -14,7 +14,7 @@
     // min-height: 188px;
     height: 288px;
     background-color: #fff;
-    z-index: 9;
+    z-index: 11;
     overflow-x: hidden;
     overflow-y: auto;
     border-radius: 5px;
@@ -38,7 +38,7 @@
     }
 
     .search-result-item {
-      width: 262px;
+      // width: 262px;
       height: 48px;
       // background-color: orange;
       display: flex;

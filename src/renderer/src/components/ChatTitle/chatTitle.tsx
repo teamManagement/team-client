@@ -1,5 +1,5 @@
 import { AppInfo, UserInfo } from '@byzk/teamwork-sdk'
-import { MessageInfo } from '@renderer/pages/Home/components/ContentComments/CommentsSidebar'
+import { MessageInfo } from '@renderer/pages/Home/function'
 import { CSSProperties, FC, ReactNode, useMemo, Children } from 'react'
 import Avatar from '../Avatar'
 import './index.scss'
@@ -41,7 +41,7 @@ export const ChatTitle: FC<ChatTitleProps> = ({ style, children, messageInfo, st
     } else if (messageInfo.type === 'groups') {
       return messageInfo.name + '( 群组 )'
     } else if (messageInfo.type === 'users') {
-      return `${messageInfo.name}( ${(messageInfo.sourceData as UserInfo).username} )`
+      return `${messageInfo.name}( ${(messageInfo.sourceData.metadata as UserInfo).username} )`
     } else {
       return messageInfo.name
     }
@@ -53,7 +53,7 @@ export const ChatTitle: FC<ChatTitleProps> = ({ style, children, messageInfo, st
     }
 
     if (messageInfo.type === 'users') {
-      const userInfo = messageInfo.sourceData as UserInfo
+      const userInfo = messageInfo.sourceData.metadata as UserInfo
       const orgName: string[] = []
       const orgList = userInfo.orgList
       if (orgList) {
@@ -69,7 +69,7 @@ export const ChatTitle: FC<ChatTitleProps> = ({ style, children, messageInfo, st
     }
 
     if (messageInfo.type === 'apps') {
-      return (messageInfo.sourceData as AppInfo).shortDesc
+      return (messageInfo.sourceData.metadata as AppInfo).shortDesc
     }
 
     return messageInfo.desc

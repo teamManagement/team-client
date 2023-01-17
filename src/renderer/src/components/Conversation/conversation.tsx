@@ -1,6 +1,6 @@
 import { ChatGroupInfo } from '@byzk/teamwork-inside-sdk'
 import { AppInfo, UserInfo } from '@byzk/teamwork-sdk'
-import { ChatMsgType } from '@renderer/pages/Home/components/ContentComments/commentsContent/vos'
+import { ChatMsgType } from '@renderer/pages/Home/hooks'
 import classNames from 'classnames'
 import dayjs from 'dayjs'
 import { FC, useMemo, HtmlHTMLAttributes, ReactNode, CSSProperties } from 'react'

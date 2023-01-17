@@ -1,25 +1,26 @@
 import { FC, useCallback, useContext, useMemo } from 'react'
 import Avatar from '../Avatar'
 import './index.scss'
-import { MessageInfo } from '@renderer/pages/Home/components/ContentComments/CommentsSidebar'
-import { UserInfo } from '@byzk/teamwork-sdk'
 import dayjs from 'dayjs'
 import classNames from 'classnames'
 import { HomeContext, HomeContextType } from '@renderer/pages/Home'
+import { MessageInfo } from '@renderer/pages/Home/function'
+import { UserInfo } from '@byzk/teamwork-sdk'
 
 export interface MessageCardProps {
   info: MessageInfo
   active?: boolean
   onClick?(info: MessageInfo): void
+  onClose?(info: MessageInfo): void
 }
 
-export const MessageCard: FC<MessageCardProps> = ({ info, active, onClick }) => {
+export const MessageCard: FC<MessageCardProps> = ({ info, active, onClick, onClose }) => {
   const homeContext = useContext<HomeContextType>(HomeContext)
 
   const name = useMemo(() => {
     if (info.type === 'users') {
       const orgNameList: string[] = []
-      const userInfo = info.sourceData as UserInfo
+      const userInfo = info.sourceData.metadata as UserInfo
       if (userInfo.orgList && userInfo.orgList.length > 0) {
         userInfo.orgList.forEach((org) => orgNameList.push(org.org.name))
       }
@@ -60,6 +61,10 @@ export const MessageCard: FC<MessageCardProps> = ({ info, active, onClick }) => 
     onClick && onClick(info)
   }, [info])
 
+  const onCardClose = useCallback(() => {
+    onClose && onClose(info)
+  }, [onClose, info])
+
   return (
     <div
       onClick={cardClick}
@@ -79,6 +84,10 @@ export const MessageCard: FC<MessageCardProps> = ({ info, active, onClick }) => 
           size="48px"
           name={info.name}
         />
+
+        <div onClick={onCardClose} className="close-mask">
+          关闭
+        </div>
       </div>
       <div className="content">
         <div className="name">
