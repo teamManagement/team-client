@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import localforage from 'localforage'
 import AsyncLock from 'async-lock'
-import { api, ChatGroupInfo, remoteCache } from '@byzk/teamwork-inside-sdk'
-import { AppInfo, UserInfo } from '@byzk/teamwork-sdk'
+import { api, ChatGroupInfo, insideDb, remoteCache } from '@byzk/teamwork-inside-sdk'
+import { AppInfo, current, UserInfo } from '@byzk/teamwork-sdk'
 import { SearchResult } from '@renderer/components/SearchInput/searchInput'
 import {
   convertMessageInfoListToMessageInfoMap,
@@ -12,9 +12,13 @@ import {
   putMessageInfoAndSettingCurrent,
   queryCurrentMessageInfo,
   queryMessageDataList,
+  querySendingChatMsgInfoList,
+  saveSendingChatMsgInfo,
   searchResultFilter,
   settingCurrentMessageInfo
 } from './function'
+import { EMsgItem, EMsgType } from '@renderer/components/ImInput/interface'
+import dayjs from 'dayjs'
 
 const _lock = new AsyncLock()
 
@@ -145,6 +149,10 @@ function getChatMsgLitLocalForageKey(targetId: string): string {
   return targetId + '_' + _chatMsgListLocalForageKey
 }
 
+function getSendingMsgId(id: string): string {
+  return 'sending_' + id
+}
+
 /**
  * 聊天类别
  */
@@ -218,6 +226,10 @@ export interface UserChatMsg {
    */
   updatedAt: string
   /**
+   * 时间戳
+   */
+  timestamp: string
+  /**
    * 客户端唯一ID
    */
   clientUniqueId: string
@@ -283,6 +295,10 @@ export interface ChatMessageCardHookReturnType {
    */
   currentChatMessageList: UserChatMsg[]
   /**
+   * 当前发送中的消息
+   */
+  currentSendingChatMessageList: UserChatMsg[]
+  /**
    * 当前消息列表是否正在加载
    */
   currentChatMsgListLoading: boolean
@@ -305,6 +321,18 @@ export interface ChatMessageCardHookReturnType {
    * @param targetId 目标ID
    */
   retryQueryCurrentMessageList(targetId: string): Promise<void>
+  /**
+   * 发送消息
+   * @param currentChatObj 发送到的对象
+   * @param msgItemList 要发送的消息列表
+   */
+  sendMsg(
+    currentChatObj: {
+      type: 'users' | 'groups' | 'apps'
+      meta: UserInfo | ChatGroupInfo | AppInfo
+    },
+    msgItemList: EMsgItem[]
+  ): Promise<void>
 }
 
 /**
@@ -323,6 +351,9 @@ export function useChatMessageOperation(): ChatMessageCardHookReturnType {
   const [currentMessageInfo, setCurrentMessageInfo] = useState<MessageInfo | undefined>(undefined)
 
   const [currentChatMessageList, setCurrentChatMessageList] = useState<UserChatMsg[]>([])
+  const [currentSendingChatMessageList, setCurrentSendingChatMessageList] = useState<UserChatMsg[]>(
+    []
+  )
 
   const restMessageInfo = useCallback(() => {
     _lock.acquire('rest_message_info', async (done) => {
@@ -374,10 +405,12 @@ export function useChatMessageOperation(): ChatMessageCardHookReturnType {
               }
               localChatMsgList = localChatMsgList || []
               setCurrentChatMessageList(localChatMsgList)
+              localChatMsgList = []
               await localforage.setItem(localforageKey, JSON.stringify(localChatMsgList))
-              return
+              // return
+            } else {
+              localRequestUrl += `&&end=${localChatMsgList[0].updatedAt}&&reverse=1`
             }
-            localRequestUrl += `&&end=${localChatMsgList[0].clientUniqueId}&&reverse=1`
           }
 
           try {
@@ -386,7 +419,9 @@ export function useChatMessageOperation(): ChatMessageCardHookReturnType {
             })
             if (!response || response.length === 0) {
               currentChatMsgListLoadAll.current = true
-              console.log('加载完毕')
+              if (isFirstLoad) {
+                setCurrentChatMessageList([])
+              }
               return
             }
             if (localChatMsgList && localChatMsgList.length > 0) {
@@ -507,15 +542,109 @@ export function useChatMessageOperation(): ChatMessageCardHookReturnType {
     [restMessageInfo, messageInfoList, convertCurrentMessageInfo]
   )
 
+  const loadCurrentSendingMessageList = useCallback(() => {
+    if (!currentMessageInfo) {
+      setCurrentSendingChatMessageList([])
+      return
+    }
+
+    let chatType: ChatType
+    switch (currentMessageInfo.type) {
+      case 'apps':
+        chatType = ChatType.ChatTypeApp
+        break
+      case 'groups':
+        chatType = ChatType.ChatTypeGroup
+        break
+      case 'users':
+        chatType = ChatType.ChatTypeUser
+        break
+      default:
+        return
+    }
+    setCurrentSendingChatMessageList(querySendingChatMsgInfoList(chatType, currentMessageInfo.id))
+  }, [currentMessageInfo])
+
+  useEffect(() => {
+    loadCurrentSendingMessageList()
+  }, [loadCurrentSendingMessageList])
+
+  const sendMsg = useCallback(
+    async (
+      currentChatObj: {
+        type: 'users' | 'groups' | 'apps'
+        meta: UserInfo | ChatGroupInfo | AppInfo
+      },
+      msgItemList: EMsgItem[]
+    ) => {
+      if (!msgItemList || msgItemList.length === 0) {
+        return
+      }
+      let chatType: ChatType
+      switch (currentChatObj.type) {
+        case 'apps':
+          chatType = ChatType.ChatTypeApp
+          break
+        case 'groups':
+          chatType = ChatType.ChatTypeGroup
+          break
+        case 'users':
+          chatType = ChatType.ChatTypeUser
+          break
+        default:
+          console.error('未知的聊天类型')
+          return
+      }
+
+      for (let i = 0; i < msgItemList.length; i++) {
+        const _id = getSendingMsgId(await api.proxyHttpLocalServer<string>('/services/id/create'))
+
+        const msgItem = msgItemList[i]
+
+        let nowTime: string
+        let msgType: ChatMsgType
+        let content: string
+        switch (msgItem.type) {
+          case EMsgType.text:
+            nowTime = dayjs().valueOf().toString()
+            msgType = ChatMsgType.ChatMsgTypeText
+            content = typeof msgItem.data === 'string' ? msgItem.data : ''
+            break
+          default:
+            console.warn('暂不支持发送的聊天内容类型')
+            continue
+        }
+
+        saveSendingChatMsgInfo({
+          targetId: currentChatObj.meta.id,
+          targetInfo: currentChatObj.meta,
+          sourceId: current.userInfo.id,
+          sourceInfo: current.userInfo,
+          content,
+          chatType,
+          msgType,
+          timestamp: nowTime,
+          status: 'loading',
+          clientUniqueId: _id
+        } as UserChatMsg)
+      }
+
+      loadCurrentSendingMessageList()
+    },
+    []
+  )
+
   return {
     messageInfoList,
     currentMessageInfo,
     currentChatMessageList,
     currentChatMsgListLoading,
+    currentSendingChatMessageList,
     convertCurrentMessageInfo,
     openChatMessageCard,
     closeChatMessageCard,
-    retryQueryCurrentMessageList: queryCurrentMessageList
+    retryQueryCurrentMessageList: queryCurrentMessageList,
+    sendMsg
   }
 }
 //#endregion

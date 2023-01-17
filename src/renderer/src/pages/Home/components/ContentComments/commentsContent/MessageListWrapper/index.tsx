@@ -71,7 +71,13 @@ export const MessageListWrapper: FC = () => {
     if (!messageOperation.currentMessageInfo) {
       return
     }
-    return messageOperation.currentChatMessageList
+
+    const msgList = [
+      ...messageOperation.currentSendingChatMessageList,
+      ...messageOperation.currentChatMessageList
+    ]
+
+    return msgList
       .filter((m) => m.chatType >= ChatType.ChatTypeUser && m.chatType <= ChatType.ChatTypeApp)
       .map((m, index) => {
         // console.log(m)
@@ -89,7 +95,7 @@ export const MessageListWrapper: FC = () => {
                 }}
                 width={commentsContentSize}
                 status={m.status}
-                sendTime={m.createdAt}
+                sendTime={typeof m.timestamp === 'string' ? parseInt(m.timestamp) : undefined}
               />
             )
           }
@@ -109,6 +115,7 @@ export const MessageListWrapper: FC = () => {
         return undefined
       })
   }, [
+    messageOperation.currentSendingChatMessageList,
     messageOperation.currentChatMessageList,
     messageOperation.currentMessageInfo,
     commentsContentSize

@@ -2,6 +2,7 @@ import { api, insideDb } from '@byzk/teamwork-inside-sdk'
 import { current } from '@byzk/teamwork-sdk'
 import { ignoreErrorWrapper } from '@renderer/tools'
 import { pinyin } from 'pinyin-pro'
+import { message } from 'tdesign-react'
 import { ChatMsgType, ChatType, DataSourceMeta, UserChatMsg } from './hooks'
 
 export function addUnreadMsg(msg: UserChatMsg): void {
@@ -119,6 +120,38 @@ export function deleteMessageDataById(id: string): void {
     console.warn('删除消息卡片失败: ', e)
     return
   }
+}
+
+export function saveSendingChatMsgInfo(chatMsg: UserChatMsg): UserChatMsg {
+  ignoreErrorWrapper(() => {
+    insideDb.sync.remove(chatMsg.clientUniqueId)
+  })
+  try {
+    insideDb.sync.put({
+      _id: chatMsg.clientUniqueId,
+      chatData: chatMsg,
+      indexInfo: {
+        dataType: 'sending_msg_' + chatMsg.chatType + '_' + chatMsg.targetId,
+        updateAt: new Date()
+      }
+    })
+  } catch (e) {
+    message.error('保存发送数据失败, 请重新发送, 本次错误: ' + JSON.stringify(e))
+    throw e
+  }
+  return chatMsg
+}
+
+export function querySendingChatMsgInfoList(chatType: ChatType, targetId: string): UserChatMsg[] {
+  const messageList = insideDb.sync.index.find<any>({
+    selector: {
+      'indexInfo.dataType': 'sending_msg_' + chatType + '_' + targetId,
+      'indexInfo.updateAt': { $gte: null }
+    },
+    sort: [{ 'indexInfo.updateAt': 'desc' }]
+  }).docs
+  console.log(messageList)
+  return []
 }
 
 export async function loadMessageDataListEndMsg(

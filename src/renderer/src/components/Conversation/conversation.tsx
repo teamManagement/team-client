@@ -26,7 +26,7 @@ export interface ConversationProps extends HtmlHTMLAttributes<HTMLDivElement> {
   meInfo?: UserInfo
   content: string
   contentType?: ChatMsgType
-  sendTime?: string
+  sendTime?: string | number
 }
 
 export const Conversation: FC<ConversationProps> = ({

@@ -9,16 +9,8 @@ import { Emoji } from '@renderer/components/Emoji'
 import { useUserinfo } from '@renderer/hooks'
 import { EMsgItem, IEmojiItem } from '../../../../../components/ImInput/interface'
 import { FC, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import AsyncLock from 'async-lock'
-import localforage from 'localforage'
 import { MessageListWrapper } from './MessageListWrapper'
 import { HomeContext, HomeContextType } from '@renderer/pages/Home'
-
-const lock = new AsyncLock()
-
-function createId(): Promise<string> {
-  return api.proxyHttpLocalServer('/services/id/create')
-}
 
 // export interface CommentsContentProps {
 //   currentMessageCard?: MessageInfo
@@ -26,7 +18,7 @@ function createId(): Promise<string> {
 
 export const CommentsContent: FC = () => {
   const homeContext = useContext<HomeContextType>(HomeContext)
-  const { currentMessageInfo } = homeContext.messageOperation
+  const { currentMessageInfo, sendMsg } = homeContext.messageOperation
 
   const currentUser = useUserinfo()
 
@@ -340,11 +332,7 @@ export const CommentsContent: FC = () => {
             <MessageEdit
               ref={messageEditRef}
               // onSend={msgOnSend}
-              // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-              onSend={(current, msgList) => {
-                console.log('current: ', current)
-                console.log('msgList: ', msgList)
-              }}
+              onSend={sendMsg}
               currentChatObj={{
                 type: currentMessageInfo.type,
                 meta: currentMessageInfo.sourceData.metadata
