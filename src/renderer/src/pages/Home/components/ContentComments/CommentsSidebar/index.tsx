@@ -5,15 +5,10 @@ import { Search } from './Search'
 import { SearchResult } from '@renderer/components/SearchInput/searchInput'
 import { HomeContext } from '@renderer/pages/Home'
 import { DataSourceMeta } from '@renderer/pages/Home/hooks'
-import { MessageInfo } from '@renderer/pages/Home/function'
 
 // const currentMessageCardDbKey = 'current_message_card'
 
-export interface CommentsSidebarProps {
-  activeMessageCardChange?(msgInfo?: MessageInfo): void
-}
-
-export const CommentsSidebar: FC<CommentsSidebarProps> = ({ activeMessageCardChange }) => {
+export const CommentsSidebar: FC = () => {
   const homeContext = useContext(HomeContext)
   const { messageOperation } = homeContext
 

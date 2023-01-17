@@ -46,6 +46,9 @@
       right: 0;
     }
 
+    .react-im-input__container-inner {
+      min-height: unset !important;
+    }
     .react-im-input__container > div {
       &:empty::before {
         content: '请输入要发送的内容';

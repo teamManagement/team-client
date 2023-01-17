@@ -7,7 +7,7 @@ import ChatTitle from '@renderer/components/ChatTitle'
 import MessageEdit, { MessageEditInterface } from '@renderer/components/MessageEdit'
 import { Emoji } from '@renderer/components/Emoji'
 import { useUserinfo } from '@renderer/hooks'
-import { EMsgItem, IEmojiItem } from '@shen9401/react-im-input/type/interface'
+import { EMsgItem, IEmojiItem } from '../../../../../components/ImInput/interface'
 import { FC, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import AsyncLock from 'async-lock'
 import localforage from 'localforage'
@@ -36,9 +36,9 @@ export const CommentsContent: FC = () => {
 
   // const currentChatTypeRef = useRef<ChatType | undefined>(undefined)
   // const currentTargetInfo = useRef<UserInfo | ChatGroupInfo | AppInfo | undefined>(undefined)
-  // const messageEditRef = useRef<MessageEditInterface>(null)
+  const messageEditRef = useRef<MessageEditInterface>(null)
   // const loadingPutChatMsg = useRef<UserChatMsg[]>([])
-  // const [showEmoji, setShowEmoji] = useState<boolean>(false)
+  const [showEmoji, setShowEmoji] = useState<boolean>(false)
   // const [currentChatMsgListMap, setCurrentChatMsgListMap] = useState<{
   //   [key: string]: UserChatMsg[]
   // }>({})
@@ -206,33 +206,32 @@ export const CommentsContent: FC = () => {
   //   }
   // }, [currentMessageCard])
 
-  // const actionEleList = useMemo(() => {
-  //   return [
-  //     <ImgEmoji
-  //       // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-  //       onClick={(e) => {
-  //         e.stopPropagation()
-  //         e.preventDefault()
-  //         setShowEmoji((s) => !s)
-  //       }}
-  //       title="表情"
-  //       key={'emoji'}
-  //     />
-  //     // <ImgUploadPicture title="图片" key={'uploadPicture'} />,
-  //     // <ImgUploadFile title="文件" key={'uploadFile'} />
-  //   ]
-  // }, [])
+  const actionEleList = useMemo(() => {
+    return [
+      <ImgEmoji
+        // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+        onClick={(e) => {
+          e.stopPropagation()
+          e.preventDefault()
+          setShowEmoji((s) => !s)
+        }}
+        title="表情"
+        key={'emoji'}
+      />
+      // <ImgUploadPicture title="图片" key={'uploadPicture'} />,
+      // <ImgUploadFile title="文件" key={'uploadFile'} />
+    ]
+  }, [])
 
-  // useEffect(() => {
-  //   // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-  //   const _clickFn = () => {
-  //     setShowEmoji(false)
-  //   }
-  //   document.addEventListener('click', _clickFn)
-  //   return () => {
-  //     document.removeEventListener('click', _clickFn)
-  //   }
-  // }, [])
+  useEffect(() => {
+    const _clickFn: () => void = () => {
+      setShowEmoji(false)
+    }
+    document.addEventListener('click', _clickFn)
+    return () => {
+      document.removeEventListener('click', _clickFn)
+    }
+  }, [])
 
   // const msgOnSend = useCallback(
   //   async (
@@ -324,9 +323,9 @@ export const CommentsContent: FC = () => {
   //   })
   // }, [currentChatMsgListMap])
 
-  // const emojiItemClick = useCallback((item: IEmojiItem) => {
-  //   messageEditRef.current?.insertEmoji(item)
-  // }, [])
+  const emojiItemClick = useCallback((item: IEmojiItem) => {
+    messageEditRef.current?.insertEmoji(item)
+  }, [])
 
   return (
     <>
@@ -337,13 +336,18 @@ export const CommentsContent: FC = () => {
         <SettingIcon size="22px" /> */}
           </ChatTitle>
           <MessageListWrapper />
-          {/* <div className="message-edit">
+          <div className="message-edit">
             <MessageEdit
               ref={messageEditRef}
-              onSend={msgOnSend}
+              // onSend={msgOnSend}
+              // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+              onSend={(current, msgList) => {
+                console.log('current: ', current)
+                console.log('msgList: ', msgList)
+              }}
               currentChatObj={{
-                type: currentMessageCard.type,
-                meta: currentMessageCard.sourceData
+                type: currentMessageInfo.type,
+                meta: currentMessageInfo.sourceData.metadata
               }}
               actionEleList={actionEleList}
               minHeight={'100%'}
@@ -357,7 +361,7 @@ export const CommentsContent: FC = () => {
                 </div>
               )}
             </MessageEdit>
-          </div> */}
+          </div>
         </div>
       ) : (
         <div></div>

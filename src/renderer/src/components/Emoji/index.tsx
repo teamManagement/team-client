@@ -1,4 +1,4 @@
-import { IEmojiItem } from '@shen9401/react-im-input/type/interface'
+import { IEmojiItem } from '../ImInput/interface'
 import { FC } from 'react'
 import emojiData from './emoji.json'
 import './index.scss'

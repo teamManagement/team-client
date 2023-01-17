@@ -9,12 +9,12 @@ import React, {
   forwardRef,
   ForwardRefRenderFunction
 } from 'react'
-import IMInput, { IIMRef } from '@shen9401/react-im-input'
+import IMInput, { IIMRef } from '../ImInput'
 import './index.scss'
 import { Button } from 'tdesign-react'
 import { AppInfo, UserInfo } from '@byzk/teamwork-sdk'
-import { ChatGroupInfo } from '@byzk/teamwork-inside-sdk'
-import { EMsgItem, IEmojiItem } from '@shen9401/react-im-input/type/interface'
+import { ChatGroupInfo, electron } from '@byzk/teamwork-inside-sdk'
+import { EMsgItem, IEmojiItem } from '../ImInput/interface'
 
 const SESSION_STORAGE_MESSAGE_DATA_KEY = 'once-messageEdit-content'
 
@@ -99,13 +99,30 @@ const _messageEdit: ForwardRefRenderFunction<MessageEditInterface, MessageEditPr
     }
   }))
 
+  const msgInputOnKeyDown = useCallback(async (event: React.KeyboardEvent) => {
+    if (!imInputRef.current) {
+      return
+    }
+
+    event.stopPropagation()
+    if (!event.ctrlKey || !event.key || event.key.toLowerCase() !== 'v') {
+      return
+    }
+    event.preventDefault()
+    const clipboardText = await electron.clipboard.readText()
+    if (!clipboardText) {
+      return
+    }
+    imInputRef.current.insertText(clipboardText)
+  }, [])
+
   return (
     <div className="message-edit" style={{ minHeight, maxHeight }}>
       {children}
       <div className="actions">
         <div className="actions-wrapper">{actions}</div>
       </div>
-      <div className="content">
+      <div className="content" onKeyDown={msgInputOnKeyDown}>
         <IMInput inputId={inputId} memberList={[]} handleSend={_onSend} onRef={imInputRef} />
       </div>
       <div className="sender">
