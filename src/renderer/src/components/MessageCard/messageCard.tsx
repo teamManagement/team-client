@@ -61,9 +61,14 @@ export const MessageCard: FC<MessageCardProps> = ({ info, active, onClick, onClo
     onClick && onClick(info)
   }, [info])
 
-  const onCardClose = useCallback(() => {
-    onClose && onClose(info)
-  }, [onClose, info])
+  const onCardClose = useCallback(
+    (event: React.MouseEvent) => {
+      event.stopPropagation()
+      event.preventDefault()
+      onClose && onClose(info)
+    },
+    [onClose, info]
+  )
 
   return (
     <div

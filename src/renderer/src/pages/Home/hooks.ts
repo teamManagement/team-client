@@ -417,6 +417,32 @@ export function useChatMessageOperation(): ChatMessageCardHookReturnType {
     queryCurrentMessageList(currentMessageInfo.id)
   }, [currentMessageInfo])
 
+  const convertCurrentMessageInfo = useCallback(
+    (msgInfo?: MessageInfo) => {
+      if (!msgInfo) {
+        setCurrentChatMessageList([])
+        settingCurrentMessageInfo(undefined)
+        setCurrentMessageInfo(undefined)
+        currentChatMsgListFirstLoad.current = true
+        return
+      }
+      if (!messageInfoList || messageInfoList.length === 0) {
+        return
+      }
+
+      for (const info of messageInfoList) {
+        if (msgInfo.id === info.id) {
+          setCurrentChatMessageList([])
+          settingCurrentMessageInfo(info)
+          setCurrentMessageInfo(info)
+          currentChatMsgListFirstLoad.current = true
+          return
+        }
+      }
+    },
+    [messageInfoList]
+  )
+
   const openChatMessageCard = useCallback((messageInfo: OpenChatMessageCardInfo) => {
     // debugger
     if (
@@ -466,37 +492,19 @@ export function useChatMessageOperation(): ChatMessageCardHookReturnType {
           tmpMessageInfoList.splice(i, 1)
           deleteMessageDataById(info._id)
           if (tmpMessageInfoList.length === 0) {
-            settingCurrentMessageInfo(undefined)
+            convertCurrentMessageInfo(undefined)
+            // settingCurrentMessageInfo(undefined)
           } else if (tmpMessageInfoList.length > i) {
-            settingCurrentMessageInfo(tmpMessageInfoList[i])
+            convertCurrentMessageInfo(tmpMessageInfoList[i])
           } else {
-            settingCurrentMessageInfo(tmpMessageInfoList[i - 1])
+            convertCurrentMessageInfo(tmpMessageInfoList[i - 1])
           }
           restMessageInfo()
           return
         }
       }
     },
-    [restMessageInfo, messageInfoList]
-  )
-
-  const convertCurrentMessageInfo = useCallback(
-    (msgInfo: MessageInfo) => {
-      if (!msgInfo || !messageInfoList || messageInfoList.length === 0) {
-        return
-      }
-
-      for (const info of messageInfoList) {
-        if (msgInfo.id === info.id) {
-          setCurrentChatMessageList([])
-          settingCurrentMessageInfo(info)
-          setCurrentMessageInfo(info)
-          currentChatMsgListFirstLoad.current = true
-          return
-        }
-      }
-    },
-    [messageInfoList]
+    [restMessageInfo, messageInfoList, convertCurrentMessageInfo]
   )
 
   return {
