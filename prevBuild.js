@@ -95,7 +95,52 @@ function getMkcertDownloadUrl() {
 function downloadHttpFile(url, localPath) {
   return new Promise((resolve, reject) => {
     http
-      .get(url, (res) => {
+      .get(url, async (res) => {
+        if (res.statusCode === 301) {
+          try {
+            let data = ''
+            res.on('data', (d) => (data += d.toString()))
+            res.on('end', async () => {
+              console.log('下载文件:', url, ' 发生301重定向, 内容: ', data)
+              const hrefIndexof = data.indexOf('href')
+              if (hrefIndexof === -1) {
+                reject(new Error('解析301内容的href属性失败'))
+                return
+              }
+
+              data = data.substring(hrefIndexof + 6)
+              const hrefEndIndexof = data.indexOf('"')
+              if (hrefEndIndexof === -1) {
+                reject(new Error('解析301内容的href属性结束标识失败'))
+                return
+              }
+
+              data = data.substring(0, hrefEndIndexof)
+              try {
+                await downloadHttpFile(data, localPath)
+                resolve()
+              } catch (e) {
+                reject(e)
+              }
+            })
+          } catch (e) {
+            reject(e)
+          }
+          return
+        }
+
+        if (res.statusCode === 302) {
+          const location = res.headers.location
+          console.log('请求文件地址:', url, ', 发生302重定向, 目标地址:', location)
+          try {
+            await downloadHttpFile(location, localPath)
+            resolve()
+          } catch (e) {
+            reject(e)
+          }
+          return
+        }
+
         try {
           mkdirSync(path.dirname(localPath), { recursive: true })
         } catch (e) {
@@ -106,6 +151,7 @@ function downloadHttpFile(url, localPath) {
           const writer = createWriteStream(localPath)
           res.pipe(writer)
           writer.on('finish', () => {
+            console.log('文件写出完成')
             writer.close()
             resolve()
           })
@@ -116,6 +162,7 @@ function downloadHttpFile(url, localPath) {
       .on('error', (e) => {
         reject(e)
       })
+      .end()
   })
 }
 
