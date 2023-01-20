@@ -4,7 +4,7 @@ import IconFont from '@renderer/components/IconFont'
 import { useUserinfo } from '@renderer/hooks'
 import { FC, useCallback, useMemo } from 'react'
 import { Divider } from 'tdesign-react'
-import { currentWindow } from '@byzk/teamwork-inside-sdk'
+import { currentWindow } from '@teamworktoolbox/inside-sdk'
 import './index.scss'
 
 export const UserInfo: FC = () => {

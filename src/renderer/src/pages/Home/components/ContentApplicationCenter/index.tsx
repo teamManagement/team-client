@@ -18,7 +18,7 @@ import {
   currentWindow,
   AppInfo,
   AppType
-} from '@byzk/teamwork-inside-sdk'
+} from '@teamworktoolbox/inside-sdk'
 import 'antd/dist/antd.css'
 import './index.scss'
 import { AppDesktop } from './appDesktop'

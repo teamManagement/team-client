@@ -1,4 +1,4 @@
-import { UserInfo } from '@byzk/teamwork-sdk'
+import { UserInfo } from '@teamworktoolbox/sdk'
 import { IpcMainEvent } from 'electron'
 import { SdkHandlerParam } from '../..'
 import { WsHandler } from '../../../socket'

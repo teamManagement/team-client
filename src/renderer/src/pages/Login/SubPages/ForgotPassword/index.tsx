@@ -13,7 +13,7 @@ import {
   message,
   DialogPlugin
 } from 'tdesign-react'
-import { api } from '@byzk/teamwork-inside-sdk'
+import { api } from '@teamworktoolbox/inside-sdk'
 import Title from '../Title'
 import './index.scss'
 

@@ -12,8 +12,8 @@ import React, {
 import IMInput, { IIMRef } from '../ImInput'
 import './index.scss'
 import { Button } from 'tdesign-react'
-import { AppInfo, UserInfo } from '@byzk/teamwork-sdk'
-import { ChatGroupInfo, electron } from '@byzk/teamwork-inside-sdk'
+import { AppInfo, UserInfo } from '@teamworktoolbox/sdk'
+import { ChatGroupInfo, electron } from '@teamworktoolbox/inside-sdk'
 import { EMsgItem, IEmojiItem } from '../ImInput/interface'
 
 const SESSION_STORAGE_MESSAGE_DATA_KEY = 'once-messageEdit-content'

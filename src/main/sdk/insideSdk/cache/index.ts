@@ -1,4 +1,4 @@
-import { UserInfo } from '@byzk/teamwork-sdk'
+import { UserInfo } from '@teamworktoolbox/sdk'
 import { IpcMainInvokeEvent } from 'electron'
 import { sendHttpRequestToLocalServer } from '../../../tools'
 

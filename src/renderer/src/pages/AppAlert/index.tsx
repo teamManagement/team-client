@@ -9,7 +9,7 @@ import {
   RemoveIcon
 } from 'tdesign-icons-react'
 import { Button } from 'tdesign-react'
-import { applications, currentWindow, electron, AppInfo } from '@byzk/teamwork-inside-sdk'
+import { applications, currentWindow, electron, AppInfo } from '@teamworktoolbox/inside-sdk'
 import './index.scss'
 import IconFont from '@renderer/components/IconFont'
 

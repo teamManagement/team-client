@@ -1,5 +1,5 @@
 import { FC, useCallback, useContext, useEffect, useMemo, useRef } from 'react'
-import { current } from '@byzk/teamwork-sdk'
+import { current } from '@teamworktoolbox/sdk'
 import Conversation from '@renderer/components/Conversation'
 import { getCommentsSidebarEle, getNavEle } from '@renderer/dom'
 import { useContentWidthSize } from '@renderer/hooks/size'

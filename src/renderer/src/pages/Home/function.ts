@@ -1,5 +1,5 @@
-import { api, insideDb } from '@byzk/teamwork-inside-sdk'
-import { current } from '@byzk/teamwork-sdk'
+import { api, insideDb } from '@teamworktoolbox/inside-sdk'
+import { current } from '@teamworktoolbox/sdk'
 import { ignoreErrorWrapper } from '@renderer/tools'
 import { pinyin } from 'pinyin-pro'
 import { message } from 'tdesign-react'
@@ -160,7 +160,7 @@ export async function loadMessageDataListEndMsg(
   for (let i = 0; i < messageDataList.length; i++) {
     const msgInfo = messageDataList[i]
     const requestUrl = `/services/chat/msg/query/end/${msgInfo.id}?num=1`
-    const resp = await api.proxyHttpLocalServer<UserChatMsg[]>(requestUrl)
+    const resp = await api.proxyHttpLocalServer<UserChatMsg[]>(requestUrl, { timeout: -1 })
     if (resp && resp.length > 0) {
       const msg = resp[0]
       let content = msg.content

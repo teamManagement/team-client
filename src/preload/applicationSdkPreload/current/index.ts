@@ -1,5 +1,5 @@
 import { ipcRenderer } from 'electron'
-import { UserInfo } from '@byzk/teamwork-sdk'
+import { UserInfo } from '@teamworktoolbox/sdk'
 import { sendSyncIpcEventWrapperEventNameAndDataCallBack } from '../tools'
 
 //#region APP相关接口

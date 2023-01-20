@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
-import { api, TcpTransferInfo, TcpTransferCmdCode } from '@byzk/teamwork-inside-sdk'
-import { UserInfo, current } from '@byzk/teamwork-sdk'
+import { api, TcpTransferInfo, TcpTransferCmdCode } from '@teamworktoolbox/inside-sdk'
+import { UserInfo, current } from '@teamworktoolbox/sdk'
 
 export function useUserStatus(): 'online' | 'offline' {
   const [status, setStatus] = useState<'online' | 'offline'>('offline')

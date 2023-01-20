@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import localforage from 'localforage'
 import AsyncLock from 'async-lock'
-import { api, ChatGroupInfo, insideDb, remoteCache } from '@byzk/teamwork-inside-sdk'
-import { AppInfo, current, UserInfo } from '@byzk/teamwork-sdk'
+import { api, ChatGroupInfo, remoteCache } from '@teamworktoolbox/inside-sdk'
+import { AppInfo, current, UserInfo } from '@teamworktoolbox/sdk'
 import { SearchResult } from '@renderer/components/SearchInput/searchInput'
 import {
   convertMessageInfoListToMessageInfoMap,

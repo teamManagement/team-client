@@ -1,6 +1,6 @@
 import { FC, useCallback, useEffect, useState } from 'react'
-import { current } from '@byzk/teamwork-sdk'
-import { id, api } from '@byzk/teamwork-inside-sdk'
+import { current } from '@teamworktoolbox/sdk'
+import { id, api } from '@teamworktoolbox/inside-sdk'
 import Nav from './components/Nav'
 import Content from './components/Content'
 import WindowToolbar from './components/WindowToolbar'

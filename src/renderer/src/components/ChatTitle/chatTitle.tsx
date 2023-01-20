@@ -1,4 +1,4 @@
-import { AppInfo, UserInfo } from '@byzk/teamwork-sdk'
+import { AppInfo, UserInfo } from '@teamworktoolbox/sdk'
 import { MessageInfo } from '@renderer/pages/Home/function'
 import { CSSProperties, FC, ReactNode, useMemo, Children } from 'react'
 import Avatar from '../Avatar'

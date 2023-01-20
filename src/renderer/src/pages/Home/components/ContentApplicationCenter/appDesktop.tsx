@@ -1,5 +1,5 @@
 import { FC, useCallback, useMemo, MouseEvent, useEffect, useRef } from 'react'
-import { contextmenu, AppInfo, ContextMenu } from '@byzk/teamwork-inside-sdk'
+import { contextmenu, AppInfo, ContextMenu } from '@teamworktoolbox/inside-sdk'
 import AppItem from '@renderer/components/AppItem'
 
 export interface AppDesktopContextMenuEvent {

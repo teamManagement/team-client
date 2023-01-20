@@ -13,7 +13,7 @@ import {
 import { LinkIcon, LocationIcon, LockOnIcon, SecuredIcon, UserIcon } from 'tdesign-icons-react'
 import { useCountDown } from 'ahooks'
 import { useNavigate } from 'react-router-dom'
-import { api } from '@byzk/teamwork-inside-sdk'
+import { api } from '@teamworktoolbox/inside-sdk'
 import { sha1 } from 'hash.js'
 import Title from '../Title'
 import './index.scss'

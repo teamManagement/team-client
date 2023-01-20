@@ -1,4 +1,4 @@
-import { UserInfo } from '@byzk/teamwork-sdk'
+import { UserInfo } from '@teamworktoolbox/sdk'
 import { tryJsonParseDataHandler } from '../../_commons/tools'
 import { sendInvokeIpcEventWrapperEventNameAndDataCallBack } from '../tools'
 

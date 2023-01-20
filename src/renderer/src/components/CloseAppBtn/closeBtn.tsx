@@ -1,7 +1,7 @@
 import React, { FC, useCallback, useState } from 'react'
 import { Button } from 'tdesign-react'
 import { CloseIcon } from 'tdesign-icons-react'
-import { electron } from '@byzk/teamwork-inside-sdk'
+import { electron } from '@teamworktoolbox/inside-sdk'
 
 export interface CloseAppBtnProps {
   size?: 'small' | 'medium' | 'large'

@@ -5,7 +5,7 @@ import NavItem from '../NavItem'
 import IconFont from '@renderer/components/IconFont'
 import { useUserinfo, useUserStatus } from '@renderer/hooks'
 import { useCallback } from 'react'
-import { api, modalWindow } from '@byzk/teamwork-inside-sdk'
+import { api, modalWindow } from '@teamworktoolbox/inside-sdk'
 
 export const Nav: FC = () => {
   const userInfo = useUserinfo()

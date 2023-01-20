@@ -5,7 +5,7 @@ import dayjs from 'dayjs'
 import classNames from 'classnames'
 import { HomeContext, HomeContextType } from '@renderer/pages/Home'
 import { MessageInfo } from '@renderer/pages/Home/function'
-import { UserInfo } from '@byzk/teamwork-sdk'
+import { UserInfo } from '@teamworktoolbox/sdk'
 
 export interface MessageCardProps {
   info: MessageInfo

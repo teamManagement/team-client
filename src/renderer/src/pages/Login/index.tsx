@@ -14,7 +14,7 @@ import {
 } from 'tdesign-react'
 import { UserIcon, LockOnIcon } from 'tdesign-icons-react'
 import { sha1 } from 'hash.js'
-import { api } from '@byzk/teamwork-inside-sdk'
+import { api } from '@teamworktoolbox/inside-sdk'
 import Avatar from '@renderer/components/Avatar'
 import CloseAppBtn from '@renderer/components/CloseAppBtn'
 import defaultHeadImg from '../../assets/imgs/default-header.png'

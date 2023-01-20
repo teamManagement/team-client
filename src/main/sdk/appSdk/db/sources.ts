@@ -1,7 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import logs from 'electron-log'
-import { UserInfo } from '@byzk/teamwork-sdk'
+import { UserInfo } from '@teamworktoolbox/sdk'
 import { sendHttpRequestToLocalServer } from '../../../tools'
 import { AppInfo } from '../../insideSdk/applications'
 import { CORE_COUCHDB_URL, USER_LOCAL_CONFIG_DIR } from '../../../consts'

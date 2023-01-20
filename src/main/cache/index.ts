@@ -1,4 +1,4 @@
-import { UserInfo } from '@byzk/teamwork-sdk'
+import { UserInfo } from '@teamworktoolbox/sdk'
 import { loadLocalCacheDatabase } from '../sdk/appSdk/db'
 import { sendHttpRequestToLocalServer } from '../tools'
 

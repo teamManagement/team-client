@@ -1,5 +1,5 @@
-import { ChatGroupInfo } from '@byzk/teamwork-inside-sdk'
-import { AppInfo, UserInfo } from '@byzk/teamwork-sdk'
+import { ChatGroupInfo } from '@teamworktoolbox/inside-sdk'
+import { AppInfo, UserInfo } from '@teamworktoolbox/sdk'
 import { ChatMsgType } from '@renderer/pages/Home/hooks'
 import classNames from 'classnames'
 import dayjs from 'dayjs'

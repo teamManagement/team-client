@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react'
 import { FC, useEffect, useState } from 'react'
 import { Notification as TdNotification } from 'tdesign-react'
-import { currentWindow } from '@byzk/teamwork-inside-sdk'
+import { currentWindow } from '@teamworktoolbox/inside-sdk'
 import { TemplateContent } from '@renderer/hooks/templates'
 import { Btn } from './Btn'
 import { useTemplateBody, useTemplateTitle } from './hooks/template'
