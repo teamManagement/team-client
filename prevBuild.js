@@ -1,9 +1,16 @@
-const { statSync, createReadStream, writeFileSync, copyFileSync } = require('fs')
+const {
+  statSync,
+  createReadStream,
+  writeFileSync,
+  copyFileSync,
+  mkdirSync,
+  createWriteStream
+} = require('fs')
 const { platform, arch } = require('os')
 const { exit } = require('process')
 const { createHash } = require('crypto')
 const path = require('path')
-const download = require('download')
+const http = require('https')
 
 function fileToSha512(filePath) {
   return new Promise((resolve, reject) => {
@@ -51,42 +58,73 @@ const localServerPath = path.join(fileDir, 'teamClientServer' + fileSuffix)
 
 const hashToFilePath = path.join('src', 'main', 'consts', 'hash.ts')
 
+function getMkcertDownloadUrl() {
+  let downloadPlatform = ''
+  switch (currentPlatform) {
+    case 'win32':
+      downloadPlatform = 'windows'
+      break
+    case 'linux':
+    case 'darwin':
+      downloadPlatform = currentPlatform
+      break
+    default:
+      console.error('不支持的平台: ', currentPlatform)
+      exit(3)
+      return
+  }
+
+  let downloadArch = ''
+  switch (arch()) {
+    case 'x64':
+      downloadArch = 'amd64'
+      break
+    case 'arm':
+    case 'arm64':
+      downloadArch = arch()
+      break
+    default:
+      console.error('不支持的架构: ', arch())
+      exit(4)
+      return
+  }
+
+  return `https://dl.filippo.io/mkcert/latest?for=${downloadPlatform}/${downloadArch}`
+}
+
+function downloadHttpFile(url, localPath) {
+  return new Promise((resolve, reject) => {
+    http
+      .get(url, (res) => {
+        try {
+          mkdirSync(path.dirname(localPath), { recursive: true })
+        } catch (e) {
+          //nothing
+        }
+
+        try {
+          const writer = createWriteStream(localPath)
+          res.pipe(writer)
+          writer.on('finish', () => {
+            writer.close()
+            resolve()
+          })
+        } catch (e) {
+          reject(e)
+        }
+      })
+      .on('error', (e) => {
+        reject(e)
+      })
+  })
+}
+
 ;(async () => {
   try {
-    let downloadPlatform = ''
-    switch (currentPlatform) {
-      case 'win32':
-        downloadPlatform = 'windows'
-        break
-      case 'linux':
-      case 'darwin':
-        downloadPlatform = currentPlatform
-        break
-      default:
-        console.error('不支持的平台: ', currentPlatform)
-        exit(3)
-        return
-    }
-
-    let downloadArch = ''
-    switch (arch()) {
-      case 'x64':
-        downloadArch = 'amd64'
-        break
-      case 'arm':
-      case 'arm64':
-        downloadArch = arch()
-        break
-      default:
-        console.error('不支持的架构: ', arch())
-        exit(4)
-        return
-    }
-
-    const downloadUrl = `https://dl.filippo.io/mkcert/latest?for=${downloadPlatform}/${downloadArch}`
     console.log('下载mkcert...')
     // await download(downloadUrl, './', { filename: 'mkcert' })
-    await download(downloadUrl, fileDir, { filename: 'mkcert' })
+    await downloadHttpFile(getMkcertDownloadUrl(), mkcertPath)
+    // await download(downloadUrl, fileDir, { filename: 'mkcert' })
     console.log('下载mkcert成功!!!')
     checkFile(mkcertPath, mkcertPath + '文件不存在')
     checkFile(localServerPath, localServerPath + '文件不存在')

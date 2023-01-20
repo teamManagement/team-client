@@ -91,7 +91,6 @@
     "babel-loader": "^8.2.5",
     "copyfiles": "^2.4.1",
     "css-loader": "^6.7.1",
-    "download": "^8.0.0",
     "electron": "^21.2.0",
     "electron-builder": "^22.14.13",
     "electron-notarize": "^1.2.1",
