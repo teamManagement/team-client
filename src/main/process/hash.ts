@@ -1,10 +1,10 @@
-import process from 'process'
 import fs from 'fs'
 import logs from 'electron-log'
 import { mkcertFilePath, packageLocalServerFilePath, updaterLocalServerFilePath } from './vars'
 import { is } from '@electron-toolkit/utils'
 import { fileToSha512 } from '../tools'
-import { packageInfo } from '../consts/packageInfo'
+// import { packageInfo } from '../consts/packageInfo'
+import { hashLocalServer, hashMkcert } from '../consts/hash'
 
 export async function verifyExternalProgramHash(): Promise<boolean> {
   try {
@@ -13,7 +13,7 @@ export async function verifyExternalProgramHash(): Promise<boolean> {
       return true
     }
 
-    if ((await fileToSha512(mkcertFilePath)) !== packageInfo.signature.mkcert[process.platform]) {
+    if ((await fileToSha512(mkcertFilePath)) !== hashMkcert) {
       logs.error('mkcert程序HASH验证失败')
       return false
     }
@@ -23,10 +23,7 @@ export async function verifyExternalProgramHash(): Promise<boolean> {
     try {
       const stat = fs.statSync(updaterLocalServerFilePath)
       if (stat.isFile()) {
-        if (
-          (await fileToSha512(updaterLocalServerFilePath)) ===
-          packageInfo.signature.localServer[process.platform]
-        ) {
+        if ((await fileToSha512(updaterLocalServerFilePath)) === hashLocalServer) {
           try {
             fs.copyFileSync(updaterLocalServerFilePath, packageLocalServerFilePath)
           } catch (e) {
@@ -43,10 +40,7 @@ export async function verifyExternalProgramHash(): Promise<boolean> {
       //nothing
     }
 
-    if (
-      (await fileToSha512(packageLocalServerFilePath)) !==
-      packageInfo.signature.localServer[process.platform]
-    ) {
+    if ((await fileToSha512(packageLocalServerFilePath)) !== hashLocalServer) {
       logs.error('本地服务文件HASH验证失败')
       return false
     }
