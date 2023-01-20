@@ -185,6 +185,8 @@ export const hashLocalServer =
 `
 
     writeFileSync(hashToFilePath, fileHash)
+    console.log('预编译脚本执行完成!!')
+    exit(0)
   } catch (e) {
     console.error('写出hash到文件失败')
     console.error(e)
