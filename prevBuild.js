@@ -1,16 +1,8 @@
-const {
-  statSync,
-  createReadStream,
-  writeFileSync,
-  copyFileSync,
-  mkdirSync,
-  createWriteStream
-} = require('fs')
-const { platform, arch } = require('os')
+const { statSync, createReadStream, writeFileSync, copyFileSync } = require('fs')
+const { platform } = require('os')
 const { exit } = require('process')
 const { createHash } = require('crypto')
 const path = require('path')
-const http = require('https')
 
 function fileToSha512(filePath) {
   return new Promise((resolve, reject) => {
@@ -165,30 +157,33 @@ const hashToFilePath = path.join('src', 'main', 'consts', 'hash.ts')
 //       .end()
 //   })
 // }
-try {
-  // console.log('下载mkcert...')
-  // await download(downloadUrl, './', { filename: 'mkcert' })
-  // await downloadHttpFile(getMkcertDownloadUrl(), mkcertPath)
-  // await download(downloadUrl, fileDir, { filename: 'mkcert' })
-  // console.log('下载mkcert成功!!!')
-  checkFile(mkcertPath, mkcertPath + '文件不存在')
-  checkFile(localServerPath, localServerPath + '文件不存在')
 
-  const mkcertSha512 = await fileToSha512(mkcertPath)
-  const localServerSha512 = await fileToSha512(localServerPath)
-  const fileHash = `export const hashMkcert =
-  '${mkcertSha512}'
-export const hashLocalServer =
-  '${localServerSha512}'
-`
+;(async () => {
+  try {
+    // console.log('下载mkcert...')
+    // await download(downloadUrl, './', { filename: 'mkcert' })
+    // await downloadHttpFile(getMkcertDownloadUrl(), mkcertPath)
+    // await download(downloadUrl, fileDir, { filename: 'mkcert' })
+    // console.log('下载mkcert成功!!!')
+    checkFile(mkcertPath, mkcertPath + '文件不存在')
+    checkFile(localServerPath, localServerPath + '文件不存在')
 
-  writeFileSync(hashToFilePath, fileHash)
-  console.log('预编译脚本执行完成!!')
-  copyFileSync('antd.css', path.join('node_modules', 'antd', 'dist', 'antd.css'))
-  console.log('替换antd.css文件成功')
-  exit(0)
-} catch (e) {
-  console.error('写出hash到文件失败')
-  console.error(e)
-  exit(2)
-}
+    const mkcertSha512 = await fileToSha512(mkcertPath)
+    const localServerSha512 = await fileToSha512(localServerPath)
+    const fileHash = `export const hashMkcert =
+    '${mkcertSha512}'
+  export const hashLocalServer =
+    '${localServerSha512}'
+  `
+
+    writeFileSync(hashToFilePath, fileHash)
+    console.log('预编译脚本执行完成!!')
+    copyFileSync('antd.css', path.join('node_modules', 'antd', 'dist', 'antd.css'))
+    console.log('替换antd.css文件成功')
+    exit(0)
+  } catch (e) {
+    console.error('写出hash到文件失败')
+    console.error(e)
+    exit(2)
+  }
+})()
