@@ -151,7 +151,7 @@ function downloadHttpFile(url, localPath) {
           const writer = createWriteStream(localPath)
           res.pipe(writer)
           writer.on('finish', () => {
-            console.log('文件写出完成')
+            console.log('文件写出完成到:', localPath, '成功')
             writer.close()
             resolve()
           })
