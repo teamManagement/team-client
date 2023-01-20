@@ -2701,6 +2701,18 @@
   dependencies:
     defer-to-connect "^1.0.1"
 
+"@teamworktoolbox/inside-sdk@^0.1.4":
+  version "0.1.4"
+  resolved "https://registry.npmjs.org/@teamworktoolbox/inside-sdk/-/inside-sdk-0.1.4.tgz#ebbe478fbb26ff1f754f0fb7b0903aa79a03006f"
+  integrity sha512-9+PTJ8kFpKQUgO6N7dIoFGLMRyP4tLfW6iTk3RxsKuHc0x6avQPBBHU9ZbXnF5r6wCzf3KgnCBx7ItNd7/Rs1A==
+  dependencies:
+    "@teamworktoolbox/sdk" "^0.1.4"
+
+"@teamworktoolbox/sdk@^0.1.4":
+  version "0.1.4"
+  resolved "https://registry.npmjs.org/@teamworktoolbox/sdk/-/sdk-0.1.4.tgz#25b2854d49bcde3824d31160e6e27c24dfdb9a1c"
+  integrity sha512-us13cux4iPjLL0Rfr+elj2jhpR72cJxGgyy1tRDFvUhG/c9m5AQMP3anLXFK4nUlK67RG9WhxMP8/36pescD9g==
+
 "@testing-library/dom@^8.3.0":
   version "8.19.0"
   resolved "https://registry.npmmirror.com/@testing-library/dom/-/dom-8.19.0.tgz#bd3f83c217ebac16694329e413d9ad5fdcfd785f"
