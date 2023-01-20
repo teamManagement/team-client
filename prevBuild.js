@@ -4,6 +4,8 @@ const { exit } = require('process')
 const { createHash } = require('crypto')
 const path = require('path')
 
+console.log('当前所在目录:', __dirname)
+
 function fileToSha512(filePath) {
   return new Promise((resolve, reject) => {
     const h = createHash('sha512')
