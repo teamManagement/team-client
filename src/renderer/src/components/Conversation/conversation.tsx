@@ -3,12 +3,13 @@ import { AppInfo, UserInfo } from '@teamworktoolbox/sdk'
 import { ChatMsgType } from '@renderer/pages/Home/hooks'
 import classNames from 'classnames'
 import dayjs from 'dayjs'
-import { FC, useMemo, HtmlHTMLAttributes, ReactNode, CSSProperties } from 'react'
+import { FC, useMemo, HtmlHTMLAttributes, CSSProperties } from 'react'
 import { ErrorCircleFilledIcon, LoadingIcon } from 'tdesign-icons-react'
 import Avatar from '../Avatar'
 import { emojiMap, emojiReplaceReg } from '../Emoji'
 import { BubbleTipIcon } from './bubbleTipIcon'
 import './index.scss'
+import { useCallback } from 'react'
 
 function replaceEmojiStr(subStr: string): string {
   const emojiImg = emojiMap[subStr]
@@ -19,26 +20,78 @@ function replaceEmojiStr(subStr: string): string {
   }
 }
 
+export interface ConversationTargetInfo {
+  type: 'users' | 'groups' | 'apps'
+  meta: UserInfo | ChatGroupInfo | AppInfo
+}
+
 export interface ConversationProps extends HtmlHTMLAttributes<HTMLDivElement> {
+  id: string
   status?: 'loading' | 'error' | 'ok'
+  errMsg?: string
   width?: number
-  targetInfo?: { type: 'users' | 'groups' | 'apps'; meta: UserInfo | ChatGroupInfo | AppInfo }
+  targetInfo?: ConversationTargetInfo
   meInfo?: UserInfo
   content: string
   contentType?: ChatMsgType
   sendTime?: string | number
+  onErrorRetry?(id: string, info?: ConversationTargetInfo): void
+  onRightClick?(id: string, status?: 'loading' | 'error' | 'ok'): void
 }
 
 export const Conversation: FC<ConversationProps> = ({
+  id,
   meInfo,
   targetInfo,
   status = 'ok',
+  errMsg,
   width,
   content,
   contentType,
   sendTime,
+  onErrorRetry,
+  onRightClick,
   ...otherDatas
 }) => {
+  // const contextMenu = useRef<ContextMenu | null>()
+
+  // const clearContextmenu = useCallback((key: string) => {
+  //   contextmenu.clear(key)
+  //   contextMenu.current = null
+  // }, [])
+
+  // useEffect(() => {
+  //   const contextmenuId = 'conversation-error-menu-' + targetInfo?.type + '-' + id
+
+  //   if (status !== 'error') {
+  //     clearContextmenu(contextmenuId)
+  //     return
+  //   }
+
+  //   console.log('被调用')
+  //   // if (contextMenu.current !== null) {
+  //   //   return
+  //   // }
+
+  //   contextMenu.current = contextmenu.build(
+  //     [
+  //       {
+  //         label: '删除',
+  //         // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+  //         click() {
+  //           onDeleteClick && onDeleteClick(id, targetInfo)
+  //         }
+  //       }
+  //     ],
+  //     contextmenuId
+  //   )
+
+  //   return () => {
+  //     console.log('取消调用')
+  //     clearContextmenu(contextmenuId)
+  //   }
+  // }, [id, status, targetInfo])
+
   const align = useMemo(() => {
     return meInfo ? 'right' : 'left'
   }, [])
@@ -56,22 +109,22 @@ export const Conversation: FC<ConversationProps> = ({
   }, [targetInfo, meInfo])
 
   const messageTitleDesc = useMemo(() => {
-    const msgTitleFlagClassName = 'message-title-flag-' + align
-    let ele: ReactNode = undefined
-    switch (status) {
-      case 'loading':
-        ele = <LoadingIcon size="18px" className={msgTitleFlagClassName} />
-        break
-      case 'error':
-        ele = (
-          <ErrorCircleFilledIcon
-            style={{ cursor: 'pointer' }}
-            color="red"
-            size="22px"
-            className={msgTitleFlagClassName}
-          />
-        )
-    }
+    // const msgTitleFlagClassName = 'message-title-flag-' + align
+    // let ele: ReactNode = undefined
+    // switch (status) {
+    //   // case 'loading':
+    //   //   ele = <LoadingIcon size="18px" className={msgTitleFlagClassName} />
+    //   //   break
+    //   case 'error':
+    //     ele = (
+    //       <ErrorCircleFilledIcon
+    //         style={{ cursor: 'pointer' }}
+    //         color="red"
+    //         size="22px"
+    //         className={msgTitleFlagClassName}
+    //       />
+    //     )
+    // }
 
     // let desc: string | undefined = undefined
     // if (meInfo) {
@@ -104,9 +157,9 @@ export const Conversation: FC<ConversationProps> = ({
 
     return (
       <>
-        {align === 'right' && ele}
+        {/* {align === 'right' && ele} */}
         {desc}
-        {align === 'left' && ele}
+        {/* {align === 'left' && ele} */}
       </>
     )
   }, [align, status, meInfo, targetInfo, sendTime])
@@ -144,8 +197,21 @@ export const Conversation: FC<ConversationProps> = ({
     }
   }, [])
 
+  const errorClick = useCallback(() => {
+    onErrorRetry && onErrorRetry(id, targetInfo)
+  }, [onErrorRetry, targetInfo, id])
+
+  const onContextMenu = useCallback(() => {
+    onRightClick && onRightClick(id, status)
+  }, [onRightClick, id, status])
+
   return (
-    <div {...otherDatas} style={{ width, ...otherDatas.style }} className="conversation">
+    <div
+      onContextMenu={onContextMenu}
+      {...otherDatas}
+      style={{ width, ...otherDatas.style }}
+      className="conversation"
+    >
       {align == 'left' && <div className="avatar-wrapper">{avatarEle}</div>}
       <div className={classNames('message', align)}>
         <div className="message-title">
@@ -153,6 +219,19 @@ export const Conversation: FC<ConversationProps> = ({
         </div>
 
         <div className="bubble">
+          {status === 'loading' && (
+            <LoadingIcon style={{ color: '#999' }} className="status" size="18px" />
+          )}
+          {status === 'error' && (
+            <span className="status" title={errMsg}>
+              <ErrorCircleFilledIcon
+                onClick={errorClick}
+                style={{ cursor: 'pointer' }}
+                color="red"
+                size="22px"
+              />
+            </span>
+          )}
           <div className="bubble-tip">
             <BubbleTipIcon width={40} height={28} color="#bcd7f1" />
           </div>

@@ -7,6 +7,7 @@ import { current } from './current'
 import { loadDbApi } from './db'
 import { dialog } from './dialog'
 import { download } from './download'
+import { encoding } from './encoding'
 import { exec } from './exec'
 import { hosts } from './hosts'
 import { notification } from './notification'
@@ -33,7 +34,8 @@ const teamworkSDK = {
   dialog,
   download,
   notification,
-  channel
+  channel,
+  encoding
 }
 
 if (process.contextIsolated) {

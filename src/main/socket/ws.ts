@@ -252,7 +252,6 @@ export class WsHandler {
                 }
 
                 if (data.cmdCode === 4) {
-                  console.log('进入....')
                   showNotification('template', {
                     title: '他处登录',
                     body: `您当前的帐号正在: ${msgData} 上尝试登录, 是否允许进行登录?`,
@@ -282,9 +281,9 @@ export class WsHandler {
                   return
                 }
 
-                if (data.cmdCode === 5) {
-                  console.log('应用来信')
-                }
+                // if (data.cmdCode === 5) {
+                //   console.log('应用来信')
+                // }
 
                 for (const w of list) {
                   w.sender && w.sender.send('ipc-serverMsgTransferEvent', serverData)

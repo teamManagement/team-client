@@ -1,5 +1,5 @@
 import { FC, useCallback, useContext, useEffect, useMemo, useRef } from 'react'
-import { current } from '@teamworktoolbox/sdk'
+import { contextmenu, ContextMenu, current } from '@teamworktoolbox/sdk'
 import Conversation from '@renderer/components/Conversation'
 import { getCommentsSidebarEle, getNavEle } from '@renderer/dom'
 import { useContentWidthSize } from '@renderer/hooks/size'
@@ -14,6 +14,41 @@ const _lock = new AsyncLock()
 export const MessageListWrapper: FC = () => {
   const homeContext = useContext<HomeContextType>(HomeContext)
   const { messageOperation } = homeContext
+
+  const deleteChatMsgId = useRef<string | undefined>(undefined)
+
+  const contextMenu = useRef<ContextMenu | null>(null)
+  useEffect(() => {
+    const menuId = 'chatMsg-list-contextmenu'
+    contextMenu.current = contextmenu.build(
+      [
+        {
+          label: '删除',
+          // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+          click() {
+            if (!deleteChatMsgId.current) {
+              return
+            }
+            messageOperation.deleteChatMsg(deleteChatMsgId.current)
+            deleteChatMsgId.current = undefined
+          }
+        }
+      ],
+      menuId
+    )
+    return () => {
+      contextmenu.clear(menuId)
+      contextMenu.current = null
+    }
+  }, [messageOperation.deleteChatMsg])
+
+  const showContextMenu = useCallback((id: string, status: 'loading' | 'error' | 'ok') => {
+    if (status !== 'error') {
+      return
+    }
+    deleteChatMsgId.current = id
+    contextMenu.current?.popup()
+  }, [])
 
   const wrapperWheelLoading = useRef<boolean>(false)
 
@@ -30,6 +65,13 @@ export const MessageListWrapper: FC = () => {
       behavior: 'smooth'
     })
   }, [])
+
+  useEffect(() => {
+    homeContext.dispatch({ type: 'messageListScrollToBottom', data: messageWrapperScrollToBottom })
+    return () => {
+      homeContext.dispatch({ type: 'messageListScrollToBottom', data: undefined })
+    }
+  }, [messageWrapperScrollToBottom, homeContext.dispatch])
 
   const messageListContentWrapper = useRef<HTMLDivElement>(null)
 
@@ -73,19 +115,32 @@ export const MessageListWrapper: FC = () => {
     }
 
     const msgList = [
-      ...messageOperation.currentSendingChatMessageList,
-      ...messageOperation.currentChatMessageList
+      ...messageOperation.currentChatMessageList,
+      ...messageOperation.currentSendingChatMessageList
     ]
+
+    const tempIdMap: { [key: string]: boolean } = {}
 
     return msgList
       .filter((m) => m.chatType >= ChatType.ChatTypeUser && m.chatType <= ChatType.ChatTypeApp)
-      .map((m, index) => {
+      .map((m) => {
+        if (tempIdMap[m.clientUniqueId]) {
+          return undefined
+        }
+
+        tempIdMap[m.clientUniqueId] = true
         // console.log(m)
-        const key = m.id || m.clientUniqueId || index
+        const key = m.clientUniqueId
         if (m.chatType === ChatType.ChatTypeUser || m.chatType === ChatType.ChatTypeApp) {
+          // const deleteMessage: (id: string, info?: ConversationTargetInfo) => void = () => {
+          //   homeContext.deleteChatMsg(m)
+          // }
           if (m.targetId === current.userInfo.id) {
             return (
               <Conversation
+                onErrorRetry={messageOperation.retrySendErrCharMsg}
+                onRightClick={showContextMenu}
+                id={m.clientUniqueId}
                 key={key}
                 contentType={m.msgType}
                 content={m.content}
@@ -95,12 +150,16 @@ export const MessageListWrapper: FC = () => {
                 }}
                 width={commentsContentSize}
                 status={m.status}
-                sendTime={typeof m.timestamp === 'string' ? parseInt(m.timestamp) : undefined}
+                errMsg={m.errMsg}
+                sendTime={typeof m.timeStamp === 'string' ? parseInt(m.timeStamp) : undefined}
               />
             )
           }
           return (
             <Conversation
+              onErrorRetry={messageOperation.retrySendErrCharMsg}
+              onRightClick={showContextMenu}
+              id={m.clientUniqueId}
               key={key}
               contentType={m.msgType}
               content={m.content}
@@ -108,6 +167,7 @@ export const MessageListWrapper: FC = () => {
               width={commentsContentSize}
               status={m.status}
               sendTime={m.createdAt}
+              errMsg={m.errMsg}
             />
           )
         }
@@ -118,6 +178,7 @@ export const MessageListWrapper: FC = () => {
     messageOperation.currentSendingChatMessageList,
     messageOperation.currentChatMessageList,
     messageOperation.currentMessageInfo,
+    messageOperation.retrySendErrCharMsg,
     commentsContentSize
   ])
 

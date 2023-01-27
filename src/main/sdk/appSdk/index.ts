@@ -6,7 +6,8 @@ import { _channelHandler } from './channel'
 import { _currentSyncHandler } from './current'
 import { _dbHandler, _dbSyncHandler } from './db'
 import { _dialogSyncHandler } from './dialog'
-import { _downloadHandler } from './donwload'
+import { _downloadHandler } from './download'
+import { _encodingHandler, _encodingSyncHandler } from './encoding'
 import { _execHandler } from './exec'
 import { _hostsHandler } from './hosts'
 import { _notificationHandler } from './notification'
@@ -24,7 +25,16 @@ function _childEventHandlerWrapper(
   }
 }
 
-const noCheckAppInfoMethodName = ['httpFile', 'showWithTemplate']
+const noCheckAppInfoMethodName = [
+  'httpFile',
+  'showWithTemplate',
+  'base64',
+  'base64Decode',
+  'base64DecodeToBuffer',
+  'hex',
+  'hexDecode',
+  'hexDecodeToBuffer'
+]
 
 const promiseEventHandlerInfo: SdkRegistryInfo<AppInfo> = {
   name: applicationPreloadIpcEventName,
@@ -77,7 +87,11 @@ const promiseEventHandlerInfo: SdkRegistryInfo<AppInfo> = {
     /**
      * 消息通知
      */
-    notification: _notificationHandler
+    notification: _notificationHandler,
+    /**
+     * 编解码工具
+     */
+    encoding: _encodingHandler
   }
 }
 
@@ -94,7 +108,10 @@ const syncEventHandlerInfo: SdkRegistryInfo<void> = {
     db: {
       sync: _dbSyncHandler
     },
-    dialog: _dialogSyncHandler
+    dialog: _dialogSyncHandler,
+    encoding: {
+      sync: _encodingSyncHandler
+    }
   }
 }
 

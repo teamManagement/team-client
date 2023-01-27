@@ -31,18 +31,21 @@ export const AppDesktop: FC<AppDesktop> = ({
   const contextMenu = useRef<ContextMenu | null>()
 
   useEffect(() => {
-    contextMenu.current = contextmenu.build([
-      {
-        label: '刷新',
-        // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-        click() {
-          forceRefreshAppList()
+    contextMenu.current = contextmenu.build(
+      [
+        {
+          label: '刷新',
+          // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+          click() {
+            forceRefreshAppList()
+          }
         }
-      }
-    ])
+      ],
+      'desktop-refresh'
+    )
 
     return () => {
-      contextmenu.clearAll()
+      contextmenu.clear('desktop-refresh')
       contextMenu.current = null
     }
   }, [])

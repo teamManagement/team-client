@@ -97,10 +97,12 @@ export interface MessageInfo {
  */
 export async function queryMessageDataList(): Promise<MessageInfo[]> {
   try {
-    const messageList = insideDb.sync.index.find<MessageInfo>({
-      selector: { 'indexInfo.dataType': 'userMessage', 'indexInfo.updateAt': { $gte: null } },
-      sort: [{ 'indexInfo.updateAt': 'desc' }]
-    }).docs
+    const messageList = (
+      await insideDb.index.find<MessageInfo>({
+        selector: { 'indexInfo.dataType': 'userMessage', 'indexInfo.updateAt': { $gte: null } },
+        sort: [{ 'indexInfo.updateAt': 'desc' }]
+      })
+    ).docs
     await loadMessageDataListEndMsg(messageList)
     return messageList
   } catch (e) {
@@ -113,12 +115,46 @@ export async function queryMessageDataList(): Promise<MessageInfo[]> {
  * 根据ID删除消息卡片
  * @param id 要删除的Id
  */
-export function deleteMessageDataById(id: string): void {
+export async function deleteMessageDataById(id: string): Promise<void> {
   try {
-    insideDb.sync.remove(id)
+    await insideDb.remove(id)
   } catch (e) {
     console.warn('删除消息卡片失败: ', e)
     return
+  }
+}
+
+export async function errorSendingToLoading(clientUniqueId: string): Promise<void> {
+  if (!clientUniqueId) {
+    throw new Error('id不存在')
+  }
+
+  const userChatMsgData = await insideDb.get<UserChatMsgTableInfo>(getSendingId(clientUniqueId))
+  await insideDb.remove(userChatMsgData._id)
+  delete (userChatMsgData as any)['_rev']
+
+  userChatMsgData.chatData.status = 'loading'
+  userChatMsgData.chatData.errMsg = ''
+  await insideDb.put(userChatMsgData)
+}
+
+export interface UserChatMsgTableInfo {
+  chatData: UserChatMsg
+  indexInfo: {
+    dataType: string
+    updateAt: string
+  }
+}
+
+function getSendingId(clientUniqueId: string): string {
+  return 'sending_msg_' + clientUniqueId
+}
+
+export async function getSendingUserChatMsg(id: string): Promise<UserChatMsg | undefined> {
+  try {
+    return (await insideDb.get<UserChatMsgTableInfo>(getSendingId(id))).chatData
+  } catch (e) {
+    return undefined
   }
 }
 
@@ -128,7 +164,7 @@ export function saveSendingChatMsgInfo(chatMsg: UserChatMsg): UserChatMsg {
   })
   try {
     insideDb.sync.put({
-      _id: chatMsg.clientUniqueId,
+      _id: getSendingId(chatMsg.clientUniqueId),
       chatData: chatMsg,
       indexInfo: {
         dataType: 'sending_msg_' + chatMsg.chatType + '_' + chatMsg.targetId,
@@ -142,17 +178,69 @@ export function saveSendingChatMsgInfo(chatMsg: UserChatMsg): UserChatMsg {
   return chatMsg
 }
 
-export function querySendingChatMsgInfoList(chatType: ChatType, targetId: string): UserChatMsg[] {
-  const messageList = insideDb.sync.index.find<any>({
+export async function sendingMsgHaveError(id: string, errMsg: string): Promise<void> {
+  try {
+    const sendingChatMsgId = getSendingId(id)
+    const userChatMsg = await insideDb.get<UserChatMsgTableInfo>(sendingChatMsgId)
+    if (!userChatMsg) {
+      return
+    }
+    await insideDb.remove(sendingChatMsgId)
+
+    userChatMsg.chatData.status = 'error'
+    userChatMsg.chatData.errMsg = errMsg
+    ;(userChatMsg as any)._rev = undefined
+    await insideDb.put(userChatMsg)
+  } catch (e) {
+    console.warn('更新消息状态为错误失败')
+  }
+}
+
+export function confirmSendingChatMsgInfo(chatMsg: UserChatMsg): void {
+  insideDb.sync.remove(getSendingId(chatMsg.clientUniqueId))
+}
+
+export async function deleteChatMsg(chatMsgId: string): Promise<void> {
+  try {
+    const msgId = getSendingId(chatMsgId)
+    const msgInfo = await insideDb.get<UserChatMsgTableInfo>(msgId)
+    if (!msgInfo.indexInfo.dataType.startsWith('sending_msg_')) {
+      throw new Error('未能被识别的消息类型')
+    }
+
+    if (msgInfo.chatData.status !== 'error') {
+      throw new Error('当前消息状态无法进行删除')
+    }
+
+    await insideDb.remove(msgId)
+  } catch (e) {
+    console.error('获取要删除的消息失败: ', e)
+    throw e
+  }
+}
+
+export async function querySendingChatMsgInfoList(
+  chatType: ChatType,
+  targetId: string
+): Promise<UserChatMsg[]> {
+  const messageList = await insideDb.index.find<UserChatMsgTableInfo>({
     selector: {
       'indexInfo.dataType': 'sending_msg_' + chatType + '_' + targetId,
       'indexInfo.updateAt': { $gte: null }
     },
-    sort: [{ 'indexInfo.updateAt': 'desc' }]
-  }).docs
-  console.log(messageList)
-  return []
+    sort: [{ 'indexInfo.updateAt': 'asc' }]
+  })
+
+  return messageList.docs.map((m) => {
+    return m.chatData
+  })
+  // console.log(messageList)
+  // return messageList
 }
+
+// export function filterSendingChatMsgList(msgList: UserChatMsg[], targetId: string): UserChatMsg {
+//   api.proxyHttpLocalServer('')
+// }
 
 export async function loadMessageDataListEndMsg(
   messageDataList: MessageInfo[]

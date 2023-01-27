@@ -58,6 +58,7 @@ export const MessageCard: FC<MessageCardProps> = ({ info, active, onClick, onClo
   }, [info.endMessageTime])
 
   const cardClick = useCallback(() => {
+    console.log('...........')
     onClick && onClick(info)
   }, [info])
 

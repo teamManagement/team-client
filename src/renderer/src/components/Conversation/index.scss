@@ -22,15 +22,20 @@ $avatarSize: 68px;
       align-items: flex-end;
       text-align: right;
 
-      > .bubble > .bubble-tip {
-        transform: scale(-1) !important;
-        -webkit-transform: scale(-1) !important;
-        -moz-transform: scale(-1) !important;
-        -ms-transform: scale(-1) !important;
-        -o-transform: scale(-1) !important;
+      > .bubble {
+        > .status {
+          left: -28px;
+        }
+        > .bubble-tip {
+          transform: scale(-1) !important;
+          -webkit-transform: scale(-1) !important;
+          -moz-transform: scale(-1) !important;
+          -ms-transform: scale(-1) !important;
+          -o-transform: scale(-1) !important;
 
-        left: unset !important;
-        right: -8px;
+          left: unset !important;
+          right: -8px;
+        }
       }
     }
 
@@ -53,6 +58,12 @@ $avatarSize: 68px;
     }
     > .bubble {
       position: relative;
+
+      > .status {
+        position: absolute;
+        top: 8px;
+        // color: #999;
+      }
 
       > .bubble-content {
         margin-top: 8px;

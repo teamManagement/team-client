@@ -1,14 +1,13 @@
-import { FC, useCallback, useEffect, useState } from 'react'
+import { FC, useCallback, useEffect, useReducer, useState } from 'react'
 import { current } from '@teamworktoolbox/sdk'
-import { id, api } from '@teamworktoolbox/inside-sdk'
+import { id } from '@teamworktoolbox/inside-sdk'
 import Nav from './components/Nav'
 import Content from './components/Content'
 import WindowToolbar from './components/WindowToolbar'
 import './index.scss'
 import React from 'react'
-import { UserChatMsg } from './components/ContentComments/commentsContent/vos'
 import AsyncLock from 'async-lock'
-import { ChatMessageCardHookReturnType, useChatMessageOperation } from './hooks'
+import { ChatMessageCardHookReturnType, useChatMessageOperation, UserChatMsg } from './hooks'
 
 const lock = new AsyncLock()
 
@@ -30,6 +29,11 @@ export interface HomeContextType {
    * 清空未读消息获取方法
    */
   clearUnreadFn(): void
+  /**
+   * 派发值
+   * @param val 要派发的内容
+   */
+  dispatch(val: HomeReducerAction): void
   /**
    * 打开消息卡片
    */
@@ -54,7 +58,13 @@ const homeContextInitValue = {
   clearUnreadFn() {
     //nothing
   },
-  messageOperation: {} as any
+  messageOperation: {} as any,
+  dispatch() {
+    return
+  },
+  deleteChatMsg() {
+    //nothing
+  }
   // onlineUserIdList: current.onlineUserIdList
   // registerOnlineUserChange: current.registerOnlineUserChange,
   // unRegisterOnlineUserChange: current.unRegisterOnlineUserChange
@@ -64,8 +74,35 @@ let unreadChatMsgFn: ((chatMsg: UserChatMsg) => void) | undefined = undefined
 
 export const HomeContext = React.createContext<HomeContextType>(homeContextInitValue)
 
+export interface HomeReducerData {
+  messageListScrollToBottom?(): void
+}
+
+export interface HomeReducerAction {
+  type: 'messageListScrollToBottom'
+  data: any
+}
+
 export const Home: FC = () => {
-  const messageOperation = useChatMessageOperation()
+  const [reducerData, dispatch] = useReducer<
+    (states: HomeReducerData, action: HomeReducerAction) => HomeReducerData
+  >((states, action) => {
+    const target: HomeReducerData = {
+      ...states
+    }
+    switch (action.type) {
+      case 'messageListScrollToBottom':
+        target.messageListScrollToBottom = action.data
+        break
+      default:
+        return states
+    }
+    return target
+  }, {})
+
+  const messageOperation = useChatMessageOperation({
+    scrollToBottom: reducerData.messageListScrollToBottom
+  })
 
   // const [, setUnreadFn] = useState<((chatMsg: UserChatMsg) => void) | undefined>(undefined)
   const getUnreadChatMsg = useCallback(async () => {
@@ -92,42 +129,42 @@ export const Home: FC = () => {
     })
   }, [])
 
-  useEffect(() => {
-    const fnId = api.registerServerMsgHandler((data) => {
-      if (data.cmdCode !== 6) {
-        return
-      }
+  // useEffect(() => {
+  //   const fnId = api.registerServerMsgHandler((data) => {
+  //     if (data.cmdCode !== 6) {
+  //       return
+  //     }
 
-      // insideDb.;
-      lock.acquire('serverMsgHandler', async (done) => {
-        try {
-          for (;;) {
-            if (
-              await new Promise<boolean>((resolve) => {
-                if (!unreadChatMsgFn) {
-                  setTimeout(() => {
-                    resolve(false)
-                  }, 500)
-                  return
-                }
+  //     // insideDb.;
+  //     lock.acquire('serverMsgHandler', async (done) => {
+  //       try {
+  //         for (;;) {
+  //           if (
+  //             await new Promise<boolean>((resolve) => {
+  //               if (!unreadChatMsgFn) {
+  //                 setTimeout(() => {
+  //                   resolve(false)
+  //                 }, 500)
+  //                 return
+  //               }
 
-                unreadChatMsgFn(data.data as any)
-                resolve(true)
-              })
-            ) {
-              break
-            }
-          }
-        } finally {
-          done()
-        }
-      })
-    })
-    return () => {
-      console.log('退出...')
-      api.removeServerMsgHandler(fnId)
-    }
-  }, [])
+  //               unreadChatMsgFn(data.data as any)
+  //               resolve(true)
+  //             })
+  //           ) {
+  //             break
+  //           }
+  //         }
+  //       } finally {
+  //         done()
+  //       }
+  //     })
+  //   })
+  //   return () => {
+  //     console.log('退出...')
+  //     api.removeServerMsgHandler(fnId)
+  //   }
+  // }, [])
 
   const [onlineUserIdList, setOnlineUserIdList] = useState<string[]>(
     current.onlineUserIdList() || []
@@ -149,7 +186,8 @@ export const Home: FC = () => {
         messageOperation,
         onlineUserIdList,
         getUnreadChatMsg,
-        clearUnreadFn
+        clearUnreadFn,
+        dispatch
       }}
     >
       <div className="home match-parent">

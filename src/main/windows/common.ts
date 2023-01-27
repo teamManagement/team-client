@@ -5,7 +5,7 @@ import { CurrentInfo, WinNameEnum } from '../current'
 import { AppIcon } from '../icons'
 import { WsHandler } from '../socket'
 import { PRELOAD_JS_INSIDE } from '../consts'
-import { registerDownloadEvent } from '../sdk/appSdk/donwload'
+import { registerDownloadEvent } from '../sdk/appSdk/download'
 
 export async function SettingWindow(
   winNameEnum: WinNameEnum,

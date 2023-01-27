@@ -214,6 +214,7 @@ export const CommentsSidebar: FC = () => {
         </div>
       )
     }
+    console.log(messageOperation.currentMessageInfo)
     return messageOperation.messageInfoList.map((m) => {
       return (
         <div key={m.id} className="item">
