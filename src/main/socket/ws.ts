@@ -293,7 +293,9 @@ export class WsHandler {
                   'TCP服务通道转发的数据内容失败, 内容: ',
                   buf.toString('utf8'),
                   ' , 错误信息: ',
-                  JSON.stringify(e)
+                  JSON.stringify(e),
+                  ' ,原始错误: ',
+                  e
                 )
               } finally {
                 done()

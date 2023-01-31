@@ -10,10 +10,11 @@ import {
   deleteChatMsg,
   deleteMessageDataById,
   errorSendingToLoading,
+  getMessageInfoById,
   getSendingUserChatMsg,
   MessageInfo,
   MessageInfoMap,
-  putMessageInfoAndSettingCurrent,
+  putMessageInfo,
   queryCurrentMessageInfo,
   queryMessageDataList,
   querySendingChatMsgInfoList,
@@ -152,7 +153,7 @@ const _chatMsgListLocalForageKey = 'chat_msg_list'
  * @param targetId 目标ID
  * @returns 本地存储key
  */
-function getChatMsgLitLocalForageKey(targetId: string): string {
+function getChatMsgLocalForageKey(targetId: string): string {
   return targetId + '_' + _chatMsgListLocalForageKey
 }
 
@@ -409,11 +410,65 @@ export function useChatMessageOperation(fns?: {
     })
   }, [currentMessageInfo])
 
+  const sendOutMsgHandler = useCallback(async (userChatMsg: UserChatMsg) => {
+    let targetId = ''
+    let messageInfo: OpenChatMessageCardInfo | undefined = undefined
+
+    if (userChatMsg.chatType === ChatType.ChatTypeUser) {
+      if (
+        (userChatMsg.targetId === current.userInfo.id &&
+          userChatMsg.sourceId === current.userInfo.id) ||
+        (userChatMsg.targetId !== current.userInfo.id &&
+          userChatMsg.sourceId !== current.userInfo.id)
+      ) {
+        return
+      }
+
+      if (userChatMsg.targetId === current.userInfo.id) {
+        targetId = userChatMsg.sourceId
+      } else {
+        targetId = userChatMsg.targetId
+      }
+
+      if (await getMessageInfoById(targetId)) {
+        return
+      }
+
+      const userList = await remoteCache.userList()
+      for (const user of userList) {
+        if (user.id === targetId) {
+          let desc = ''
+          if (user.orgList) {
+            for (const o of user.orgList) {
+              desc += o.org.name + ','
+            }
+          }
+
+          if (desc.length > 0) {
+            desc = desc.substring(0, desc.length - 1)
+            desc = '部门: ' + desc
+          }
+          messageInfo = {
+            type: 'users',
+            info: { id: user.id, name: user.name, icon: user.icon, sourceData: user, desc }
+          }
+          break
+        }
+      }
+    }
+
+    if (!targetId || !messageInfo) {
+      return
+    }
+
+    openChatMessageCard(messageInfo, true)
+  }, [])
+
   const confirmSendingMsg = useCallback(
-    (userChatMsg: UserChatMsg) => {
+    (userChatMsg: UserChatMsg, isSendOut?: boolean) => {
       console.log(currentMessageInfo)
       const { targetId } = userChatMsg
-      const localforageKey = getChatMsgLitLocalForageKey(targetId)
+      const localforageKey = getChatMsgLocalForageKey(targetId)
       _lock.acquire(localforageKey, async (done) => {
         try {
           try {
@@ -425,15 +480,25 @@ export function useChatMessageOperation(fns?: {
               delete sendingRetryMsgTimeoutIdMap.current[userChatMsg.clientUniqueId]
               try {
                 confirmSendingChatMsgInfo(userChatMsg)
-                done()
               } catch (e) {
-                done(e as any)
+                if (!isSendOut) {
+                  done(e as any)
+                  return
+                }
+                //nothing
               }
+              done()
             })
           } catch (e) {
             return
           }
-          loadCurrentSendingMessageList()
+          if (!isSendOut) {
+            loadCurrentSendingMessageList()
+          }
+
+          if (isSendOut) {
+            await sendOutMsgHandler(userChatMsg)
+          }
 
           if (currentMessageInfo?.id !== targetId) {
             return
@@ -475,7 +540,7 @@ export function useChatMessageOperation(fns?: {
 
       if (data.data.type === QueueMsgType.CONFIRM || data.data.type === QueueMsgType.SEND_OUT) {
         const userChatMsg = JSON.parse(encoding.sync.base64Decode(data.data.content))
-        confirmSendingMsg(userChatMsg)
+        confirmSendingMsg(userChatMsg, data.data.type === QueueMsgType.SEND_OUT)
         return
       }
     })
@@ -528,7 +593,7 @@ export function useChatMessageOperation(fns?: {
         return
       }
 
-      const localforageKey = getChatMsgLitLocalForageKey(targetId)
+      const localforageKey = getChatMsgLocalForageKey(targetId)
 
       await _lock.acquire(localforageKey, async (done) => {
         try {
@@ -637,37 +702,40 @@ export function useChatMessageOperation(fns?: {
     [messageInfoList]
   )
 
-  const openChatMessageCard = useCallback((messageInfo: OpenChatMessageCardInfo) => {
-    if (
-      messageInfo.type !== 'apps' &&
-      messageInfo.type !== 'groups' &&
-      messageInfo.type !== 'users'
-    ) {
-      console.error('暂不支持的聊天类型')
-      return
-    }
+  const openChatMessageCard = useCallback(
+    (messageInfo: OpenChatMessageCardInfo, noCurrent?: boolean) => {
+      if (
+        messageInfo.type !== 'apps' &&
+        messageInfo.type !== 'groups' &&
+        messageInfo.type !== 'users'
+      ) {
+        console.error('暂不支持的聊天类型')
+        return
+      }
 
-    if (messageInfoMap.current[messageInfo.info.id]) {
-      const currentMessageInfo = messageInfoMap.current[messageInfo.info.id]
-      setCurrentMessageInfo((currentMsg) => {
-        if (currentMsg?.id === currentMessageInfo.id) {
-          return currentMsg
-        }
-        settingCurrentMessageInfo(currentMessageInfo)
-        return { ...currentMessageInfo }
-      })
-      return
-    }
+      if (messageInfoMap.current[messageInfo.info.id]) {
+        const currentMessageInfo = messageInfoMap.current[messageInfo.info.id]
+        setCurrentMessageInfo((currentMsg) => {
+          if (currentMsg?.id === currentMessageInfo.id) {
+            return currentMsg
+          }
+          settingCurrentMessageInfo(currentMessageInfo)
+          return { ...currentMessageInfo }
+        })
+        return
+      }
 
-    const msgInfo: MessageInfo = {
-      ...messageInfo.info,
-      type: messageInfo.type,
-      _id: 'message_info_' + messageInfo.info.id
-    } as MessageInfo
+      const msgInfo: MessageInfo = {
+        ...messageInfo.info,
+        type: messageInfo.type,
+        _id: 'message_info_' + messageInfo.info.id
+      } as MessageInfo
 
-    putMessageInfoAndSettingCurrent(msgInfo)
-    restMessageInfo()
-  }, [])
+      putMessageInfo(msgInfo, !noCurrent)
+      restMessageInfo()
+    },
+    []
+  )
 
   const closeChatMessageCard = useCallback(
     async (msg: MessageInfo) => {

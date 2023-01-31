@@ -77,20 +77,28 @@ enum IconType {
 //   }
 // }
 
+const dbApi = loadDbApi(
+  sendInvokeIpcEventWrapperEventNameAndDataCallBack,
+  sendSyncIpcEventWrapperEventNameAndDataCallBack
+)
+
 const apiMap = {
   teamworkInsideSdk: {
     electron,
-    id,
+    id: {
+      ...id,
+      seq: dbApi.seq
+    },
     api,
     currentWindow,
     applications,
     contextmenu,
     modalWindow,
     remoteCache,
-    insideDb: loadDbApi(
-      sendInvokeIpcEventWrapperEventNameAndDataCallBack,
-      sendSyncIpcEventWrapperEventNameAndDataCallBack
-    )
+    insideDb: {
+      ...dbApi,
+      seq: undefined
+    }
   },
   TcpTransferCmdCode,
   AppType,

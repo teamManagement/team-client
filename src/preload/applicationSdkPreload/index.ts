@@ -18,8 +18,16 @@ import {
   sendSyncIpcEventWrapperEventNameAndDataCallBack
 } from './tools'
 
+const dbApi = loadDbApi(
+  sendInvokeIpcEventWrapperEventNameAndDataCallBack,
+  sendSyncIpcEventWrapperEventNameAndDataCallBack
+)
+
 const teamworkSDK = {
-  id,
+  id: {
+    ...id,
+    seq: dbApi.seq
+  },
   store,
   exec,
   proxy,
@@ -27,10 +35,10 @@ const teamworkSDK = {
   hosts,
   current,
   contextmenu,
-  db: loadDbApi(
-    sendInvokeIpcEventWrapperEventNameAndDataCallBack,
-    sendSyncIpcEventWrapperEventNameAndDataCallBack
-  ),
+  db: {
+    ...dbApi,
+    seq: undefined
+  },
   dialog,
   download,
   notification,

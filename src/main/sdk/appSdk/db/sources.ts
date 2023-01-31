@@ -165,13 +165,19 @@ export class Database {
   }
 }
 
-export function createDatabase(appInfo: AppInfo): Promise<Database> {
+export async function createDatabase(appInfo: AppInfo): Promise<Database> {
   const cacheDb = dbMap[appInfo.id]
   if (cacheDb) {
     logs.debug(`${appInfo.name}-从缓存中恢复数据库连接`)
     return cacheDb.init()
   }
-  return new Database(appInfo).init()
+  const _db = await new Database(appInfo).init()
+  await _db.db.createIndex({
+    index: {
+      fields: ['indexInfo.__GLOBAL_SEQUENCE__']
+    }
+  })
+  return _db
 }
 
 let insideDatabase: Database | undefined = undefined
@@ -189,6 +195,12 @@ export async function loadInsideDatabase(): Promise<Database> {
     await insideDatabase.db.createIndex({
       index: {
         fields: ['indexInfo.updateAt']
+      }
+    })
+
+    await insideDatabase.db.createIndex({
+      index: {
+        fields: ['indexInfo.__GLOBAL_SEQUENCE__']
       }
     })
   }

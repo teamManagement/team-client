@@ -4,6 +4,7 @@ import logs from 'electron-log'
 import { SdkHandlerParam } from '../..'
 import { AppInfo } from '../../insideSdk/applications'
 import { loadInsideDatabase } from './sources'
+import AsyncLock from 'async-lock'
 export * from './sources'
 
 const { fromBuffer } = require('file-type-cjs')
@@ -82,7 +83,74 @@ async function _putAttachment(
   return
 }
 
+interface SequenceInfo {
+  _id?: string
+  _rev?: string
+  seq: number
+  indexInfo: {
+    __GLOBAL_SEQUENCE__: Date
+  }
+}
+
+const _dbLock = new AsyncLock()
+
 const eventHandlerMap = {
+  async seqNo(db: PouchDB.Database): Promise<number> {
+    return _dbLock.acquire('seq_create', async () => {
+      let seqList: SequenceInfo[] = []
+      try {
+        const seqListResult = await db.find({
+          selector: { 'indexInfo.__GLOBAL_SEQUENCE__': { $gte: null } },
+          sort: [{ 'indexInfo.__GLOBAL_SEQUENCE__': 'desc' }]
+        })
+        seqList = seqListResult.docs as any
+      } catch (e) {
+        //nothing
+      }
+
+      let currentSeqInfo: SequenceInfo | undefined = undefined
+      if (seqList.length > 0) {
+        currentSeqInfo = seqList.splice(0, 1)[0]
+      }
+
+      if (!currentSeqInfo) {
+        currentSeqInfo = {
+          seq: 0,
+          indexInfo: {
+            __GLOBAL_SEQUENCE__: new Date()
+          }
+        } as SequenceInfo
+      }
+
+      for (const seqInfo of seqList) {
+        if (seqInfo._id && seqInfo._rev) {
+          await db.remove({
+            _id: seqInfo._id,
+            _rev: seqInfo._rev
+          })
+        }
+      }
+
+      const currentSeqId = currentSeqInfo._id
+      const currentSeqRev = currentSeqInfo._rev
+
+      currentSeqInfo._rev = undefined
+      currentSeqInfo._id = undefined
+
+      currentSeqInfo.seq += 1
+
+      await db.post(currentSeqInfo)
+
+      if (currentSeqId && currentSeqRev) {
+        await db.remove({
+          _id: currentSeqId,
+          _rev: currentSeqRev
+        })
+      }
+
+      return currentSeqInfo.seq
+    })
+  },
   /**
    * 向数据库内添加一个值
    * @param db 数据库

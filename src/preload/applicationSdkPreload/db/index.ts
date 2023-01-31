@@ -68,6 +68,9 @@ export function loadDbApi(
   }
 
   const promiseApi = {
+    async seq(): Promise<number> {
+      return await sendInvokeIpcEvent('seqNo')
+    },
     async put<T extends { _id: string; _rev?: string }>(data: T): Promise<Response> {
       if (!data) {
         throw new Error('数据必要信息缺失')

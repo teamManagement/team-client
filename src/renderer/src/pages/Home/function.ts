@@ -1,5 +1,5 @@
 import { api, insideDb } from '@teamworktoolbox/inside-sdk'
-import { current } from '@teamworktoolbox/sdk'
+import { current, db } from '@teamworktoolbox/sdk'
 import { ignoreErrorWrapper } from '@renderer/tools'
 import { pinyin } from 'pinyin-pro'
 import { message } from 'tdesign-react'
@@ -108,6 +108,22 @@ export async function queryMessageDataList(): Promise<MessageInfo[]> {
   } catch (e) {
     console.warn('查询消息卡片列表失败: ', e)
     return []
+  }
+}
+
+export async function getMessageInfoById(id: string): Promise<MessageInfo | undefined> {
+  if (!id.startsWith('message_info')) {
+    id = 'message_info_' + id
+  }
+
+  try {
+    const messageInfo: MessageInfo = await db.get(id)
+    if (messageInfo.indexInfo.dataType !== 'userMessage') {
+      return undefined
+    }
+    return messageInfo
+  } catch (e) {
+    return undefined
   }
 }
 
@@ -300,7 +316,7 @@ export function settingCurrentMessageInfo(messageInfo?: MessageInfo): void {
   }
 }
 
-export function putMessageInfoAndSettingCurrent(messageInfo: MessageInfo): void {
+export function putMessageInfo(messageInfo: MessageInfo, current?: boolean): void {
   try {
     ignoreErrorWrapper(() => {
       insideDb.sync.remove(messageInfo._id)
@@ -313,7 +329,9 @@ export function putMessageInfoAndSettingCurrent(messageInfo: MessageInfo): void 
       },
       _rev: undefined
     } as MessageInfo)
-    settingCurrentMessageInfo(messageInfo)
+    if (current) {
+      settingCurrentMessageInfo(messageInfo)
+    }
   } catch (e) {
     console.error(e)
   }
