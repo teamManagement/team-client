@@ -5,9 +5,10 @@ import { SdkHandlerParam } from '../..'
 import { AppInfo } from '../../insideSdk/applications'
 import { loadInsideDatabase } from './sources'
 import AsyncLock from 'async-lock'
+import { fileTypeFromBuffer as fromBuffer } from 'file-type'
 export * from './sources'
 
-const { fromBuffer } = require('file-type-cjs')
+// const { fromBuffer } = require('file-type-cjs')
 
 const MAX_ATTACHMENT_SIZE = 1024 * 1024 * 50
 

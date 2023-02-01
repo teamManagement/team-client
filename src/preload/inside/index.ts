@@ -14,6 +14,7 @@ import {
   sendInvokeIpcEventWrapperEventNameAndDataCallBack,
   sendSyncIpcEventWrapperEventNameAndDataCallBack
 } from './tools'
+import { fs } from '../_commons/fs'
 
 // Custom APIs for renderer
 // const api = {
@@ -102,7 +103,8 @@ const apiMap = {
   },
   TcpTransferCmdCode,
   AppType,
-  IconType
+  IconType,
+  fs
 }
 
 for (const k in apiMap) {

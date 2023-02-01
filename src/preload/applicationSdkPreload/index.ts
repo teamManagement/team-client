@@ -1,5 +1,6 @@
 import { contextBridge } from 'electron'
 import { contextmenu } from '../_commons/contextmenu'
+import { fs } from '../_commons/fs'
 import { id } from '../_commons/id'
 import { cache } from './cache'
 import { channel } from './channel'
@@ -43,7 +44,8 @@ const teamworkSDK = {
   download,
   notification,
   channel,
-  encoding
+  encoding,
+  fs
 }
 
 if (process.contextIsolated) {
