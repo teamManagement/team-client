@@ -31,6 +31,9 @@ export const AppDesktop: FC<AppDesktop> = ({
   const contextMenu = useRef<ContextMenu | null>()
 
   useEffect(() => {
+    if (!showContextMenu) {
+      return
+    }
     contextMenu.current = contextmenu.build(
       [
         {
@@ -48,7 +51,7 @@ export const AppDesktop: FC<AppDesktop> = ({
       contextmenu.clear('desktop-refresh')
       contextMenu.current = null
     }
-  }, [])
+  }, [showContextMenu])
 
   const appElementList = useMemo(() => {
     const convertAppList = appList.filter((val) => {
